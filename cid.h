@@ -41,3 +41,10 @@
 /*                                                                           */
 /*****************************************************************************/
 
+#ifndef CID_H
+#define CID_H
+
+extern GtkWidget * main_window;
+
+#endif
+

@@ -41,27 +41,16 @@
 /*                                                                           */
 /*****************************************************************************/
 
-/*****************************************************************************/
-#include <glib/gprintf.h>
-#include <gtk/gtk.h>
+#ifndef TOTAL_H
+#define TOTAL_H
 
-#include "total.h"
+#define SUCCESS        0
+#define FAILURE        1
 
-/*****************************************************************************/
-GtkWidget * main_window = NULL;
 
-static void save_file(const gchar *log_domain,GLogLevelFlags log_level,const gchar *message,gpointer user_data)
-{
-	g_printf("%s\n",message);
-	return ;
-}
+extern const char STR_NAME_PROGRAMM[];
 
-/*****************************************************************************/
-int main(int argc,char * argv[])
-{
-	g_log_set_default_handler(save_file,NULL);
-	g_message("%s",STR_NAME_PROGRAMM);
+extern const char STR_KEY_FILE_NAME[];
 
-	return SUCCESS;
-}
-/*****************************************************************************/
+#endif
+
