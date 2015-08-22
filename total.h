@@ -52,5 +52,8 @@ extern const char STR_NAME_PROGRAMM[];
 
 extern const char STR_KEY_FILE_NAME[];
 
+extern const char STR_LOG_FILE[];
+
+extern GError * error_check;
 #endif
 

@@ -42,6 +42,7 @@
 /*****************************************************************************/
 
 /*****************************************************************************/
+#include <stdlib.h>
 #include <glib/gprintf.h>
 #include <gtk/gtk.h>
 
@@ -50,17 +51,63 @@
 /*****************************************************************************/
 GtkWidget * main_window = NULL;
 
-static void save_file(const gchar *log_domain,GLogLevelFlags log_level,const gchar *message,gpointer user_data)
+/*****************************************************************************/
+static GIOChannel * log_file = NULL;
+static GTimeVal current_time;
+static char STR_CURRENT_TIME[] = "\n[ 00.00.0000 00:00:00 ] ";
+#define LEN_STR_CURRENT_TIME    25
+
+void save_file(const gchar *log_domain,GLogLevelFlags log_level,
+             const gchar *message,gpointer user_data)
 {
-	g_printf("%s\n",message);
-	return ;
+	GDateTime * p_dt;
+	GIOStatus rc;
+	gsize bw;
+
+	if(log_file != NULL){
+ 		g_get_current_time (&current_time);
+		p_dt = g_date_time_new_from_timeval_local(&current_time);
+		g_sprintf(STR_CURRENT_TIME,"\n[ %02d.%02d.%04d %02d:%02d:%02d ] "
+ 		         ,g_date_time_get_day_of_month(p_dt)
+		         ,g_date_time_get_month(p_dt)
+		         ,g_date_time_get_year(p_dt)
+		         ,g_date_time_get_hour(p_dt)
+		         ,g_date_time_get_minute(p_dt)
+		         ,g_date_time_get_second(p_dt));
+		error_check = NULL;
+		rc = g_io_channel_write_chars(log_file
+				,STR_CURRENT_TIME,LEN_STR_CURRENT_TIME
+ 				,&bw,&error_check);
+		rc = g_io_channel_write_chars(log_file
+		,message,-1,&bw,&error_check);
+		if(rc != G_IO_STATUS_NORMAL){
+ 		 	/*TODO*/;
+			g_error_free(error_check);
+		}
+	}
 }
+
+int init_log(void)
+{
+	log_file = g_io_channel_new_file (STR_LOG_FILE,"a",&error_check);
+	if(log_file == NULL){
+		g_message("Not open log file : %s : %s",STR_LOG_FILE,error_check->message);
+		exit(FAILURE);
+	}
+	g_log_set_default_handler(save_file,NULL);
+	return SUCCESS;
+}
+/*****************************************************************************/
 
 /*****************************************************************************/
 int main(int argc,char * argv[])
 {
-	g_log_set_default_handler(save_file,NULL);
+	init_log();
+
 	g_message("%s",STR_NAME_PROGRAMM);
+
+	/*TODO перенести в функцию закрытия*/
+	g_io_channel_shutdown(log_file,TRUE,&error_check);
 
 	return SUCCESS;
 }
