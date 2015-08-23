@@ -47,9 +47,13 @@
 
 const char STR_NAME_PROGRAMM[] = "Управление Промышленым Оборудованием";
 
-const char STR_KEY_FILE_NAME[] = "cid.ini";
 
 const char STR_LOG_FILE[] = "modbus.log";
 
-GError * error_check = NULL;
+const char STR_KEY_FILE_NAME[] = "cid.ini";
+GKeyFile * ini_file = NULL;
+
+const char STR_NAME_ICON[] = "cid.png";
+
+const char STR_NAME_DEFAULT_VIDEO[] = "video_720x576.png";
 /*****************************************************************************/

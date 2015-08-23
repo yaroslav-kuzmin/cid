@@ -47,6 +47,8 @@
 #define SUCCESS        0
 #define FAILURE        1
 
+#define OK             0
+#define NOT_OK         1
 
 extern const char STR_NAME_PROGRAMM[];
 
@@ -54,6 +56,12 @@ extern const char STR_KEY_FILE_NAME[];
 
 extern const char STR_LOG_FILE[];
 
-extern GError * error_check;
+extern char INI_FILE[];
+extern GKeyFile * ini_file;
+
+extern const char STR_NAME_ICON[];
+
+extern const char STR_NAME_DEFAULT_VIDEO[];
+
 #endif
 
