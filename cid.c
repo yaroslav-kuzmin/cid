@@ -50,7 +50,17 @@
 
 /*****************************************************************************/
 
+/*TODO перенести в файл базы данных*/
+char TEMP_JOB_0[] = "Изделие 000";
+#define TEMP_PRESSURE           2
+#define TEMP_HOUR               0
+#define TEMP_MINUTE             10
+#define TEMP_SECOND             22
+#define TEMP_UPRISE_ANGEL       35
+#define TEMP_LOWERING_ANGLE     5
+
 /*****************************************************************************/
+
 static GIOChannel * log_file = NULL;
 static GTimeVal current_time;
 static char STR_CURRENT_TIME[] = "\n[ 00.00.0000 00:00:00 ] ";
@@ -128,32 +138,52 @@ int init_config(void)
 	return SUCCESS;
 }
 /*****************************************************************************/
+void load_job(GtkButton * b,gpointer d)
+{
+	g_message("Загрузить работу");
+}
+void create_job(GtkButton * b,gpointer d)
+{
+	g_message("Cоздать работу");
+}
 
+char STR_LOAD_JOB[] = "загрузить работу";
+char STR_CREATE_JOB[] = "создать работу";
+
+GtkWidget * job_panel = NULL;
+
+#define JOB_PANEL_SPACING      1
+
+int create_job_panel(void)
+{
+	GtkWidget * b_load_job;
+	GtkWidget * b_create_job;
+
+	job_panel = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,JOB_PANEL_SPACING);
+
+	b_load_job = gtk_button_new_with_label(STR_LOAD_JOB);
+	g_signal_connect(b_load_job,"clicked",G_CALLBACK(load_job),NULL);
+
+	b_create_job = gtk_button_new_with_label(STR_CREATE_JOB);
+	g_signal_connect(b_create_job,"clicked",G_CALLBACK(create_job),NULL);
+
+	gtk_box_pack_start(GTK_BOX(job_panel),b_load_job,TRUE,TRUE,JOB_PANEL_SPACING);
+	gtk_box_pack_start(GTK_BOX(job_panel),b_create_job,TRUE,TRUE,JOB_PANEL_SPACING);
+
+	gtk_widget_show(b_load_job);
+	gtk_widget_show(b_create_job);
+	gtk_widget_show(job_panel);
+	return SUCCESS;
+}
 /*****************************************************************************/
 
-GtkWidget * info_panel = NULL;
 char STR_INFO_PANEL[] = "ИНФОРМАЦИЯ";
-GtkWidget * w_name_job_info_panel = NULL;
-GtkWidget * w_pressure_info_panel = NULL;
-GtkWidget * w_time_job_info_panel = NULL;
-GString * s_name_job_info_panel = NULL;
-GString * s_pressure_info_panel = NULL;
-GString * s_time_job_info_panel = NULL;
-char STR_NAME_JOB[] = "Наименование работы ";
-char STR_PRESSURE[] = "Рабочие давление    ";
-char STR_PRESSURE_UNIT[] = "атм";
-char STR_TIME_JOB[] = "Время работы        ";
-#define INFO_SPACING            3
 
-/*TODO перенести в файл базы данных*/
-char TEMP_JOB_0[] = "Изделие 000";
-#define TEMP_PRESSURE           2
-#define TEMP_HOUR               0
-#define TEMP_MINUTE             10
-#define TEMP_SECOND             22
-#define TEMP_UPRISE_ANGEL       35
-#define TEMP_LOWERING_ANGLE     5
-/**/
+GtkWidget * info_panel = NULL;
+GString * s_name_job_info_panel = NULL;
+GtkWidget * w_name_job_info_panel = NULL;
+
+#define INFO_SPACING            3
 
 int create_info_panel(void)
 {
@@ -161,7 +191,7 @@ int create_info_panel(void)
 	PangoContext * pc_label;
 	PangoFontDescription * pfd_label;
 	GdkRGBA color_label;
-	/*char * markup;*/
+
 	/*info_panel = gtk_frame_new(STR_INFO_PANEL);*/
 	info_panel = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(info_panel),INFO_SPACING);
@@ -169,7 +199,6 @@ int create_info_panel(void)
 
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,INFO_SPACING);
 
-	/*s_name_job_info_panel= g_string_new(STR_NAME_JOB);*/
 	s_name_job_info_panel= g_string_new(NULL);
 	g_string_append(s_name_job_info_panel,TEMP_JOB_0);
 	w_name_job_info_panel = gtk_label_new(s_name_job_info_panel->str);
@@ -183,27 +212,13 @@ int create_info_panel(void)
 	color_label.alpha = 1;
 	gtk_widget_override_color(w_name_job_info_panel,GTK_STATE_FLAG_NORMAL,&color_label);
 
-	s_pressure_info_panel = g_string_new(STR_PRESSURE);
-	g_string_append_printf(s_pressure_info_panel," %d ",TEMP_PRESSURE);
-	g_string_append(s_pressure_info_panel,STR_PRESSURE_UNIT);
-	w_pressure_info_panel = gtk_label_new(s_pressure_info_panel->str);
-
-	s_time_job_info_panel = g_string_new(STR_TIME_JOB);
-	g_string_append_printf(s_time_job_info_panel,"%02d:%02d:%02d",TEMP_HOUR,TEMP_MINUTE,TEMP_SECOND);
-	w_time_job_info_panel = gtk_label_new(s_time_job_info_panel->str);
-
-
 	gtk_container_add(GTK_CONTAINER(info_panel),vbox);
 	gtk_box_pack_start(GTK_BOX(vbox),w_name_job_info_panel,TRUE,TRUE,INFO_SPACING);
-	gtk_box_pack_start(GTK_BOX(vbox),w_pressure_info_panel,TRUE,TRUE,INFO_SPACING);
-	gtk_box_pack_start(GTK_BOX(vbox),w_time_job_info_panel,TRUE,TRUE,INFO_SPACING);
-/*
-	gtk_widget_show(w_time_job_info_panel);
-	gtk_widget_show(w_pressure_info_panel);
-*/
+
 	gtk_widget_show(w_name_job_info_panel);
 	gtk_widget_show(vbox);
 	gtk_widget_show(info_panel);
+
 	return SUCCESS;
 }
 /*****************************************************************************/
@@ -228,10 +243,22 @@ int create_video_stream(void)
 	else{
 		gtk_image_set_from_pixbuf(GTK_IMAGE(video_stream),image);
 	}
+
 	gtk_widget_show(video_stream);
+
 	return SUCCESS;
 }
 /*****************************************************************************/
+
+void auto_mode(GtkButton * b,gpointer d)
+{
+	g_message("Автоматическое управление");
+}
+
+void manual_mode(GtkButton * b,gpointer d)
+{
+	g_message("Ручное управление");
+}
 
 void auto_start_mode(GtkButton * b,gpointer d)
 {
@@ -245,12 +272,7 @@ void auto_stop_mode(GtkButton * b,gpointer d)
 
 void auto_pause_mode(GtkButton * b,gpointer d)
 {
-	g_message("Пацза автоматической работы");
-}
-
-void manual_mode(GtkButton * b,gpointer d)
-{
-	g_message("Ручное управление");
+	g_message("Пауза автоматической работы");
 }
 
 char STR_BUTTON_AUTO[] = "Автоматическое управление";
@@ -260,40 +282,33 @@ char STR_BUTTON_AUTO_PAUSE[] = "ПАУЗА";
 char STR_BUTTON_MANUAL[] = "Ручное управление";
 
 #define CONTROL_BUTTON_SPACING        1
+
 GtkWidget * create_control_button(void)
 {
-	GtkWidget * hpanel;
-	GtkWidget * vboxa;
+	GtkWidget * cgrid;
 
+	GtkWidget * hboxb;
 	GtkWidget * b_auto;
+	GtkWidget * b_manual;
+
 	GtkWidget * b_auto_start;
-/*
-	PangoContext * pc_button;
-	PangoFontDescription * pfd_button;
-*/
 	GtkWidget * b_auto_stop;
 	GtkWidget * b_auto_pause;
 
-	GtkWidget * a_manual;
-	GtkWidget * b_manual;
+	cgrid = gtk_grid_new();
+	gtk_container_set_border_width(GTK_CONTAINER(cgrid),CONTROL_BUTTON_SPACING);
 
-	hpanel = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
-	gtk_container_set_border_width(GTK_CONTAINER(hpanel),CONTROL_BUTTON_SPACING);
-	gtk_paned_get_child1(GTK_PANED(hpanel));
-	gtk_paned_get_child2(GTK_PANED(hpanel));
+	hboxb = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,CONTROL_BUTTON_SPACING);
+	gtk_box_set_homogeneous (GTK_BOX(hboxb),TRUE);
 
-	vboxa = gtk_box_new(GTK_ORIENTATION_VERTICAL,CONTROL_BUTTON_SPACING);
-	gtk_container_set_border_width(GTK_CONTAINER(vboxa),CONTROL_BUTTON_SPACING);
-
-	b_auto = gtk_label_new(STR_BUTTON_AUTO);
+	b_auto = gtk_radio_button_new_with_label(NULL,STR_BUTTON_AUTO);
+	g_signal_connect(b_auto,"clicked",G_CALLBACK(auto_mode),NULL);
+	b_manual = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(b_auto)
+	                                                      ,STR_BUTTON_MANUAL);
+	g_signal_connect(b_manual,"clicked",G_CALLBACK(manual_mode),NULL);
+	/*gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_manual),TRUE);*/
 
 	b_auto_start = gtk_button_new_with_label(STR_BUTTON_AUTO_START);
-/*
-	pc_button = gtk_widget_get_pango_context (b_auto_start);
-	pfd_button = pango_context_get_font_description (pc_button);
-	pango_font_description_set_size(pfd_button,20000);
-	gtk_widget_override_font(b_auto_start,pfd_button);
-*/
 	g_signal_connect(b_auto_start,"clicked",G_CALLBACK(auto_start_mode),NULL);
 
 	b_auto_stop = gtk_button_new_with_label(STR_BUTTON_AUTO_STOP);
@@ -302,50 +317,34 @@ GtkWidget * create_control_button(void)
 	b_auto_pause = gtk_button_new_with_label(STR_BUTTON_AUTO_PAUSE);
 	g_signal_connect(b_auto_pause,"clicked",G_CALLBACK(auto_pause_mode),NULL);
 
-	a_manual = gtk_alignment_new(0,0,0,0);
-	b_manual = gtk_button_new_with_label(STR_BUTTON_MANUAL);
-	g_signal_connect(b_manual,"clicked",G_CALLBACK(manual_mode),NULL);
 
-	gtk_paned_pack1(GTK_PANED(hpanel),vboxa,TRUE,TRUE);
-	gtk_box_pack_start(GTK_BOX(vboxa),b_auto,TRUE,TRUE,CONTROL_BUTTON_SPACING);
-	gtk_box_pack_start(GTK_BOX(vboxa),b_auto_start,TRUE,TRUE,CONTROL_BUTTON_SPACING);
-	gtk_box_pack_start(GTK_BOX(vboxa),b_auto_stop,TRUE,TRUE,CONTROL_BUTTON_SPACING);
-	gtk_box_pack_start(GTK_BOX(vboxa),b_auto_pause,TRUE,TRUE,CONTROL_BUTTON_SPACING);
-	gtk_paned_pack2(GTK_PANED(hpanel),a_manual,TRUE,TRUE);
-	gtk_container_add(GTK_CONTAINER(a_manual),b_manual);
+	gtk_grid_attach(GTK_GRID(cgrid),hboxb,0,0,3,1);
+	gtk_box_pack_start(GTK_BOX(hboxb),b_auto,TRUE,TRUE,CONTROL_BUTTON_SPACING);
+	gtk_box_pack_start(GTK_BOX(hboxb),b_manual,TRUE,TRUE,CONTROL_BUTTON_SPACING);
+	gtk_grid_attach(GTK_GRID(cgrid),b_auto_start,0,1,1,1);
+	gtk_grid_attach(GTK_GRID(cgrid),b_auto_stop,0,2,1,1);
+	gtk_grid_attach(GTK_GRID(cgrid),b_auto_pause,0,3,1,1);
 
-	gtk_widget_show(b_manual);
-	gtk_widget_show(a_manual);
 	gtk_widget_show(b_auto_pause);
 	gtk_widget_show(b_auto_stop);
 	gtk_widget_show(b_auto_start);
+	gtk_widget_show(b_manual);
 	gtk_widget_show(b_auto);
-	gtk_widget_show(vboxa);
-	gtk_widget_show(hpanel);
+	gtk_widget_show(hboxb);
+	gtk_widget_show(cgrid);
 
-	return hpanel;
+	return cgrid;
 }
 
 /**************************************/
 
-void load_job(GtkButton * b,gpointer d)
-{
-	g_message("Загрузить работу");
-}
-void create_job(GtkButton * b,gpointer d)
-{
-	g_message("создать работу");
-}
-
-char STR_LOAD_JOB[] = "загрузить работу";
-char STR_CREATE_JOB[] = "создать работу";
-
 char STR_SET_VALUE[] =     " Установлено ";
 char STR_CURRENT_VALUE[] = " Текущие     ";
-char STR_UPRISE_ANGEL[] =   "Угол подъема         ";
-char STR_LOWERING_ANGEL[] = "Угол опускания       ";
+char STR_PRESSURE[] = "Рабочие давление, атм";
+char STR_TIME_JOB[] = "Время работы";
+char STR_UPRISE_ANGEL[] =   "Угол подъема, градусов";
+char STR_LOWERING_ANGEL[] = "Угол опускания, градусов";
 
-GtkWidget * w_name_job_set = NULL;
 GtkWidget * w_pressure_set = NULL;
 GtkWidget * w_pressure_current = NULL;
 GtkWidget * w_time_set = NULL;
@@ -365,10 +364,9 @@ GString * s_lowering_set = NULL;
 GString * s_lowering_current = NULL;
 
 #define SET_PANEL_SPACING           1
+
 GtkWidget * create_set_panel(void)
 {
-	GtkWidget * hpanel;
-
 	GtkWidget * igrid;
 	GtkWidget * set_value;
 	GtkWidget * current_value;
@@ -377,22 +375,14 @@ GtkWidget * create_set_panel(void)
 	GtkWidget * uprise;
 	GtkWidget * lowering;
 
-	GtkWidget * vboxb;
-	GtkWidget * b_load_job;
-	GtkWidget * b_create_job;
-
-	hpanel = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
-	gtk_container_set_border_width(GTK_CONTAINER(hpanel),SET_PANEL_SPACING);
-
 	igrid = gtk_grid_new();
 	gtk_container_set_border_width(GTK_CONTAINER(igrid),SET_PANEL_SPACING);
-/*
-	s_name_job_set = g_string_new(TEMP_JOB_0);
-	w_name_job_set = gtk_label_new(s_name_job_set->str);
-*/
+
 	set_value = gtk_label_new(STR_SET_VALUE);
 	current_value = gtk_label_new(STR_CURRENT_VALUE);
+
 	pressure = gtk_label_new(STR_PRESSURE);
+	gtk_widget_set_halign(pressure,GTK_ALIGN_START);
 	s_pressure_set = g_string_new(NULL);
 	g_string_append_printf(s_pressure_set," %d ",TEMP_PRESSURE);
 	w_pressure_set = gtk_label_new(s_pressure_set->str);
@@ -401,6 +391,7 @@ GtkWidget * create_set_panel(void)
 	w_pressure_current = gtk_label_new(s_pressure_current->str);
 
 	time = gtk_label_new(STR_TIME_JOB);
+	gtk_widget_set_halign(time,GTK_ALIGN_START);
 	s_time_set = g_string_new(NULL);
 	g_string_append_printf(s_time_set," %02d:%02d:%02d",TEMP_HOUR,TEMP_MINUTE,TEMP_SECOND);
 	w_time_set = gtk_label_new(s_time_set->str);
@@ -409,6 +400,7 @@ GtkWidget * create_set_panel(void)
 	w_time_current = gtk_label_new(s_time_current->str);
 
 	uprise = gtk_label_new(STR_UPRISE_ANGEL);
+	gtk_widget_set_halign(uprise,GTK_ALIGN_START);
 	s_uprise_set = g_string_new(NULL);
 	g_string_append_printf(s_uprise_set," %d ",TEMP_UPRISE_ANGEL);
 	w_uprise_set = gtk_label_new(s_uprise_set->str);
@@ -417,6 +409,7 @@ GtkWidget * create_set_panel(void)
 	w_uprise_current = gtk_label_new(s_uprise_current->str);
 
 	lowering = gtk_label_new(STR_LOWERING_ANGEL);
+	gtk_widget_set_halign(lowering,GTK_ALIGN_START);
 	s_lowering_set = g_string_new(NULL);
 	g_string_append_printf(s_lowering_set," %d ",TEMP_LOWERING_ANGLE);
 	w_lowering_set = gtk_label_new(s_lowering_set->str);
@@ -424,36 +417,25 @@ GtkWidget * create_set_panel(void)
 	g_string_append_printf(s_lowering_current," %d ",TEMP_UPRISE_ANGEL - 10);
 	w_lowering_current = gtk_label_new(s_lowering_current->str);
 
-	vboxb = gtk_box_new(GTK_ORIENTATION_VERTICAL,SET_PANEL_SPACING);
-	gtk_container_set_border_width(GTK_CONTAINER(vboxb),SET_PANEL_SPACING);
+	gtk_grid_attach(GTK_GRID(igrid),set_value         ,2,0,1,1);
+	gtk_grid_attach(GTK_GRID(igrid),current_value     ,3,0,1,1);
 
-	b_load_job = gtk_button_new_with_label(STR_LOAD_JOB);
-	g_signal_connect(b_load_job,"clicked",G_CALLBACK(load_job),NULL);
+	gtk_grid_attach(GTK_GRID(igrid),pressure          ,0,1,2,1);
+	gtk_grid_attach(GTK_GRID(igrid),w_pressure_set    ,2,1,1,1);
+	gtk_grid_attach(GTK_GRID(igrid),w_pressure_current,3,1,1,1);
 
-	b_create_job = gtk_button_new_with_label(STR_CREATE_JOB);
-	g_signal_connect(b_create_job,"clicked",G_CALLBACK(create_job),NULL);
+	gtk_grid_attach(GTK_GRID(igrid),time              ,0,2,2,1);
+	gtk_grid_attach(GTK_GRID(igrid),w_time_set        ,2,2,1,1);
+	gtk_grid_attach(GTK_GRID(igrid),w_time_current    ,3,2,1,1);
 
-	gtk_paned_pack1(GTK_PANED(hpanel),igrid,TRUE,TRUE);
-	/*gtk_grid_attach(GTK_GRID(igrid),w_name_job_set,0,0,3,1);*/
-	gtk_grid_attach(GTK_GRID(igrid),set_value,1,1,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),current_value,2,1,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),pressure,0,2,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_pressure_set,1,2,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_pressure_current,2,2,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),time,0,3,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_time_set,1,3,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_time_current,2,3,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),uprise,0,4,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_uprise_set,1,4,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_uprise_current,2,4,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),lowering,0,5,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_lowering_set,1,5,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_lowering_current,2,5,1,1);
-/*
-	gtk_paned_pack2(GTK_PANED(hpanel),vboxb,TRUE,TRUE);
-	gtk_box_pack_start(GTK_BOX(vboxb),b_load_job,TRUE,TRUE,SET_PANEL_SPACING);
-	gtk_box_pack_start(GTK_BOX(vboxb),b_create_job,TRUE,TRUE,SET_PANEL_SPACING);
-*/
+	gtk_grid_attach(GTK_GRID(igrid),uprise            ,0,3,2,1);
+	gtk_grid_attach(GTK_GRID(igrid),w_uprise_set      ,2,3,1,1);
+	gtk_grid_attach(GTK_GRID(igrid),w_uprise_current  ,3,3,1,1);
+
+	gtk_grid_attach(GTK_GRID(igrid),lowering          ,0,4,2,1);
+	gtk_grid_attach(GTK_GRID(igrid),w_lowering_set    ,2,4,1,1);
+	gtk_grid_attach(GTK_GRID(igrid),w_lowering_current,3,4,1,1);
+
 	gtk_widget_show(w_lowering_current);
 	gtk_widget_show(w_lowering_set);
 	gtk_widget_show(lowering);
@@ -468,19 +450,19 @@ GtkWidget * create_set_panel(void)
 	gtk_widget_show(pressure);
 	gtk_widget_show(current_value);
 	gtk_widget_show(set_value);
-	gtk_widget_show(w_name_job_set);
 	gtk_widget_show(igrid);
+
 /*
 	gtk_widget_show(b_create_job);
 	gtk_widget_show(b_load_job);
 	gtk_widget_show(vboxb);
 */
-	gtk_widget_show(hpanel);
-	return hpanel;
+	return igrid;
 }
 /**************************************/
-GtkWidget * control_panel = NULL;
 char STR_CONTROL_PANEL[] = "УПРАВЛЕНИЕ";
+
+GtkWidget * control_panel = NULL;
 
 #define CONTROL_SPACING        1
 
@@ -547,10 +529,12 @@ int create_main_window(void)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,MAIN_SPACING);
 	gtk_container_set_border_width(GTK_CONTAINER(vbox),MAIN_SPACING);
 
+	create_job_panel();
 	create_info_panel();
 	create_video_stream();
 	create_control_panel();
 
+	gtk_box_pack_start(GTK_BOX(vbox),job_panel,TRUE,TRUE,MAIN_SPACING);
 	gtk_box_pack_start(GTK_BOX(vbox),info_panel,TRUE,TRUE,MAIN_SPACING);
 	gtk_box_pack_start(GTK_BOX(vbox),video_stream,TRUE,TRUE,MAIN_SPACING);
 	gtk_box_pack_start(GTK_BOX(vbox),control_panel,TRUE,TRUE,MAIN_SPACING);
@@ -565,7 +549,6 @@ int create_main_window(void)
 /*****************************************************************************/
 int main(int argc,char * argv[])
 {
-
 	init_log();
 
 	g_message("Запуск системы");
