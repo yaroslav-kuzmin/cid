@@ -353,7 +353,6 @@ GtkWidget * w_uprise_set = NULL;
 GtkWidget * w_uprise_current = NULL;
 GtkWidget * w_lowering_set = NULL;
 GtkWidget * w_lowering_current = NULL;
-GString * s_name_job_set = NULL;
 GString * s_pressure_set = NULL;
 GString * s_pressure_current = NULL;
 GString * s_time_set = NULL;
