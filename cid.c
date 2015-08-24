@@ -129,6 +129,8 @@ int init_config(void)
 }
 /*****************************************************************************/
 
+/*****************************************************************************/
+
 GtkWidget * info_panel = NULL;
 char STR_INFO_PANEL[] = "ИНФОРМАЦИЯ";
 GtkWidget * w_name_job_info_panel = NULL;
@@ -156,16 +158,30 @@ char TEMP_JOB_0[] = "Изделие 000";
 int create_info_panel(void)
 {
 	GtkWidget * vbox;
-
-	info_panel = gtk_frame_new(STR_INFO_PANEL);
+	PangoContext * pc_label;
+	PangoFontDescription * pfd_label;
+	GdkRGBA color_label;
+	/*char * markup;*/
+	/*info_panel = gtk_frame_new(STR_INFO_PANEL);*/
+	info_panel = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(info_panel),INFO_SPACING);
-	gtk_frame_set_label_align (GTK_FRAME(info_panel),0.5,0);
+	/*gtk_frame_set_label_align (GTK_FRAME(info_panel),0.5,0);*/
 
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,INFO_SPACING);
 
-	s_name_job_info_panel= g_string_new(STR_NAME_JOB);
+	/*s_name_job_info_panel= g_string_new(STR_NAME_JOB);*/
+	s_name_job_info_panel= g_string_new(NULL);
 	g_string_append(s_name_job_info_panel,TEMP_JOB_0);
 	w_name_job_info_panel = gtk_label_new(s_name_job_info_panel->str);
+	pc_label = gtk_widget_get_pango_context(w_name_job_info_panel);
+	pfd_label = pango_context_get_font_description(pc_label);
+	pango_font_description_set_size(pfd_label,30000);
+	gtk_widget_override_font(w_name_job_info_panel,pfd_label);
+	color_label.red = 0;
+	color_label.green = 0;
+	color_label.blue = 1;
+	color_label.alpha = 1;
+	gtk_widget_override_color(w_name_job_info_panel,GTK_STATE_FLAG_NORMAL,&color_label);
 
 	s_pressure_info_panel = g_string_new(STR_PRESSURE);
 	g_string_append_printf(s_pressure_info_panel," %d ",TEMP_PRESSURE);
@@ -181,9 +197,10 @@ int create_info_panel(void)
 	gtk_box_pack_start(GTK_BOX(vbox),w_name_job_info_panel,TRUE,TRUE,INFO_SPACING);
 	gtk_box_pack_start(GTK_BOX(vbox),w_pressure_info_panel,TRUE,TRUE,INFO_SPACING);
 	gtk_box_pack_start(GTK_BOX(vbox),w_time_job_info_panel,TRUE,TRUE,INFO_SPACING);
-
+/*
 	gtk_widget_show(w_time_job_info_panel);
 	gtk_widget_show(w_pressure_info_panel);
+*/
 	gtk_widget_show(w_name_job_info_panel);
 	gtk_widget_show(vbox);
 	gtk_widget_show(info_panel);
@@ -192,8 +209,8 @@ int create_info_panel(void)
 /*****************************************************************************/
 GtkWidget * video_stream = NULL;
 
-#define DEFAULT_VIDEO_WIDTH      840      /*720*/
-#define DEFAULT_VIDEO_HEIGHT     600      /*576*/
+#define DEFAULT_VIDEO_WIDTH      720
+#define DEFAULT_VIDEO_HEIGHT     576
 
 int create_video_stream(void)
 {
@@ -250,6 +267,10 @@ GtkWidget * create_control_button(void)
 
 	GtkWidget * b_auto;
 	GtkWidget * b_auto_start;
+/*
+	PangoContext * pc_button;
+	PangoFontDescription * pfd_button;
+*/
 	GtkWidget * b_auto_stop;
 	GtkWidget * b_auto_pause;
 
@@ -267,6 +288,12 @@ GtkWidget * create_control_button(void)
 	b_auto = gtk_label_new(STR_BUTTON_AUTO);
 
 	b_auto_start = gtk_button_new_with_label(STR_BUTTON_AUTO_START);
+/*
+	pc_button = gtk_widget_get_pango_context (b_auto_start);
+	pfd_button = pango_context_get_font_description (pc_button);
+	pango_font_description_set_size(pfd_button,20000);
+	gtk_widget_override_font(b_auto_start,pfd_button);
+*/
 	g_signal_connect(b_auto_start,"clicked",G_CALLBACK(auto_start_mode),NULL);
 
 	b_auto_stop = gtk_button_new_with_label(STR_BUTTON_AUTO_STOP);
@@ -313,10 +340,10 @@ void create_job(GtkButton * b,gpointer d)
 char STR_LOAD_JOB[] = "загрузить работу";
 char STR_CREATE_JOB[] = "создать работу";
 
-char STR_SET_VALUE[] = "Заданое значение";
-char STR_CURRENT_VALUE[] = "Текущие значение";
-char STR_UPRISE_ANGEL[] = "Угол подъема";
-char STR_LOWERING_ANGEL[] = "Угол опускания";
+char STR_SET_VALUE[] =     " Установлено ";
+char STR_CURRENT_VALUE[] = " Текущие     ";
+char STR_UPRISE_ANGEL[] =   "Угол подъема         ";
+char STR_LOWERING_ANGEL[] = "Угол опускания       ";
 
 GtkWidget * w_name_job_set = NULL;
 GtkWidget * w_pressure_set = NULL;
@@ -359,9 +386,10 @@ GtkWidget * create_set_panel(void)
 
 	igrid = gtk_grid_new();
 	gtk_container_set_border_width(GTK_CONTAINER(igrid),SET_PANEL_SPACING);
-
+/*
 	s_name_job_set = g_string_new(TEMP_JOB_0);
 	w_name_job_set = gtk_label_new(s_name_job_set->str);
+*/
 	set_value = gtk_label_new(STR_SET_VALUE);
 	current_value = gtk_label_new(STR_CURRENT_VALUE);
 	pressure = gtk_label_new(STR_PRESSURE);
@@ -406,7 +434,7 @@ GtkWidget * create_set_panel(void)
 	g_signal_connect(b_create_job,"clicked",G_CALLBACK(create_job),NULL);
 
 	gtk_paned_pack1(GTK_PANED(hpanel),igrid,TRUE,TRUE);
-	gtk_grid_attach(GTK_GRID(igrid),w_name_job_set,0,0,3,1);
+	/*gtk_grid_attach(GTK_GRID(igrid),w_name_job_set,0,0,3,1);*/
 	gtk_grid_attach(GTK_GRID(igrid),set_value,1,1,1,1);
 	gtk_grid_attach(GTK_GRID(igrid),current_value,2,1,1,1);
 	gtk_grid_attach(GTK_GRID(igrid),pressure,0,2,1,1);
@@ -421,11 +449,11 @@ GtkWidget * create_set_panel(void)
 	gtk_grid_attach(GTK_GRID(igrid),lowering,0,5,1,1);
 	gtk_grid_attach(GTK_GRID(igrid),w_lowering_set,1,5,1,1);
 	gtk_grid_attach(GTK_GRID(igrid),w_lowering_current,2,5,1,1);
-
+/*
 	gtk_paned_pack2(GTK_PANED(hpanel),vboxb,TRUE,TRUE);
 	gtk_box_pack_start(GTK_BOX(vboxb),b_load_job,TRUE,TRUE,SET_PANEL_SPACING);
 	gtk_box_pack_start(GTK_BOX(vboxb),b_create_job,TRUE,TRUE,SET_PANEL_SPACING);
-
+*/
 	gtk_widget_show(w_lowering_current);
 	gtk_widget_show(w_lowering_set);
 	gtk_widget_show(lowering);
@@ -442,9 +470,11 @@ GtkWidget * create_set_panel(void)
 	gtk_widget_show(set_value);
 	gtk_widget_show(w_name_job_set);
 	gtk_widget_show(igrid);
+/*
 	gtk_widget_show(b_create_job);
 	gtk_widget_show(b_load_job);
 	gtk_widget_show(vboxb);
+*/
 	gtk_widget_show(hpanel);
 	return hpanel;
 }
@@ -468,7 +498,6 @@ int create_control_panel(void)
 
 	cbutton = create_control_button();
 	spanel = create_set_panel();
-
 
 	gtk_container_add(GTK_CONTAINER(control_panel),hboxm);
 	gtk_box_pack_start(GTK_BOX(hboxm),cbutton,TRUE,TRUE,CONTROL_SPACING);
@@ -510,8 +539,9 @@ int create_main_window(void)
 	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width(GTK_CONTAINER(main_window),MAIN_SPACING);
 	gtk_window_set_title(GTK_WINDOW(main_window),STR_NAME_PROGRAMM);
-	gtk_window_set_default_size(GTK_WINDOW(main_window),850,-1);
+	/*gtk_window_set_default_size(GTK_WINDOW(main_window),850,-1);*/
 	gtk_window_set_resizable(GTK_WINDOW(main_window),FALSE);
+	gtk_window_set_position (GTK_WINDOW(main_window),GTK_WIN_POS_CENTER);
 	g_signal_connect (main_window, "destroy",G_CALLBACK (main_destroy), NULL);
 
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,MAIN_SPACING);
