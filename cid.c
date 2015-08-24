@@ -106,7 +106,7 @@ int init_log(void)
 	GError * err = NULL;
 	log_file = g_io_channel_new_file (STR_LOG_FILE,"a",&err);
 	if(log_file == NULL){
-		g_message("Not open log file : %s : %s",STR_LOG_FILE,err->message);
+		g_message("%s",err->message);
 		exit(FAILURE);
 	}
 	g_log_set_default_handler(save_file,NULL);
@@ -120,7 +120,7 @@ int init_config(void)
 	GError * err = NULL;
 	rc = g_key_file_load_from_file(ini_file,STR_KEY_FILE_NAME,G_KEY_FILE_NONE,&err);
 	if(rc == FALSE){
-		g_message("Не найден файл конфигурации: %s : %s",STR_KEY_FILE_NAME,err->message);
+		g_message("%s",err->message);
 		g_error_free(err);
 		g_io_channel_shutdown(log_file,TRUE,NULL);
 		exit(0);
@@ -205,8 +205,7 @@ int create_video_stream(void)
 
 	image = gdk_pixbuf_new_from_file(STR_NAME_DEFAULT_VIDEO,&err);
 	if(err != NULL){
-		fprintf(stderr,":> %s",err->message);
-		g_message("Не найдено изибражение : %s : %s",STR_NAME_DEFAULT_VIDEO,err->message);
+		g_message("%s",err->message);
 		g_error_free(err);
 	}
 	else{
@@ -501,7 +500,7 @@ int create_main_window(void)
 
 	icon = gdk_pixbuf_new_from_file(STR_NAME_ICON,&err);
 	if(err != NULL){
-		g_message("Не найдено изображение для программы : %s : %s",STR_NAME_ICON,err->message);
+		g_message("%s",err->message);
 		g_error_free(err);
 	}
 	else{

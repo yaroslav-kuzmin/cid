@@ -48,7 +48,7 @@
 const char STR_NAME_PROGRAMM[] = "Управление Промышленым Оборудованием";
 
 
-const char STR_LOG_FILE[] = "modbus.log";
+const char STR_LOG_FILE[] = "cid.log";
 
 const char STR_KEY_FILE_NAME[] = "cid.ini";
 GKeyFile * ini_file = NULL;
