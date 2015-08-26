@@ -138,17 +138,32 @@ int init_config(void)
 	return SUCCESS;
 }
 /*****************************************************************************/
-void load_job(GtkButton * b,gpointer d)
+GtkWidget * main_window = NULL;
+GtkAccelGroup * accel_group = NULL;
+
+void main_exit(GtkMenuItem * im,gpointer d)
+{
+	gtk_widget_destroy(main_window);
+}
+/*****************************************************************************/
+
+
+void load_job(GtkMenuItem * b,gpointer d)
 {
 	g_message("Загрузить работу");
 }
-void create_job(GtkButton * b,gpointer d)
+void create_job(GtkMenuItem * b,gpointer d)
 {
 	g_message("Cоздать работу");
 }
 
-char STR_LOAD_JOB[] = "загрузить работу";
-char STR_CREATE_JOB[] = "создать работу";
+char STR_JOB[] = "Работа";
+char STR_LOAD_JOB[] = "Загрузить";
+char STR_CREATE_JOB[] = "Создать";
+char STR_EXIT[] = "ВЫХОД";
+char STR_MODE[] = "Режим";
+char STR_AUTO_MODE[] = "автоматический";
+char STR_MANUAL_MODE[] = "ручной";
 
 GtkWidget * job_panel = NULL;
 
@@ -156,22 +171,51 @@ GtkWidget * job_panel = NULL;
 
 int create_job_panel(void)
 {
-	GtkWidget * b_load_job;
-	GtkWidget * b_create_job;
+	GtkWidget * menu_work;
+/*
+	GtkWidget * menu_mode;
+*/
+	GtkWidget * mitem;
 
-	job_panel = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,JOB_PANEL_SPACING);
+	job_panel = gtk_menu_bar_new();
 
-	b_load_job = gtk_button_new_with_label(STR_LOAD_JOB);
-	g_signal_connect(b_load_job,"clicked",G_CALLBACK(load_job),NULL);
+	mitem = gtk_menu_item_new_with_label(STR_JOB);
+	gtk_menu_shell_append(GTK_MENU_SHELL(job_panel),mitem);
+	gtk_widget_show(mitem);
 
-	b_create_job = gtk_button_new_with_label(STR_CREATE_JOB);
-	g_signal_connect(b_create_job,"clicked",G_CALLBACK(create_job),NULL);
+	menu_work = gtk_menu_new();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mitem),menu_work);
 
-	gtk_box_pack_start(GTK_BOX(job_panel),b_load_job,TRUE,TRUE,JOB_PANEL_SPACING);
-	gtk_box_pack_start(GTK_BOX(job_panel),b_create_job,TRUE,TRUE,JOB_PANEL_SPACING);
+	mitem = gtk_menu_item_new_with_label(STR_LOAD_JOB);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
+	g_signal_connect(mitem,"activate",G_CALLBACK(load_job),NULL);
+	gtk_widget_add_accelerator(mitem,"activate",accel_group
+	                          ,'L',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	gtk_widget_show(mitem);
 
-	gtk_widget_show(b_load_job);
-	gtk_widget_show(b_create_job);
+	mitem = gtk_menu_item_new_with_label(STR_CREATE_JOB);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
+	g_signal_connect(mitem,"activate",G_CALLBACK(create_job),NULL);
+	gtk_widget_add_accelerator(mitem,"activate",accel_group
+	                          ,'C',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	gtk_widget_show(mitem);
+
+	mitem = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
+	gtk_widget_show(mitem);
+
+	mitem = gtk_menu_item_new_with_label(STR_EXIT);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
+	g_signal_connect(mitem,"activate",G_CALLBACK(main_exit),NULL);
+	gtk_widget_add_accelerator(mitem,"activate",accel_group
+	                          ,'Q',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	gtk_widget_show(mitem);
+/*
+	menu_mode = gtk_menu_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(job_panel),menu_mode);
+	gtk_widget_show(menu_mode);
+*/
+	gtk_widget_show(menu_work);
 	gtk_widget_show(job_panel);
 	return SUCCESS;
 }
@@ -286,18 +330,19 @@ char STR_BUTTON_MANUAL[] = "Ручное управление";
 GtkWidget * create_control_button(void)
 {
 	GtkWidget * cgrid;
-
+/*
 	GtkWidget * hboxb;
+
 	GtkWidget * b_auto;
 	GtkWidget * b_manual;
-
+*/
 	GtkWidget * b_auto_start;
 	GtkWidget * b_auto_stop;
 	GtkWidget * b_auto_pause;
 
 	cgrid = gtk_grid_new();
 	gtk_container_set_border_width(GTK_CONTAINER(cgrid),CONTROL_BUTTON_SPACING);
-
+/*
 	hboxb = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,CONTROL_BUTTON_SPACING);
 	gtk_box_set_homogeneous (GTK_BOX(hboxb),TRUE);
 
@@ -306,6 +351,7 @@ GtkWidget * create_control_button(void)
 	b_manual = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(b_auto)
 	                                                      ,STR_BUTTON_MANUAL);
 	g_signal_connect(b_manual,"clicked",G_CALLBACK(manual_mode),NULL);
+*/
 	/*gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b_manual),TRUE);*/
 
 	b_auto_start = gtk_button_new_with_label(STR_BUTTON_AUTO_START);
@@ -317,10 +363,11 @@ GtkWidget * create_control_button(void)
 	b_auto_pause = gtk_button_new_with_label(STR_BUTTON_AUTO_PAUSE);
 	g_signal_connect(b_auto_pause,"clicked",G_CALLBACK(auto_pause_mode),NULL);
 
-
+/*
 	gtk_grid_attach(GTK_GRID(cgrid),hboxb,0,0,3,1);
 	gtk_box_pack_start(GTK_BOX(hboxb),b_auto,TRUE,TRUE,CONTROL_BUTTON_SPACING);
 	gtk_box_pack_start(GTK_BOX(hboxb),b_manual,TRUE,TRUE,CONTROL_BUTTON_SPACING);
+*/
 	gtk_grid_attach(GTK_GRID(cgrid),b_auto_start,0,1,1,1);
 	gtk_grid_attach(GTK_GRID(cgrid),b_auto_stop,0,2,1,1);
 	gtk_grid_attach(GTK_GRID(cgrid),b_auto_pause,0,3,1,1);
@@ -328,9 +375,11 @@ GtkWidget * create_control_button(void)
 	gtk_widget_show(b_auto_pause);
 	gtk_widget_show(b_auto_stop);
 	gtk_widget_show(b_auto_start);
+/*
 	gtk_widget_show(b_manual);
 	gtk_widget_show(b_auto);
 	gtk_widget_show(hboxb);
+*/
 	gtk_widget_show(cgrid);
 
 	return cgrid;
@@ -489,7 +538,6 @@ int create_control_panel(void)
 }
 
 /*****************************************************************************/
-GtkWidget * main_window = NULL;
 
 void main_destroy(GtkWidget * w,gpointer ud)
 {
@@ -517,6 +565,7 @@ int create_main_window(void)
 		gtk_window_set_default_icon(icon);
 	}
 
+
 	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width(GTK_CONTAINER(main_window),MAIN_SPACING);
 	gtk_window_set_title(GTK_WINDOW(main_window),STR_NAME_PROGRAMM);
@@ -524,6 +573,8 @@ int create_main_window(void)
 	gtk_window_set_resizable(GTK_WINDOW(main_window),FALSE);
 	gtk_window_set_position (GTK_WINDOW(main_window),GTK_WIN_POS_CENTER);
 	g_signal_connect (main_window, "destroy",G_CALLBACK (main_destroy), NULL);
+
+	gtk_window_add_accel_group(GTK_WINDOW(main_window),accel_group);
 
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,MAIN_SPACING);
 	gtk_container_set_border_width(GTK_CONTAINER(vbox),MAIN_SPACING);
@@ -533,7 +584,7 @@ int create_main_window(void)
 	create_video_stream();
 	create_control_panel();
 
-	gtk_box_pack_start(GTK_BOX(vbox),job_panel,TRUE,TRUE,MAIN_SPACING);
+	gtk_box_pack_start(GTK_BOX(vbox),job_panel,FALSE,TRUE,MAIN_SPACING);
 	gtk_box_pack_start(GTK_BOX(vbox),info_panel,TRUE,TRUE,MAIN_SPACING);
 	gtk_box_pack_start(GTK_BOX(vbox),video_stream,TRUE,TRUE,MAIN_SPACING);
 	gtk_box_pack_start(GTK_BOX(vbox),control_panel,TRUE,TRUE,MAIN_SPACING);
@@ -556,6 +607,8 @@ int main(int argc,char * argv[])
 	init_config();
 
 	gtk_init(&argc,&argv);
+
+	accel_group = gtk_accel_group_new();
 
 	create_main_window();
 
