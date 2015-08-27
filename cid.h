@@ -45,6 +45,7 @@
 #define CID_H
 
 extern GtkAccelGroup * accel_group;
+extern GKeyFile * ini_file;
 
 void main_exit(GtkMenuItem * im,gpointer d);
 GtkWidget * create_menu_mode(void);

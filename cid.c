@@ -117,13 +117,16 @@ int init_log(void)
 	GError * err = NULL;
 	log_file = g_io_channel_new_file (STR_LOG_FILE,"a",&err);
 	if(log_file == NULL){
-		g_message("%s",err->message);
+		g_message("%s : %s",STR_LOG_FILE,err->message);
 		exit(FAILURE);
 	}
 	g_log_set_default_handler(save_file,NULL);
 	return SUCCESS;
 }
 /*****************************************************************************/
+
+GKeyFile * ini_file = NULL;
+
 int init_config(void)
 {
 	int rc;
@@ -131,7 +134,7 @@ int init_config(void)
 	GError * err = NULL;
 	rc = g_key_file_load_from_file(ini_file,STR_KEY_FILE_NAME,G_KEY_FILE_NONE,&err);
 	if(rc == FALSE){
-		g_message("%s",err->message);
+		g_message("%s : %s",STR_KEY_FILE_NAME,err->message);
 		g_error_free(err);
 		g_io_channel_shutdown(log_file,TRUE,NULL);
 		exit(0);
@@ -592,7 +595,6 @@ int create_main_window(void)
 	else{
 		gtk_window_set_default_icon(icon);
 	}
-
 
 	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width(GTK_CONTAINER(main_window),MAIN_SPACING);

@@ -51,7 +51,6 @@ const char STR_NAME_PROGRAMM[] = "Управление Промышленым О
 const char STR_LOG_FILE[] = "cid.log";
 
 const char STR_KEY_FILE_NAME[] = "cid.ini";
-GKeyFile * ini_file = NULL;
 
 const char STR_NAME_ICON[] = "cid.png";
 

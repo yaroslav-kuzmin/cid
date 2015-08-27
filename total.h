@@ -57,7 +57,6 @@ extern const char STR_KEY_FILE_NAME[];
 extern const char STR_LOG_FILE[];
 
 extern char INI_FILE[];
-extern GKeyFile * ini_file;
 
 extern const char STR_NAME_ICON[];
 
