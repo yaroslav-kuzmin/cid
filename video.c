@@ -41,15 +41,36 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#ifndef CID_H
-#define CID_H
+/*****************************************************************************/
+#include <gtk/gtk.h>
 
-extern GtkWidget * main_window;
-extern GtkAccelGroup * accel_group;
-extern GKeyFile * ini_file;
+#include "total.h"
+/*****************************************************************************/
 
-void main_exit(GtkMenuItem * im,gpointer d);
-GtkWidget * create_menu_mode(void);
+GtkWidget * video_stream = NULL;
+GdkPixbuf * image;
 
-#endif
+#define DEFAULT_VIDEO_WIDTH      720
+#define DEFAULT_VIDEO_HEIGHT     576
 
+GtkWidget * create_video_stream(void)
+{
+	GError * err = NULL;
+
+	video_stream = gtk_image_new();
+	gtk_widget_set_size_request(video_stream,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
+
+	image = gdk_pixbuf_new_from_file(STR_NAME_DEFAULT_VIDEO,&err);
+	if(err != NULL){
+		g_message("%s",err->message);
+		g_error_free(err);
+	}
+	else{
+		gtk_image_set_from_pixbuf(GTK_IMAGE(video_stream),image);
+	}
+
+	gtk_widget_show(video_stream);
+
+	return video_stream;
+}
+/*****************************************************************************/

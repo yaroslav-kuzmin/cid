@@ -43,15 +43,49 @@
 
 /*****************************************************************************/
 #include <gtk/gtk.h>
+#include <sqlite3.h>
 
 #include "total.h"
 #include "cid.h"
 
+GtkWidget * load_window = NULL;
 /*****************************************************************************/
-void load_job(GtkMenuItem * b,gpointer d)
+void load_job(GtkButton * b,gpointer d)
 {
-	g_message("Загрузить работу");
+	g_message("load_job");
+	gtk_widget_destroy(load_window);
 }
+
+void load_window_destroy(GtkWidget * w,gpointer d)
+{
+	g_message("load_window destroy");
+}
+/*****************************************************************************/
+char STR_LOAD_WINDOW[] = "Загрузить работу";
+
+void create_window_load_job(GtkMenuItem * b,gpointer d)
+{
+	GtkWidget * hbox;
+	GtkWidget * b_exit;
+	load_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_screen(GTK_WINDOW (load_window),gtk_widget_get_screen(main_window));
+	gtk_window_set_title(GTK_WINDOW(load_window),STR_LOAD_WINDOW);
+	gtk_container_set_border_width(GTK_CONTAINER(load_window),5);
+
+	g_signal_connect (load_window,"destroy",G_CALLBACK(load_window_destroy),NULL);
+
+	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
+	gtk_container_add(GTK_CONTAINER(load_window),hbox);
+
+	b_exit = gtk_button_new_with_label("Загрузить");
+	g_signal_connect(b_exit,"clicked",G_CALLBACK(load_job),NULL);
+
+	gtk_box_pack_start(GTK_BOX(hbox),b_exit,TRUE,TRUE,5);
+	gtk_widget_show(b_exit);
+	gtk_widget_show(hbox);
+	gtk_widget_show(load_window);
+}
+
 void create_job(GtkMenuItem * b,gpointer d)
 {
 	g_message("Cоздать работу");
@@ -81,7 +115,7 @@ GtkWidget * create_job_panel(void)
 
 	mitem = gtk_menu_item_new_with_label(STR_LOAD_JOB);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
-	g_signal_connect(mitem,"activate",G_CALLBACK(load_job),NULL);
+	g_signal_connect(mitem,"activate",G_CALLBACK(create_window_load_job),NULL);
 	gtk_widget_add_accelerator(mitem,"activate",accel_group
 	                          ,'L',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_widget_show(mitem);

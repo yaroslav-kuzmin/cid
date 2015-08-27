@@ -48,6 +48,7 @@
 
 #include "total.h"
 #include "job.h"
+#include "video.h"
 
 /*****************************************************************************/
 
@@ -267,33 +268,6 @@ GtkWidget * create_info_panel(void)
 	gtk_widget_show(info_panel);
 
 	return info_panel;
-}
-/*****************************************************************************/
-GtkWidget * video_stream = NULL;
-
-#define DEFAULT_VIDEO_WIDTH      720
-#define DEFAULT_VIDEO_HEIGHT     576
-
-GtkWidget * create_video_stream(void)
-{
-	GError * err = NULL;
-	GdkPixbuf * image;
-
-	video_stream = gtk_image_new();
-	gtk_widget_set_size_request(video_stream,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
-
-	image = gdk_pixbuf_new_from_file(STR_NAME_DEFAULT_VIDEO,&err);
-	if(err != NULL){
-		g_message("%s",err->message);
-		g_error_free(err);
-	}
-	else{
-		gtk_image_set_from_pixbuf(GTK_IMAGE(video_stream),image);
-	}
-
-	gtk_widget_show(video_stream);
-
-	return video_stream;
 }
 /*****************************************************************************/
 

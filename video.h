@@ -41,15 +41,10 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#ifndef CID_H
-#define CID_H
+#ifndef VIDEO_H
+#define VIDEO_H
 
-extern GtkWidget * main_window;
-extern GtkAccelGroup * accel_group;
-extern GKeyFile * ini_file;
-
-void main_exit(GtkMenuItem * im,gpointer d);
-GtkWidget * create_menu_mode(void);
+GtkWidget * create_video_stream(void);
 
 #endif
 
