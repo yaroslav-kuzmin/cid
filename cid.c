@@ -47,6 +47,7 @@
 #include <gtk/gtk.h>
 
 #include "total.h"
+#include "job.h"
 
 /*****************************************************************************/
 
@@ -147,17 +148,6 @@ void main_exit(GtkMenuItem * im,gpointer d)
 }
 /*****************************************************************************/
 
-
-void load_job(GtkMenuItem * b,gpointer d)
-{
-
-	g_message("Загрузить работу");
-}
-void create_job(GtkMenuItem * b,gpointer d)
-{
-	g_message("Cоздать работу");
-}
-
 char STR_AUTO_CONTROL[] = "Автоматическое";
 char STR_MANUAL_CONTROL[] = "Ручное";
 
@@ -171,7 +161,6 @@ GtkWidget * b_manual_left;
 GtkWidget * b_manual_right;
 GtkWidget * b_manual_close;
 GtkWidget * b_manual_open;
-
 
 void auto_mode(GtkMenuItem * im,gpointer d)
 {
@@ -204,65 +193,22 @@ void manual_mode(GtkMenuItem * im,gpointer d)
 	gtk_label_set_text(GTK_LABEL(l_control),STR_MANUAL_CONTROL);
 }
 
-char STR_JOB[] = "Работа";
-char STR_LOAD_JOB[] = "Загрузить";
-char STR_CREATE_JOB[] = "Создать";
-char STR_EXIT[] = "ВЫХОД";
 char STR_MODE[] = "Режим";
 char STR_AUTO_MODE[] = "автоматический";
 char STR_MANUAL_MODE[] = "ручной";
 
-GtkWidget * job_panel = NULL;
-
 #define JOB_PANEL_SPACING      1
-
-int create_job_panel(void)
+GtkWidget * create_menu_mode(void)
 {
-	GtkWidget * menu_work;
+	GtkWidget * menu_mode_item;
 	GtkWidget * menu_mode;
 	GtkWidget * mitem;
 
-	job_panel = gtk_menu_bar_new();
-	gtk_widget_set_halign(job_panel,GTK_ALIGN_START);
-
-	mitem = gtk_menu_item_new_with_label(STR_JOB);
-	gtk_menu_shell_append(GTK_MENU_SHELL(job_panel),mitem);
-	gtk_widget_show(mitem);
-
-	menu_work = gtk_menu_new();
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mitem),menu_work);
-
-	mitem = gtk_menu_item_new_with_label(STR_LOAD_JOB);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
-	g_signal_connect(mitem,"activate",G_CALLBACK(load_job),NULL);
-	gtk_widget_add_accelerator(mitem,"activate",accel_group
-	                          ,'L',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
-	gtk_widget_show(mitem);
-
-	mitem = gtk_menu_item_new_with_label(STR_CREATE_JOB);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
-	g_signal_connect(mitem,"activate",G_CALLBACK(create_job),NULL);
-	gtk_widget_add_accelerator(mitem,"activate",accel_group
-	                          ,'C',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
-	gtk_widget_show(mitem);
-
-	mitem = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
-	gtk_widget_show(mitem);
-
-	mitem = gtk_menu_item_new_with_label(STR_EXIT);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
-	g_signal_connect(mitem,"activate",G_CALLBACK(main_exit),NULL);
-	gtk_widget_add_accelerator(mitem,"activate",accel_group
-	                          ,'Q',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
-	gtk_widget_show(mitem);
-
-	mitem = gtk_menu_item_new_with_label(STR_MODE);
-	gtk_menu_shell_append(GTK_MENU_SHELL(job_panel),mitem);
-	gtk_widget_show(mitem);
+	menu_mode_item = gtk_menu_item_new_with_label(STR_MODE);
+	gtk_widget_show(menu_mode_item);
 
 	menu_mode = gtk_menu_new();
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mitem),menu_mode);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_mode_item),menu_mode);
 
 	mitem = gtk_radio_menu_item_new_with_label(NULL,STR_AUTO_MODE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_mode),mitem);
@@ -274,13 +220,10 @@ int create_job_panel(void)
 	g_signal_connect(mitem,"activate",G_CALLBACK(manual_mode),NULL);
 	gtk_widget_show(mitem);
 
-	gtk_widget_show(menu_mode);
-	gtk_widget_show(menu_work);
-	gtk_widget_show(job_panel);
-	return SUCCESS;
+	return menu_mode_item;
 }
-/*****************************************************************************/
 
+/*****************************************************************************/
 
 GtkWidget * info_panel = NULL;
 GString * s_name_job_info_panel = NULL;
@@ -288,7 +231,7 @@ GtkWidget * w_name_job_info_panel = NULL;
 
 #define INFO_SPACING            3
 
-int create_info_panel(void)
+GtkWidget * create_info_panel(void)
 {
 	GtkWidget * vbox;
 	PangoContext * pc_label;
@@ -320,7 +263,7 @@ int create_info_panel(void)
 	gtk_widget_show(vbox);
 	gtk_widget_show(info_panel);
 
-	return SUCCESS;
+	return info_panel;
 }
 /*****************************************************************************/
 GtkWidget * video_stream = NULL;
@@ -328,7 +271,7 @@ GtkWidget * video_stream = NULL;
 #define DEFAULT_VIDEO_WIDTH      720
 #define DEFAULT_VIDEO_HEIGHT     576
 
-int create_video_stream(void)
+GtkWidget * create_video_stream(void)
 {
 	GError * err = NULL;
 	GdkPixbuf * image;
@@ -347,7 +290,7 @@ int create_video_stream(void)
 
 	gtk_widget_show(video_stream);
 
-	return SUCCESS;
+	return video_stream;
 }
 /*****************************************************************************/
 
@@ -605,7 +548,7 @@ GtkWidget * control_panel = NULL;
 
 #define CONTROL_SPACING        1
 
-int create_control_panel(void)
+GtkWidget * create_control_panel(void)
 {
 	GtkWidget * cbutton;
 	GtkWidget * spanel;
@@ -618,7 +561,7 @@ int create_control_panel(void)
 	gtk_box_pack_start(GTK_BOX(control_panel),cbutton,TRUE,TRUE,CONTROL_SPACING);
 	gtk_box_pack_start(GTK_BOX(control_panel),spanel,TRUE,TRUE,CONTROL_SPACING);
 	gtk_widget_show(control_panel);
-	return SUCCESS;
+	return control_panel;
 }
 
 /*****************************************************************************/
@@ -639,6 +582,7 @@ int create_main_window(void)
 	GError * err = NULL;
 	GdkPixbuf * icon = NULL;
 	GtkWidget * vbox = NULL;
+	GtkWidget * wtemp;
 
 	icon = gdk_pixbuf_new_from_file(STR_NAME_ICON,&err);
 	if(err != NULL){
@@ -663,15 +607,14 @@ int create_main_window(void)
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,MAIN_SPACING);
 	gtk_container_set_border_width(GTK_CONTAINER(vbox),MAIN_SPACING);
 
-	create_job_panel();
-	create_info_panel();
-	create_video_stream();
-	create_control_panel();
-
-	gtk_box_pack_start(GTK_BOX(vbox),job_panel,FALSE,TRUE,MAIN_SPACING);
-	gtk_box_pack_start(GTK_BOX(vbox),info_panel,TRUE,TRUE,MAIN_SPACING);
-	gtk_box_pack_start(GTK_BOX(vbox),video_stream,TRUE,TRUE,MAIN_SPACING);
-	gtk_box_pack_start(GTK_BOX(vbox),control_panel,TRUE,TRUE,MAIN_SPACING);
+	wtemp = create_job_panel();
+	gtk_box_pack_start(GTK_BOX(vbox),wtemp,FALSE,TRUE,MAIN_SPACING);
+	wtemp = create_info_panel();
+	gtk_box_pack_start(GTK_BOX(vbox),wtemp,TRUE,TRUE,MAIN_SPACING);
+	wtemp = create_video_stream();
+	gtk_box_pack_start(GTK_BOX(vbox),wtemp,TRUE,TRUE,MAIN_SPACING);
+	wtemp = create_control_panel();
+	gtk_box_pack_start(GTK_BOX(vbox),wtemp,TRUE,TRUE,MAIN_SPACING);
 
 	gtk_container_add(GTK_CONTAINER(main_window),vbox);
 

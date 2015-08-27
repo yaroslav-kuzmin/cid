@@ -41,13 +41,75 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#ifndef CID_H
-#define CID_H
+/*****************************************************************************/
+#include <gtk/gtk.h>
 
-extern GtkAccelGroup * accel_group;
+#include "total.h"
+#include "cid.h"
 
-void main_exit(GtkMenuItem * im,gpointer d);
-GtkWidget * create_menu_mode(void);
+/*****************************************************************************/
+void load_job(GtkMenuItem * b,gpointer d)
+{
+	g_message("Загрузить работу");
+}
+void create_job(GtkMenuItem * b,gpointer d)
+{
+	g_message("Cоздать работу");
+}
 
-#endif
+char STR_JOB[] = "Работа";
+char STR_LOAD_JOB[] = "Загрузить";
+char STR_CREATE_JOB[] = "Создать";
+char STR_EXIT[] = "ВЫХОД";
+
+GtkWidget * job_panel = NULL;
+
+GtkWidget * create_job_panel(void)
+{
+	GtkWidget * menu_work;
+	GtkWidget * mitem;
+
+	job_panel = gtk_menu_bar_new();
+	gtk_widget_set_halign(job_panel,GTK_ALIGN_START);
+
+	mitem = gtk_menu_item_new_with_label(STR_JOB);
+	gtk_menu_shell_append(GTK_MENU_SHELL(job_panel),mitem);
+	gtk_widget_show(mitem);
+
+	menu_work = gtk_menu_new();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(mitem),menu_work);
+
+	mitem = gtk_menu_item_new_with_label(STR_LOAD_JOB);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
+	g_signal_connect(mitem,"activate",G_CALLBACK(load_job),NULL);
+	gtk_widget_add_accelerator(mitem,"activate",accel_group
+	                          ,'L',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	gtk_widget_show(mitem);
+
+	mitem = gtk_menu_item_new_with_label(STR_CREATE_JOB);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
+	g_signal_connect(mitem,"activate",G_CALLBACK(create_job),NULL);
+	gtk_widget_add_accelerator(mitem,"activate",accel_group
+	                          ,'C',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	gtk_widget_show(mitem);
+
+	mitem = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
+	gtk_widget_show(mitem);
+
+	mitem = gtk_menu_item_new_with_label(STR_EXIT);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
+	g_signal_connect(mitem,"activate",G_CALLBACK(main_exit),NULL);
+	gtk_widget_add_accelerator(mitem,"activate",accel_group
+	                          ,'Q',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	gtk_widget_show(mitem);
+
+	mitem = create_menu_mode();
+	gtk_menu_shell_append(GTK_MENU_SHELL(job_panel),mitem);
+
+	gtk_widget_show(menu_work);
+	gtk_widget_show(job_panel);
+	return job_panel;
+}
+/*****************************************************************************/
 

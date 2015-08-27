@@ -41,13 +41,10 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#ifndef CID_H
-#define CID_H
+#ifndef JOB_H
+#define JOB_H
 
-extern GtkAccelGroup * accel_group;
-
-void main_exit(GtkMenuItem * im,gpointer d);
-GtkWidget * create_menu_mode(void);
+GtkWidget * create_job_panel(void);
 
 #endif
 
