@@ -546,8 +546,8 @@ GtkWidget * create_control_panel(void)
 void main_destroy(GtkWidget * w,gpointer ud)
 {
 	close_video();
-	g_key_file_free(ini_file);
 
+	g_key_file_free(ini_file);
 	g_message("Останов системы\n");
 	g_io_channel_shutdown(log_file,TRUE,NULL);
 	gtk_main_quit();
