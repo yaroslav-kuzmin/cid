@@ -81,6 +81,8 @@ AVCodecContext *pCodecCtx = NULL;
 struct SwsContext *sws_ctx = NULL;
 AVCodec *pCodec = NULL;
 
+int exit_video_stream = NOT_OK;
+
 GtkWidget * video_stream = NULL;
 GdkPixbuf * image = NULL;
 GdkPixbuf * image_default = NULL;
@@ -115,9 +117,9 @@ static gpointer play_background(gpointer args)
 		rc = av_read_frame(pFormatCtx, &packet);
 		if(rc != 0){
 			g_message("Ошибка потока ");
-			g_thread_exit(0);
+			break;
 		}
-		usleep(15000);
+		/*usleep(15000);*/
 		if(packet.stream_index==videoStream) {
 			avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,&packet);
 
@@ -137,6 +139,9 @@ static gpointer play_background(gpointer args)
 		}
 		av_free_packet(&packet);
 		g_thread_yield();
+		if(exit_video_stream == OK){
+			g_thread_exit(0);
+		}
 	}
 
 	gtk_image_set_from_pixbuf((GtkImage*) video_stream,image_default);
@@ -222,7 +227,9 @@ static void image_realize(GtkWidget *widget, gpointer data)
 
 static void image_unrealize(GtkWidget *widget, gpointer data)
 {
-	g_thread_unref(tid);
+	exit_video_stream = OK;
+	/*g_thread_unref(tid);*/
+	g_thread_join(tid);
 
 	avformat_close_input(&pFormatCtx);
 	avformat_network_deinit();
