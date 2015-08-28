@@ -42,20 +42,197 @@
 /*****************************************************************************/
 
 /*****************************************************************************/
+#include <stdint.h>
 #include <gtk/gtk.h>
 
-#include "total.h"
-/*****************************************************************************/
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
 
-GtkWidget * video_stream = NULL;
-GdkPixbuf * image;
+#include "total.h"
+#include "cid.h"
+
+
+/*****************************************************************************/
+char VIDEO_GROUP[] = "video";
+
+char *name_stream;
+int read_name_stream(void)
+{
+	GError * err = NULL;
+
+	name_stream = g_key_file_get_string (ini_file,VIDEO_GROUP,"stream",&err);
+	if(name_stream == NULL){
+		g_message("В секции %s нет ключа %s : %s",VIDEO_GROUP,"stream",err->message);
+		g_error_free(err);
+		return FAILURE;
+	}
+	g_message("Камера : %s",name_stream);
+
+
+	return SUCCESS;
+}
 
 #define DEFAULT_VIDEO_WIDTH      720
 #define DEFAULT_VIDEO_HEIGHT     576
 
+int videoStream;
+AVFormatContext *pFormatCtx = NULL;
+AVCodecContext *pCodecCtx = NULL;
+struct SwsContext *sws_ctx = NULL;
+AVCodec *pCodec = NULL;
+
+GtkWidget * video_stream = NULL;
+GdkPixbuf * image;
+
+static void pixmap_destroy_notify(guchar *pixels,gpointer data)
+{
+	g_message("Destroy pixmap - not sure how\n");
+}
+static gpointer play_background(gpointer args)
+{
+	int rc;
+	AVPacket packet;
+	AVFrame *pFrame = NULL;
+	AVFrame *picture_RGB;
+	char *buffer;
+	int frameFinished;
+	int width = pCodecCtx->width;
+	int height = pCodecCtx->height;
+
+	av_init_packet(&packet);
+	packet.data = NULL;
+	packet.size = 0;
+
+	pFrame = avcodec_alloc_frame();
+  picture_RGB = avcodec_alloc_frame();
+	buffer = malloc (avpicture_get_size(PIX_FMT_RGB24,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT));
+	avpicture_fill((AVPicture *)picture_RGB, buffer, PIX_FMT_RGB24,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
+
+	av_read_play(pFormatCtx);
+
+	for(;;){
+		rc = av_read_frame(pFormatCtx, &packet);
+		if(rc != 0){
+			g_message("Ошибка потока ");
+			return NULL;
+		}
+		if(packet.stream_index==videoStream) {
+			avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,&packet);
+
+			sws_ctx = sws_getContext(width,height,pCodecCtx->pix_fmt
+			                        ,width,height,PIX_FMT_RGB24,SWS_BICUBIC, NULL, NULL, NULL);
+
+	    if (frameFinished) {
+				sws_scale(sws_ctx,(uint8_t const * const *) pFrame->data, pFrame->linesize,0,height
+				                  ,picture_RGB->data,picture_RGB->linesize);
+
+				image = gdk_pixbuf_new_from_data(picture_RGB->data[0],GDK_COLORSPACE_RGB
+				                                  ,0,8,width
+																					,height,picture_RGB->linesize[0]
+																					,pixmap_destroy_notify,NULL);
+				gtk_image_set_from_pixbuf((GtkImage*) video_stream,image);
+			}
+		}
+		av_free_packet(&packet);
+		g_thread_yield();
+	}
+	return NULL;
+}
+
+int init_rtsp(void)
+{
+	int i;
+	int rc;
+	AVDictionary *optionsDict = NULL;
+	rc = read_name_stream();
+	if(rc == FAILURE){
+		return rc;
+	}
+
+  av_register_all();
+	avformat_network_init();
+
+	rc = avformat_open_input(&pFormatCtx,name_stream , NULL, NULL);
+	if(rc != 0) {
+		g_message("Не смог открыть видео поток");
+		return FAILURE;
+	}
+	g_message("Открыл поток с камеры!");
+
+	rc = avformat_find_stream_info(pFormatCtx, NULL);
+	if(rc < 0){
+		g_message("Не нашел поток");
+		return FAILURE;
+	}
+	g_message("Нашел поток");
+
+	av_dump_format(pFormatCtx, 0, name_stream, 0);
+
+	videoStream=-1;
+	for(i = 0;i < pFormatCtx->nb_streams;i++){
+		if(pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
+	    videoStream = i;
+	    break;
+		}
+	}
+	if(videoStream== -1){
+		g_message("Не нашел видео поток");
+		return FAILURE; // Didn't find a video stream
+	}
+	g_message("Нашел видео поток");
+
+	pCodecCtx = pFormatCtx->streams[videoStream]->codec;
+	pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
+	if(pCodec==NULL) {
+		g_message("Кодек не поддерживается : %s",pCodec->long_name);
+		return FAILURE; // Codec not found
+	}
+	g_message("Кодек поддерживается : %s",pCodec->long_name);
+
+	rc = avcodec_open2(pCodecCtx, pCodec, &optionsDict);
+	if(rc < 0){
+		g_message("Не смог открыть кодек");
+		return FAILURE;
+	}
+	g_message("Запустил кодек");
+
+	sws_ctx = sws_getContext(pCodecCtx->width,pCodecCtx->height
+	                        ,pCodecCtx->pix_fmt
+	                        ,pCodecCtx->width,pCodecCtx->height
+	                        ,PIX_FMT_YUV420P,SWS_BILINEAR
+	                        ,NULL,NULL,NULL);
+	g_message("Инизиализировал видео поток %dх%d",pCodecCtx->width,pCodecCtx->height);
+
+	return rc;
+}
+
+GThread *tid;
+
+int close_video(void)
+{
+	g_thread_unref(tid);
+	avformat_close_input(&pFormatCtx);
+	avformat_network_deinit();
+
+	g_message("Ведео поток закрыт");
+	return SUCCESS;
+}
+/*****************************************************************************/
+
+static void image_realized(GtkWidget *widget, gpointer data)
+{
+
+	tid=g_thread_new("video",play_background,NULL);
+
+	g_message("Видео запущено");
+}
+
 GtkWidget * create_video_stream(void)
 {
+	/*int rc;*/
 	GError * err = NULL;
+
+	init_rtsp();
 
 	video_stream = gtk_image_new();
 	gtk_widget_set_size_request(video_stream,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
@@ -68,7 +245,7 @@ GtkWidget * create_video_stream(void)
 	else{
 		gtk_image_set_from_pixbuf(GTK_IMAGE(video_stream),image);
 	}
-
+	g_signal_connect(video_stream,"realize",G_CALLBACK(image_realized),NULL);
 	gtk_widget_show(video_stream);
 
 	return video_stream;
