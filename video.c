@@ -81,8 +81,11 @@ AVCodecContext *pCodecCtx = NULL;
 struct SwsContext *sws_ctx = NULL;
 AVCodec *pCodec = NULL;
 
+int exit_video_stream = NOT_OK;
+
 GtkWidget * video_stream = NULL;
-GdkPixbuf * image;
+GdkPixbuf * image = NULL;
+GdkPixbuf * image_default = NULL;
 
 static void pixmap_destroy_notify(guchar *pixels,gpointer data)
 {
@@ -94,7 +97,7 @@ static gpointer play_background(gpointer args)
 	AVPacket packet;
 	AVFrame *pFrame = NULL;
 	AVFrame *picture_RGB;
-	char *buffer;
+	uint8_t *buffer;
 	int frameFinished;
 	int width = pCodecCtx->width;
 	int height = pCodecCtx->height;
@@ -114,8 +117,9 @@ static gpointer play_background(gpointer args)
 		rc = av_read_frame(pFormatCtx, &packet);
 		if(rc != 0){
 			g_message("Ошибка потока ");
-			return NULL;
+			break;
 		}
+		/*usleep(15000);*/
 		if(packet.stream_index==videoStream) {
 			avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,&packet);
 
@@ -135,7 +139,13 @@ static gpointer play_background(gpointer args)
 		}
 		av_free_packet(&packet);
 		g_thread_yield();
+		if(exit_video_stream == OK){
+			g_thread_exit(0);
+		}
 	}
+
+	gtk_image_set_from_pixbuf((GtkImage*) video_stream,image_default);
+	g_thread_exit(0);
 	return NULL;
 }
 
@@ -206,53 +216,48 @@ int init_rtsp(void)
 	return rc;
 }
 
-GThread *tid;
+/*****************************************************************************/
 
-int close_video(void)
+GThread *tid;
+static void image_realize(GtkWidget *widget, gpointer data)
 {
-	g_thread_unref(tid);
+	tid = g_thread_new("video",play_background,NULL);
+	g_message("Видео запущено");
+}
+
+static void image_unrealize(GtkWidget *widget, gpointer data)
+{
+	exit_video_stream = OK;
+	g_thread_join(tid);
+
 	avformat_close_input(&pFormatCtx);
 	avformat_network_deinit();
 
 	g_message("Ведео поток закрыт");
-	return SUCCESS;
-}
-/*****************************************************************************/
-
-int open_strteam = NOT_OK;
-
-static void image_realized(GtkWidget *widget, gpointer data)
-{
-	if(open_strteam == OK){
-		tid=g_thread_new("video",play_background,NULL);
-	}
-	g_message("Видео запущено");
 }
 
 GtkWidget * create_video_stream(void)
 {
-	int rc;
+	/*int rc;*/
 	GError * err = NULL;
 
 	/*TODO  первичная проверка правильности адресса*/
-	rc = init_rtsp();
-	if(rc == SUCCESS){
-		open_strteam = OK;
-	}
+	init_rtsp();
 
 	video_stream = gtk_image_new();
 	gtk_widget_set_size_request(video_stream,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
 
-	image = gdk_pixbuf_new_from_file(STR_NAME_DEFAULT_VIDEO,&err);
+	image_default = gdk_pixbuf_new_from_file(STR_NAME_DEFAULT_VIDEO,&err);
 	if(err != NULL){
 		g_message("%s",err->message);
 		g_error_free(err);
 	}
 	else{
-		gtk_image_set_from_pixbuf(GTK_IMAGE(video_stream),image);
+		gtk_image_set_from_pixbuf(GTK_IMAGE(video_stream),image_default);
 	}
 
-	g_signal_connect(video_stream,"realize",G_CALLBACK(image_realized),NULL);
+	g_signal_connect(video_stream,"realize",G_CALLBACK(image_realize),NULL);
+	g_signal_connect(video_stream,"unrealize",G_CALLBACK(image_unrealize),NULL);
 	gtk_widget_show(video_stream);
 
 	return video_stream;

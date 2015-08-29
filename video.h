@@ -45,7 +45,6 @@
 #define VIDEO_H
 
 GtkWidget * create_video_stream(void);
-int close_video(void);
 
 #endif
 
