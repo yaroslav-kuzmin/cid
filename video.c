@@ -219,20 +219,26 @@ int close_video(void)
 }
 /*****************************************************************************/
 
+int open_strteam = NOT_OK;
+
 static void image_realized(GtkWidget *widget, gpointer data)
 {
-
-	tid=g_thread_new("video",play_background,NULL);
-
+	if(open_strteam == OK){
+		tid=g_thread_new("video",play_background,NULL);
+	}
 	g_message("Видео запущено");
 }
 
 GtkWidget * create_video_stream(void)
 {
-	/*int rc;*/
+	int rc;
 	GError * err = NULL;
 
-	init_rtsp();
+	/*TODO  первичная проверка правильности адресса*/
+	rc = init_rtsp();
+	if(rc == SUCCESS){
+		open_strteam = OK;
+	}
 
 	video_stream = gtk_image_new();
 	gtk_widget_set_size_request(video_stream,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
@@ -245,6 +251,7 @@ GtkWidget * create_video_stream(void)
 	else{
 		gtk_image_set_from_pixbuf(GTK_IMAGE(video_stream),image);
 	}
+
 	g_signal_connect(video_stream,"realize",G_CALLBACK(image_realized),NULL);
 	gtk_widget_show(video_stream);
 
