@@ -57,10 +57,12 @@ extern const char STR_KEY_FILE_NAME[];
 extern const char STR_LOG_FILE[];
 
 extern char INI_FILE[];
+extern GKeyFile * ini_file;
 
 extern const char STR_NAME_ICON[];
 
 extern const char STR_NAME_DEFAULT_VIDEO[];
 
+extern const char STR_NAME_DB[];
 #endif
 

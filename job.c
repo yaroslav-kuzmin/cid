@@ -48,34 +48,125 @@
 #include "total.h"
 #include "cid.h"
 
-GtkWidget * load_window = NULL;
+/*****************************************************************************/
+sqlite3 * db = NULL;
+
+/*************************************/
+char QUERY_TABLE[] = "SELECT * FROM sqlite_master WHERE type = 'table'";
+
+int table_job = NOT_OK;
+char STR_TABLE_NAME[] = "job";
+#define SIZE_STR_TABLE_NAME      3
+char STR_COL_NAME_TABLE[] = "name";
+#define SIZE_STR_COL_NAME_TABLE      4
+int callback_table(void * ud, int argc, char **argv, char ** col_name)
+{
+	int i;
+	char * name;
+	char * value;
+	char * check;
+	for(i = 0;i < argc;i++){
+		name = col_name[i];
+		value = argv[i];
+		check = NULL;
+		check = g_strrstr_len(name,SIZE_STR_COL_NAME_TABLE,STR_COL_NAME_TABLE);
+		if(check != NULL){
+			check = g_strrstr_len(value,SIZE_STR_TABLE_NAME,STR_TABLE_NAME);
+			if( check != NULL){
+				table_job = OK;
+			}
+		}
+	}
+	return 0;
+}
+/*************************************/
+char QUERY_CREATE_TABLE[]="CREATE TABLE job(name PRIMARY KEY,pressure INTEGER,time INTEGER,uprise INTEGER,lowering INTEGER)";
+
+
+/*************************************/
+int init_db(void)
+{
+	int rc;
+	char * error_message = NULL;
+
+	rc = sqlite3_open(STR_NAME_DB,&db); // откравает базу данных
+	if(rc != SQLITE_OK){
+		g_message("Несог открыть базу данных %s : %s",STR_NAME_DB,sqlite3_errmsg(db));
+		sqlite3_close(db);
+		return FAILURE;
+	}
+
+	rc = sqlite3_exec(db,QUERY_TABLE,callback_table,NULL,&error_message);
+	if( rc != SQLITE_OK ){
+		g_message("SQL error (0) : %s\n",error_message);
+		sqlite3_free(error_message);
+		return FAILURE;
+	}
+
+	if(table_job == NOT_OK){
+		rc = sqlite3_exec(db,QUERY_CREATE_TABLE,NULL,NULL, &error_message);
+		if( rc != SQLITE_OK){
+			g_message("SQL error (1) : %s",error_message);
+			sqlite3_free(error_message);
+			return FAILURE;
+		}
+	}
+	g_message("Открыл базу данных");
+	return SUCCESS;
+}
+
+int deinit_db(void)
+{
+	if(db != NULL){
+		sqlite3_close(db);
+		g_message("Закрыл базу данных");
+	}
+
+	return SUCCESS;
+}
+/*****************************************************************************/
+GtkWidget * load_job_window = NULL;
+GtkWidget * create_job_window = NULL;
+
 /*****************************************************************************/
 void load_job(GtkButton * b,gpointer d)
 {
 	g_message("load_job");
-	gtk_widget_destroy(load_window);
+	gtk_widget_destroy(load_job_window);
 }
 
-void load_window_destroy(GtkWidget * w,gpointer d)
+void load_job_window_destroy(GtkWidget * w,gpointer d)
 {
-	g_message("load_window destroy");
+	g_message("load_job_window destroy");
+}
+
+
+void create_job(GtkButton *b,gpointer d)
+{
+	g_message("Сохранить работу");
+}
+
+void create_job_window_destroy(GtkWidget * w,gpointer d)
+{
+	g_message("load_job_window destroy");
 }
 /*****************************************************************************/
-char STR_LOAD_WINDOW[] = "Загрузить работу";
+char STR_LOAD_JOB_WINDOW[] = "Загрузить работу";
+char STR_CREATE_JOB_WINDOW[] = "Создать работу";
 
 void create_window_load_job(GtkMenuItem * b,gpointer d)
 {
 	GtkWidget * hbox;
 	GtkWidget * b_exit;
-	load_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_screen(GTK_WINDOW (load_window),gtk_widget_get_screen(main_window));
-	gtk_window_set_title(GTK_WINDOW(load_window),STR_LOAD_WINDOW);
-	gtk_container_set_border_width(GTK_CONTAINER(load_window),5);
 
-	g_signal_connect (load_window,"destroy",G_CALLBACK(load_window_destroy),NULL);
+	load_job_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_screen(GTK_WINDOW (load_job_window),gtk_widget_get_screen(main_window));
+	gtk_window_set_title(GTK_WINDOW(load_job_window),STR_LOAD_JOB_WINDOW);
+	gtk_container_set_border_width(GTK_CONTAINER(load_job_window),5);
+	g_signal_connect (load_job_window,"destroy",G_CALLBACK(load_job_window_destroy),NULL);
 
 	hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
-	gtk_container_add(GTK_CONTAINER(load_window),hbox);
+	gtk_container_add(GTK_CONTAINER(load_job_window),hbox);
 
 	b_exit = gtk_button_new_with_label("Загрузить");
 	g_signal_connect(b_exit,"clicked",G_CALLBACK(load_job),NULL);
@@ -83,11 +174,22 @@ void create_window_load_job(GtkMenuItem * b,gpointer d)
 	gtk_box_pack_start(GTK_BOX(hbox),b_exit,TRUE,TRUE,5);
 	gtk_widget_show(b_exit);
 	gtk_widget_show(hbox);
-	gtk_widget_show(load_window);
+	gtk_widget_show(load_job_window);
 }
 
-void create_job(GtkMenuItem * b,gpointer d)
+void create_window_create_job(GtkMenuItem * b,gpointer d)
 {
+	/*
+	GtkWidget * hbox;
+	GtkWidget * save_job;
+*/
+	create_job_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_screen(GTK_WINDOW (create_job_window),gtk_widget_get_screen(main_window));
+	gtk_window_set_title(GTK_WINDOW(create_job_window),STR_CREATE_JOB_WINDOW);
+	gtk_container_set_border_width(GTK_CONTAINER(create_job_window),5);
+
+	g_signal_connect (create_job_window,"destroy",G_CALLBACK(create_job_window_destroy),NULL);
+
 	g_message("Cоздать работу");
 }
 
@@ -98,6 +200,11 @@ char STR_EXIT[] = "ВЫХОД";
 
 GtkWidget * job_panel = NULL;
 
+void job_panel_destroy(GtkWidget * w,gpointer ud)
+{
+	deinit_db();
+}
+
 GtkWidget * create_job_panel(void)
 {
 	GtkWidget * menu_work;
@@ -105,6 +212,7 @@ GtkWidget * create_job_panel(void)
 
 	job_panel = gtk_menu_bar_new();
 	gtk_widget_set_halign(job_panel,GTK_ALIGN_START);
+	g_signal_connect(job_panel,"unrealize",G_CALLBACK(job_panel_destroy),NULL);
 
 	mitem = gtk_menu_item_new_with_label(STR_JOB);
 	gtk_menu_shell_append(GTK_MENU_SHELL(job_panel),mitem);
@@ -122,7 +230,7 @@ GtkWidget * create_job_panel(void)
 
 	mitem = gtk_menu_item_new_with_label(STR_CREATE_JOB);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_work),mitem);
-	g_signal_connect(mitem,"activate",G_CALLBACK(create_job),NULL);
+	g_signal_connect(mitem,"activate",G_CALLBACK(create_window_create_job),NULL);
 	gtk_widget_add_accelerator(mitem,"activate",accel_group
 	                          ,'C',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_widget_show(mitem);
@@ -143,7 +251,8 @@ GtkWidget * create_job_panel(void)
 
 	gtk_widget_show(menu_work);
 	gtk_widget_show(job_panel);
-	return job_panel;
+
+ 	return job_panel;
 }
 /*****************************************************************************/
 

@@ -44,6 +44,8 @@
 #ifndef JOB_H
 #define JOB_H
 
+int init_db(void);
+int deinit_db(void);
 GtkWidget * create_job_panel(void);
 
 #endif

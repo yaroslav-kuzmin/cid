@@ -118,27 +118,32 @@ int init_log(void)
 	GError * err = NULL;
 	log_file = g_io_channel_new_file (STR_LOG_FILE,"a",&err);
 	if(log_file == NULL){
+		/*TODO выводить диалоговое окно*/
 		g_message("%s : %s",STR_LOG_FILE,err->message);
-		exit(FAILURE);
+		return FAILURE;
 	}
 	g_log_set_default_handler(save_file,NULL);
 	return SUCCESS;
 }
 /*****************************************************************************/
 
-GKeyFile * ini_file = NULL;
-
 int init_config(void)
 {
 	int rc;
+	GtkWidget * error;
+
 	ini_file = g_key_file_new();
 	GError * err = NULL;
 	rc = g_key_file_load_from_file(ini_file,STR_KEY_FILE_NAME,G_KEY_FILE_NONE,&err);
 	if(rc == FALSE){
+		/*TODO выводить диалоговое окно*/
 		g_message("%s : %s",STR_KEY_FILE_NAME,err->message);
-		g_error_free(err);
 		g_io_channel_shutdown(log_file,TRUE,NULL);
-		exit(0);
+		error = gtk_message_dialog_new(NULL,GTK_DIALOG_DESTROY_WITH_PARENT,GTK_MESSAGE_ERROR,GTK_BUTTONS_OK
+		                              ,"Нет файла конфигурации %s \n %s",STR_KEY_FILE_NAME,err->message);
+		g_signal_connect(error,"destroy",G_CALLBACK(gtk_widget_destroyed),error);
+		g_error_free(err);
+		return FAILURE;
 	}
 	return SUCCESS;
 }
@@ -601,15 +606,30 @@ int create_main_window(void)
 /*****************************************************************************/
 int main(int argc,char * argv[])
 {
-	init_log();
+
+	int rc;
+
+	gtk_init(&argc,&argv);
+
+	rc = init_log();
+	if(rc == FAILURE){
+		return FAILURE;
+	}
 
 	g_message("Запуск системы");
 	g_message("%s",STR_NAME_PROGRAMM);
 
-	init_config();
+	rc = init_config();
+	if(rc == FAILURE){
+		return FAILURE;
+	}
 
-	gtk_init(&argc,&argv);
-
+	rc = init_db();
+/*
+	if(rc == FAILURE){
+		return FAILURE;
+	}
+*/
 	accel_group = gtk_accel_group_new();
 
 	create_main_window();
