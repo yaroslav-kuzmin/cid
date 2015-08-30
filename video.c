@@ -75,9 +75,9 @@ int read_name_stream(void)
 #define DEFAULT_VIDEO_WIDTH      720
 #define DEFAULT_VIDEO_HEIGHT     576
 
-int open_stream = NOT_OK;
-GThread *tid = NULL;
-GMutex mutex;
+static int open_stream = NOT_OK;
+static GThread *tid = NULL;
+static GMutex mutex;
 
 int videoStream;
 AVFormatContext *pFormatCtx = NULL;
@@ -97,7 +97,7 @@ static void pixmap_destroy_notify(guchar *pixels,gpointer data)
 	return ;
 }
 */
-int draw_image = NOT_OK;
+int draw_image = OK;
 
 static gpointer play_background(gpointer args)
 {
@@ -172,6 +172,7 @@ gboolean play_image(gpointer ud)
 	if( draw_image != OK){
 		draw_image = OK;
 		gtk_image_set_from_pixbuf((GtkImage*) video_stream,image);
+		/*TODO проверка на высвобождение памяти*/
 		g_object_unref(image);
 	}
 	g_mutex_unlock(&mutex);
