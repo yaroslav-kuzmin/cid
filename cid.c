@@ -604,7 +604,6 @@ int create_main_window(void)
 
 	gtk_widget_show(vbox);
 
-
 	gtk_widget_show(main_window);
 
 	return SUCCESS;
