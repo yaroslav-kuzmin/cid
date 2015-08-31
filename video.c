@@ -132,8 +132,6 @@ static gpointer play_background(gpointer args)
 			g_message("Ошибка потока ");
 			break;
 		}
-		/*TODO временая задержка для тестирования */
-		usleep(50000);
 		if(packet.stream_index == videoStream) {
 			avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,&packet);
 
