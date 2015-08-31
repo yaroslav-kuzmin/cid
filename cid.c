@@ -115,11 +115,15 @@ void save_file(const gchar *log_domain,GLogLevelFlags log_level,
 
 int init_log(void)
 {
+	GtkWidget * error;
 	GError * err = NULL;
 	log_file = g_io_channel_new_file (STR_LOG_FILE,"a",&err);
 	if(log_file == NULL){
-		/*TODO выводить диалоговое окно*/
 		g_message("%s : %s",STR_LOG_FILE,err->message);
+		error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_OK
+		                              ,"Несмог создать систему логирования %s \n %s",STR_KEY_FILE_NAME,err->message);
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy (error);
 		return FAILURE;
 	}
 	g_log_set_default_handler(save_file,NULL);
@@ -136,12 +140,12 @@ int init_config(void)
 	GError * err = NULL;
 	rc = g_key_file_load_from_file(ini_file,STR_KEY_FILE_NAME,G_KEY_FILE_NONE,&err);
 	if(rc == FALSE){
-		/*TODO выводить диалоговое окно*/
 		g_message("%s : %s",STR_KEY_FILE_NAME,err->message);
 		g_io_channel_shutdown(log_file,TRUE,NULL);
-		error = gtk_message_dialog_new(NULL,GTK_DIALOG_DESTROY_WITH_PARENT,GTK_MESSAGE_ERROR,GTK_BUTTONS_OK
+		error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_OK
 		                              ,"Нет файла конфигурации %s \n %s",STR_KEY_FILE_NAME,err->message);
-		g_signal_connect(error,"destroy",G_CALLBACK(gtk_widget_destroyed),error);
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy (error);
 		g_error_free(err);
 		return FAILURE;
 	}
@@ -599,6 +603,8 @@ int create_main_window(void)
 	gtk_container_add(GTK_CONTAINER(main_window),vbox);
 
 	gtk_widget_show(vbox);
+
+
 	gtk_widget_show(main_window);
 
 	return SUCCESS;
