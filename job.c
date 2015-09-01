@@ -82,6 +82,18 @@ GDateTime * str_time_to_datetime(const char * str)
 	}
 	return g_date_time_new_local(2015,1,1,hour,minut,(gdouble)second);
 }
+/*
+typedef struct _s_job     s_job
+struct _s_job
+{
+	GString * name;
+	int pressure;
+	GDateTime * time;
+	int uprise;
+	int lowering;
+};
+*/
+GList * job_list = NULL;
 
 /*****************************************************************************/
 sqlite3 * db = NULL;
@@ -117,8 +129,13 @@ int check_table_job(void * ud, int argc, char **argv, char ** col_name)
 /*************************************/
 char QUERY_CREATE_TABLE[]="CREATE TABLE job(name PRIMARY KEY,pressure INTEGER,time INTEGER,uprise INTEGER,lowering INTEGER)";
 char QUERY_TABLE[] = "SELECT * FROM sqlite_master WHERE type = 'table'";
-
+char QUERY_ALL_JOB[] = "SELECT * FROM job";
 /*************************************/
+int read_db(void)
+{
+	return SUCCESS;
+}
+
 int init_db(void)
 {
 	int rc;

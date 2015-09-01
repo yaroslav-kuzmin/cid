@@ -44,17 +44,15 @@
 /*****************************************************************************/
 #include <gtk/gtk.h>
 /*****************************************************************************/
-
+/*    Общие переменые                                                        */
+/*****************************************************************************/
 const char STR_NAME_PROGRAMM[] = "Управление Промышленым Оборудованием";
-
-const char STR_LOG_FILE[] = "cid.log";
-
 const char STR_KEY_FILE_NAME[] = "cid.ini";
 GKeyFile * ini_file = NULL;
 
+const char STR_LOGGING[] = "cid.log";
 const char STR_NAME_ICON[] = "cid.png";
-
 const char STR_NAME_DEFAULT_VIDEO[] = "video_720x576.png";
-
 const char STR_NAME_DB[] = "cid.db";
+
 /*****************************************************************************/
