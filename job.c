@@ -48,18 +48,53 @@
 #include "total.h"
 #include "cid.h"
 
+GDateTime * set_time = NULL;
+
+GDateTime * str_time_to_datetime(char * str)
+{
+	gint hour = 0;
+	gint minut = 0;
+	gint second = 0;
+
+	/*str 00:00:00*/
+	if((str[2] != ':') || (str[5] != ':')){
+		return NULL;
+	}
+
+	hour = str[0] - '0';
+	hour *= 10;
+	hour += (str[1] - '0');
+	if( (hour < 0) || (hour > 24) ){
+		return NULL;
+	}
+
+	minut = str[3] - '0';
+	minut *= 10;
+	minut += (str[4] - '0');
+	if((minut < 0)||(minut>59)){
+		return NULL;
+	}
+	second = str[6] - '0';
+	second *= 10;
+	second += (str[7] - '0');
+	if((second < 0) || (second > 59)){
+		return NULL;
+	}
+	return g_date_time_new_local(2015,1,1,hour,minut,(gdouble)second);
+}
+
 /*****************************************************************************/
 sqlite3 * db = NULL;
 
 /*************************************/
-char QUERY_TABLE[] = "SELECT * FROM sqlite_master WHERE type = 'table'";
 
 int table_job = NOT_OK;
 char STR_TABLE_NAME[] = "job";
 #define SIZE_STR_TABLE_NAME      3
 char STR_COL_NAME_TABLE[] = "name";
 #define SIZE_STR_COL_NAME_TABLE      4
-int callback_table(void * ud, int argc, char **argv, char ** col_name)
+
+int check_table_job(void * ud, int argc, char **argv, char ** col_name)
 {
 	int i;
 	char * name;
@@ -81,6 +116,7 @@ int callback_table(void * ud, int argc, char **argv, char ** col_name)
 }
 /*************************************/
 char QUERY_CREATE_TABLE[]="CREATE TABLE job(name PRIMARY KEY,pressure INTEGER,time INTEGER,uprise INTEGER,lowering INTEGER)";
+char QUERY_TABLE[] = "SELECT * FROM sqlite_master WHERE type = 'table'";
 
 /*************************************/
 int init_db(void)
@@ -95,7 +131,7 @@ int init_db(void)
 		return FAILURE;
 	}
 
-	rc = sqlite3_exec(db,QUERY_TABLE,callback_table,NULL,&error_message);
+	rc = sqlite3_exec(db,QUERY_TABLE,check_table_job,NULL,&error_message);
 	if( rc != SQLITE_OK ){
 		g_message("SQL error (0) : %s\n",error_message);
 		sqlite3_free(error_message);
@@ -145,8 +181,88 @@ void load_job_window_destroy(GtkWidget * w,gpointer d)
 	g_message("load_job_window destroy");
 }
 
+int check_name_job(char * name)
+{
+	return SUCCESS;
+}
+char STR_DEFAULT_PRESSURE      "2"
+
+int check_pressure(char * pressure)
+{
+	char * c;
+	c = g_strrstr_len(pressure,STR_DEFAULT_PRESSURE,1);
+	if(c == NULL){
+		return FAILURE;
+	}
+	return SUCCESS;
+}
+
+int check_time(char * time)
+{
+	return SUCCESS;
+}
+
+
+GString * query_insert_job = NULL;
+char STR_INSERT_JOB[] = "INSERT INTO job VALUES (";
+
+int save_job(char * name,char pressure,char * time
+            ,char * uprise,char * lowering )
+{
+	if(query_insert_job == NULL){
+		query_insert_job = g_string_new(STR_INSERT_JOB);
+	}
+	g_string_printf(query_insert_job,"%s",STR_INSERT_JOB);
+	g_string_append_printf(query_insert_job,"\'%s\',",name);
+	g_string_append_printf(query_insert_job,"%s,",pressure);
+	set_time = str_time_to_datetime(time);
+	if(set_time == NULL){
+		return FAILURE;
+	}
+	g_string_append_printf(query_insert_job,"%s,",g_date_time_to_unix(set_time));
+	g_date_time_unref(set_time);
+
+
+}
+
 void create_job(GtkButton *b,gpointer d)
 {
+	int rc;
+	GtkWidget * error;
+
+	rc = check_name_job(gtk_entry_buffer_get_text(eb_name_job));
+	if(rc != SUCCESS){
+		return ;
+	}
+	g_message(" :> %s",gtk_entry_buffer_get_text(eb_name_job));
+
+	rc = check_pressure(gtk_entry_buffer_get_text(eb_pressure));
+	if(rc != SUCCESS){
+		return ;
+	}
+	g_message(" :> %s",gtk_entry_buffer_get_text(eb_pressure));
+
+	rc = check_time(gtk_entry_buffer_get_text(eb_time));
+	if(rc != SUCCESS){
+		return;
+	}
+	g_message(" :> %s",gtk_entry_buffer_get_text(eb_time));
+
+	g_message(" :> %s",gtk_entry_buffer_get_text(eb_uprise));
+	g_message(" :> %s",gtk_entry_buffer_get_text(eb_lowering));
+
+	rc = save_job(gtk_entry_buffer_get_text(eb_name_job)
+	             ,gtk_entry_buffer_get_text(eb_pressure)
+	             ,gtk_entry_buffer_get_text(eb_time)
+	             ,gtk_entry_buffer_get_text(eb_uprise)
+	             ,gtk_entry_buffer_get_text(eb_lowering));
+	if(rc != SUCCESS){
+		error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+		                              ,GTK_BUTTONS_CLOSE,"Введеные данные не корректны");
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy(error);
+		return;
+	}
 	gtk_widget_destroy(create_job_window);
 	g_message("Сохранить работу");
 }
@@ -221,7 +337,7 @@ void create_window_create_job(GtkMenuItem * b,gpointer d)
 	gtk_grid_attach(GTK_GRID(cwgrid),e_name_job,0,1,2,1);
 
 	l_pressure = gtk_label_new("Давление");
-	eb_pressure = gtk_entry_buffer_new("2",-1);
+	eb_pressure = gtk_entry_buffer_new(STR_DEFAULT_PRESSURE,-1);
 	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(eb_pressure),1);
 	e_pressure = gtk_entry_new_with_buffer(eb_pressure);
 	gtk_entry_set_width_chars(GTK_ENTRY(e_pressure),3);
