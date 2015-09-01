@@ -50,7 +50,7 @@
 
 GDateTime * set_time = NULL;
 
-GDateTime * str_time_to_datetime(char * str)
+GDateTime * str_time_to_datetime(const char * str)
 {
 	gint hour = 0;
 	gint minut = 0;
@@ -181,34 +181,53 @@ void load_job_window_destroy(GtkWidget * w,gpointer d)
 	g_message("load_job_window destroy");
 }
 
-int check_name_job(char * name)
+int check_name_job(const char * name)
 {
 	return SUCCESS;
 }
-char STR_DEFAULT_PRESSURE      "2"
+char STR_DEFAULT_PRESSURE[] = "2";
 
-int check_pressure(char * pressure)
+int check_pressure(const char * pressure)
 {
 	char * c;
-	c = g_strrstr_len(pressure,STR_DEFAULT_PRESSURE,1);
+	c = g_strrstr_len(pressure,1,STR_DEFAULT_PRESSURE);
 	if(c == NULL){
 		return FAILURE;
 	}
 	return SUCCESS;
 }
 
-int check_time(char * time)
+int check_time(const char * time)
 {
 	return SUCCESS;
 }
 
+int check_angle(const char * str_uprise,gint64 * v_uprise,const char * str_lowering,gint64 * v_lowering)
+{
+	gint64 t_uprise  = g_ascii_strtoll(str_uprise,NULL,10);
+	gint64 t_lowering = g_ascii_strtoll(str_lowering,NULL,10);
+
+	if(t_uprise <= t_lowering){
+		/*TODO*/
+		return FAILURE;
+	}
+	*v_uprise = t_uprise;
+	*v_lowering = t_lowering;
+
+	return SUCCESS;
+}
 
 GString * query_insert_job = NULL;
 char STR_INSERT_JOB[] = "INSERT INTO job VALUES (";
 
-int save_job(char * name,char pressure,char * time
-            ,char * uprise,char * lowering )
+int save_job(const char * name,const char *pressure,const char * time
+            ,const char * str_uprise,const char * str_lowering )
 {
+	int rc;
+	char * error_message = NULL;
+	gint64 v_uprise = 0;
+	gint64 v_lowering = 0;
+
 	if(query_insert_job == NULL){
 		query_insert_job = g_string_new(STR_INSERT_JOB);
 	}
@@ -219,10 +238,23 @@ int save_job(char * name,char pressure,char * time
 	if(set_time == NULL){
 		return FAILURE;
 	}
-	g_string_append_printf(query_insert_job,"%s,",g_date_time_to_unix(set_time));
+	g_string_append_printf(query_insert_job,"%ld,",g_date_time_to_unix(set_time));
 	g_date_time_unref(set_time);
 
+	rc = check_angle(str_uprise,&v_uprise,str_lowering,&v_lowering);
+	if(rc != SUCCESS){
+		return FAILURE;
+	}
+	g_string_append_printf(query_insert_job,"%ld,%ld)",v_uprise,v_lowering);
 
+	rc = sqlite3_exec(db,query_insert_job->str,NULL,NULL,&error_message);
+	if(rc != SQLITE_OK){
+		/*TODO проверка на имя работы*/
+		g_message("SQL error (2) : %s",error_message);
+		sqlite3_free(error_message);
+		return FAILURE;
+	}
+	return SUCCESS;
 }
 
 void create_job(GtkButton *b,gpointer d)
