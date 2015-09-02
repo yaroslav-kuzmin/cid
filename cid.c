@@ -629,6 +629,7 @@ void main_unrealaze(GtkWidget * w,gpointer ud)
 void main_destroy(GtkWidget * w,gpointer ud)
 {
 	g_message("Останов системы\n");
+	deinit_db();
 	deinit_config();
 	deinit_logging();
 	gtk_main_quit();
