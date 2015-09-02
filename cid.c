@@ -80,6 +80,11 @@ int save_config(void)
 		g_error_free(err);
 		return FAILURE;
 	}
+/*TODO сделать запись в файл*/
+GError * err = NULL;
+gsize size;
+char * buffer =g_key_file_to_data (ini_file,&size,&err);/*записывает Ini файл в буффер*/
+
 #endif
 	return SUCCESS;
 }
@@ -104,6 +109,7 @@ int init_config(void)
 int deinit_config(void)
 {
 	g_key_file_free(ini_file);
+	ini_file = NULL;
 	return SUCCESS;
 }
 /*****************************************************************************/
@@ -185,7 +191,6 @@ set_str_level:
 		if(log_level == G_LOG_LEVEL_ERROR){
 			g_io_channel_shutdown(logging_channel,TRUE,NULL);
 		}
-
 	}
 }
 int init_logging(void)
@@ -211,9 +216,11 @@ int init_logging(void)
 int deinit_logging(void)
 {
 	g_io_channel_shutdown(logging_channel,TRUE,NULL);
+	logging_channel = NULL;
 	return SUCCESS;
 }
 /*****************************************************************************/
+
 GtkWidget * main_window = NULL;
 GtkAccelGroup * accel_group = NULL;
 
@@ -682,7 +689,6 @@ int main(int argc,char * argv[])
 
 	init_config();
 	init_logging();
-
 	g_message("Запуск системы : %s",STR_NAME_PROGRAMM);
 	init_db();
 

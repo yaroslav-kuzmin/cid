@@ -48,6 +48,104 @@
 #include "total.h"
 #include "cid.h"
 
+
+/*****************************************************************************/
+/*  работа с базой данных                                                    */
+/*****************************************************************************/
+struct _job
+{
+	GString * name;
+	int pressure;
+	GDateTime * time;
+	int uprise;
+	int lowering;
+};
+
+GList * list_job = NULL;
+
+static sqlite3 * database = NULL;
+static int table_job = NOT_OK;
+
+static char STR_JOB_TABLE_NAME[] =     "job";
+#define SIZE_STR_JOB_TABLE_NAME          3
+static char STR_COL_NAME_JOB_TABLE[] = "name";
+#define SIZE_STR_COL_NAME_JOB_TABLE      4
+static int check_table_job(void * ud, int argc, char **argv, char ** col_name)
+{
+	int i;
+	char * name;
+	char * value;
+	char * check;
+	for(i = 0;i < argc;i++){
+		name = col_name[i];
+		value = argv[i];
+		check = NULL;
+		check = g_strrstr_len(name,SIZE_STR_COL_NAME_JOB_TABLE,STR_COL_NAME_JOB_TABLE);
+		if(check != NULL){
+			check = g_strrstr_len(value,SIZE_STR_JOB_TABLE_NAME,STR_JOB_TABLE_NAME);
+			if( check != NULL){
+				table_job = OK;
+			}
+		}
+	}
+	return 0;
+}
+char QUERY_JOB_TABLE[] = "SELECT * FROM sqlite_master WHERE type = 'table'";
+char QUERY_CREATE_JOB_TABLE[] =
+     "CREATE TABLE job(name PRIMARY KEY,pressure INTEGER,time INTEGER,uprise INTEGER,lowering INTEGER)";
+
+int init_db(void)
+{
+	int rc;
+
+	char * error_message = NULL;
+	const char * name_database = STR_NAME_DB;
+
+	rc = sqlite3_open(name_database,&database); // откравает базу данных
+	if(rc != SQLITE_OK){
+		char STR_ERROR[] = "Несмог открыть базу данных %s : %s";
+		GtkWidget * md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
+		                                           ,STR_ERROR,name_database,sqlite3_errmsg(database));
+		g_critical(STR_ERROR,STR_NAME_DB,sqlite3_errmsg(database));
+		gtk_dialog_run(GTK_DIALOG(md_err));
+		gtk_widget_destroy(md_err);
+		sqlite3_close(database);
+		return FAILURE;
+	}
+
+	rc = sqlite3_exec(database,QUERY_JOB_TABLE,check_table_job,NULL,&error_message);
+	if( rc != SQLITE_OK ){
+		g_critical("SQL error QUERY_JOB_TABLE : %s\n",error_message);
+		sqlite3_free(error_message);
+		return FAILURE;
+	}
+
+	if(table_job == NOT_OK){
+		rc = sqlite3_exec(database,QUERY_CREATE_JOB_TABLE,NULL,NULL, &error_message);
+		if( rc != SQLITE_OK){
+			g_critical("SQL error QUERY_CREATE_JOB_TABLE : %s",error_message);
+			sqlite3_free(error_message);
+			return FAILURE;
+		}
+	}
+
+	g_message("Открыл базу данных");
+	return SUCCESS;
+}
+int deinit_db(void)
+{
+	if(database != NULL){
+		sqlite3_close(database);
+		g_message("Закрыл базу данных");
+		database = NULL;
+	}
+
+	return SUCCESS;
+}
+
+/*****************************************************************************/
+
+
 GDateTime * set_time = NULL;
 
 GDateTime * str_time_to_datetime(const char * str)
@@ -82,53 +180,11 @@ GDateTime * str_time_to_datetime(const char * str)
 	}
 	return g_date_time_new_local(2015,1,1,hour,minut,(gdouble)second);
 }
-/*
-typedef struct _s_job     s_job
-struct _s_job
-{
-	GString * name;
-	int pressure;
-	GDateTime * time;
-	int uprise;
-	int lowering;
-};
-*/
-GList * job_list = NULL;
 
 /*****************************************************************************/
-sqlite3 * db = NULL;
+
 
 /*************************************/
-
-int table_job = NOT_OK;
-char STR_TABLE_NAME[] = "job";
-#define SIZE_STR_TABLE_NAME      3
-char STR_COL_NAME_TABLE[] = "name";
-#define SIZE_STR_COL_NAME_TABLE      4
-
-int check_table_job(void * ud, int argc, char **argv, char ** col_name)
-{
-	int i;
-	char * name;
-	char * value;
-	char * check;
-	for(i = 0;i < argc;i++){
-		name = col_name[i];
-		value = argv[i];
-		check = NULL;
-		check = g_strrstr_len(name,SIZE_STR_COL_NAME_TABLE,STR_COL_NAME_TABLE);
-		if(check != NULL){
-			check = g_strrstr_len(value,SIZE_STR_TABLE_NAME,STR_TABLE_NAME);
-			if( check != NULL){
-				table_job = OK;
-			}
-		}
-	}
-	return 0;
-}
-/*************************************/
-char QUERY_CREATE_TABLE[]="CREATE TABLE job(name PRIMARY KEY,pressure INTEGER,time INTEGER,uprise INTEGER,lowering INTEGER)";
-char QUERY_TABLE[] = "SELECT * FROM sqlite_master WHERE type = 'table'";
 char QUERY_ALL_JOB[] = "SELECT * FROM job";
 /*************************************/
 int read_db(void)
@@ -136,46 +192,6 @@ int read_db(void)
 	return SUCCESS;
 }
 
-int init_db(void)
-{
-	int rc;
-	char * error_message = NULL;
-
-	rc = sqlite3_open(STR_NAME_DB,&db); // откравает базу данных
-	if(rc != SQLITE_OK){
-		g_message("Несог открыть базу данных %s : %s",STR_NAME_DB,sqlite3_errmsg(db));
-		sqlite3_close(db);
-		return FAILURE;
-	}
-
-	rc = sqlite3_exec(db,QUERY_TABLE,check_table_job,NULL,&error_message);
-	if( rc != SQLITE_OK ){
-		g_message("SQL error (0) : %s\n",error_message);
-		sqlite3_free(error_message);
-		return FAILURE;
-	}
-
-	if(table_job == NOT_OK){
-		rc = sqlite3_exec(db,QUERY_CREATE_TABLE,NULL,NULL, &error_message);
-		if( rc != SQLITE_OK){
-			g_message("SQL error (1) : %s",error_message);
-			sqlite3_free(error_message);
-			return FAILURE;
-		}
-	}
-	g_message("Открыл базу данных");
-	return SUCCESS;
-}
-
-int deinit_db(void)
-{
-	if(db != NULL){
-		sqlite3_close(db);
-		g_message("Закрыл базу данных");
-	}
-
-	return SUCCESS;
-}
 /*****************************************************************************/
 GtkWidget * load_job_window = NULL;
 GtkWidget * create_job_window = NULL;
@@ -219,7 +235,7 @@ int check_time(const char * time)
 	return SUCCESS;
 }
 
-int check_angle(const char * str_uprise,gint64 * v_uprise,const char * str_lowering,gint64 * v_lowering)
+int check_angle(const char * str_uprise,long int * v_uprise,const char * str_lowering,long int * v_lowering)
 {
 	gint64 t_uprise  = g_ascii_strtoll(str_uprise,NULL,10);
 	gint64 t_lowering = g_ascii_strtoll(str_lowering,NULL,10);
@@ -242,8 +258,8 @@ int save_job(const char * name,const char *pressure,const char * time
 {
 	int rc;
 	char * error_message = NULL;
-	gint64 v_uprise = 0;
-	gint64 v_lowering = 0;
+	long int v_uprise = 0;
+	long int v_lowering = 0;
 
 	if(query_insert_job == NULL){
 		query_insert_job = g_string_new(STR_INSERT_JOB);
@@ -255,7 +271,7 @@ int save_job(const char * name,const char *pressure,const char * time
 	if(set_time == NULL){
 		return FAILURE;
 	}
-	g_string_append_printf(query_insert_job,"%ld,",g_date_time_to_unix(set_time));
+	g_string_append_printf(query_insert_job,"%ld,",(long int)g_date_time_to_unix(set_time));
 	g_date_time_unref(set_time);
 
 	rc = check_angle(str_uprise,&v_uprise,str_lowering,&v_lowering);
@@ -264,7 +280,7 @@ int save_job(const char * name,const char *pressure,const char * time
 	}
 	g_string_append_printf(query_insert_job,"%ld,%ld)",v_uprise,v_lowering);
 
-	rc = sqlite3_exec(db,query_insert_job->str,NULL,NULL,&error_message);
+	rc = sqlite3_exec(database,query_insert_job->str,NULL,NULL,&error_message);
 	if(rc != SQLITE_OK){
 		/*TODO проверка на имя работы*/
 		g_message("SQL error (2) : %s",error_message);
