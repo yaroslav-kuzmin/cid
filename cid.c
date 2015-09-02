@@ -66,9 +66,12 @@ char TEMP_JOB_0[] = "Изделие 000";
 /*****************************************************************************/
 int save_config(void)
 {
+#if 0
+	in version 2.40
 	GtkWidget * md_err;
 	GError * err = NULL;
 	int rc;
+
 	rc = g_key_file_save_to_file(ini_file,STR_KEY_FILE_NAME,&err);
 	if(rc != TRUE){
 		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE,"Несмог сохранить файл конфигурации : %s",err->message);
@@ -77,6 +80,7 @@ int save_config(void)
 		g_error_free(err);
 		return FAILURE;
 	}
+#endif
 	return SUCCESS;
 }
 int init_config(void)
@@ -92,7 +96,8 @@ int init_config(void)
 		                              ,"Нет файла конфигурации %s \n %s",STR_KEY_FILE_NAME,err->message);
 		gtk_dialog_run(GTK_DIALOG(md_err));
 		gtk_widget_destroy (md_err);
-		g_error("%s : %s",STR_KEY_FILE_NAME,err->message);
+		g_critical("%s : %s",STR_KEY_FILE_NAME,err->message);
+		exit(0);
 	}
 	return SUCCESS;
 }
@@ -124,7 +129,7 @@ static void save_logging(const gchar *log_domain,GLogLevelFlags log_level,
 	GError * err;
 	char * str_level;
 
-	if(logging != NULL){
+	if(logging_channel != NULL){
 		if(log_level != G_LOG_LEVEL_DEBUG){
 			if( log_level == G_LOG_LEVEL_MESSAGE){
 				str_level = STR_MESSAGE;
@@ -175,10 +180,12 @@ set_str_level:
 			g_error_free(err);
 			g_io_channel_shutdown(logging_channel,TRUE,NULL);
 			g_io_channel_unref(logging_channel);
+			logging_channel = NULL;
 		}
 		if(log_level == G_LOG_LEVEL_ERROR){
 			g_io_channel_shutdown(logging_channel,TRUE,NULL);
 		}
+
 	}
 }
 int init_logging(void)
@@ -188,17 +195,17 @@ int init_logging(void)
 	const char * name_logging = STR_LOGGING;
 	/*TODO проверка на размер лога и архивирование*/
 	/*TODO брать имя лога из ini файла */
-	logging_channel = g_io_channel_new_file (name_logging,"a",&err);
+	logging_channel = g_io_channel_new_file(name_logging,"a",&err);
 	if(logging_channel == NULL){
-		g_message(" %s : %s",STR_LOGGING,err->message);
 		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
 		                              ,"Несмог создать систему логирования %s \n %s",STR_LOGGING,err->message);
 		gtk_dialog_run(GTK_DIALOG(md_err));
 		gtk_widget_destroy (md_err);
+		g_critical(" %s : %s",STR_LOGGING,err->message);
 		exit(FAILURE);
 	}
 	g_log_set_default_handler(save_logging,NULL);
-	logging = g_string_new(NULL);
+	logging = g_string_new(" ");
 	return SUCCESS;
 }
 int deinit_logging(void)
@@ -608,15 +615,15 @@ GtkWidget * create_control_panel(void)
 /*****************************************************************************/
 
 
-void main_realaze(GtkWidget * w,gpointer ud)
+void main_unrealaze(GtkWidget * w,gpointer ud)
 {
-	g_message("Останов системы\n");
-	deinit_config();
-	deinit_logging();
 }
 
 void main_destroy(GtkWidget * w,gpointer ud)
 {
+	g_message("Останов системы\n");
+	deinit_config();
+	deinit_logging();
 	gtk_main_quit();
 }
 
@@ -645,7 +652,7 @@ int create_main_window(void)
 	gtk_window_set_resizable(GTK_WINDOW(main_window),FALSE);
 	gtk_window_set_position (GTK_WINDOW(main_window),GTK_WIN_POS_CENTER);
 	g_signal_connect(main_window,"destroy",G_CALLBACK(main_destroy), NULL);
-	g_signal_connect(main_window,"realize",G_CALLBACK(main_realaze),NULL);
+	g_signal_connect(main_window,"unrealize",G_CALLBACK(main_unrealaze),NULL);
 	gtk_window_add_accel_group(GTK_WINDOW(main_window),accel_group);
 
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,MAIN_SPACING);
@@ -672,8 +679,10 @@ int create_main_window(void)
 int main(int argc,char * argv[])
 {
 	gtk_init(&argc,&argv);
+
 	init_config();
 	init_logging();
+
 	g_message("Запуск системы : %s",STR_NAME_PROGRAMM);
 	init_db();
 
