@@ -52,7 +52,35 @@
 /*****************************************************************************/
 /*  работа с базой данных                                                    */
 /*****************************************************************************/
-struct _job
+static GHashTable * list_job = NULL;
+static sqlite3 * database = NULL;
+
+static const char QUERY_JOB_TABLE[] = "SELECT * FROM sqlite_master WHERE type = 'table'";
+static const char QUERY_CREATE_JOB_TABLE[] =
+     "CREATE TABLE job(name PRIMARY KEY,pressure INTEGER,time INTEGER,uprise INTEGER,lowering INTEGER)";
+static const char QUERY_ALL_JOB[] = "SELECT * FROM job";
+char QUIER_INSERT_ROW_JOB[] = "INSERT INTO job VALUES (";
+#define DEFAULT_AMOUNT_COLUMN        5
+
+#define NUMBER_NAME_COLUMN           0
+#define NUMBER_PRESSURE_COLUMN       1
+#define NUMBER_TIME_COLUMN           2
+#define NUMBER_UPRISE_COLUMN         3
+#define NUMBER_LOWERING_COLUMN       4
+
+static const char NAME_COLUMN_0[] = "name";
+#define SIZE_NAME_COLUMN_0           4
+static const char NAME_COLUMN_1[] = "pressure";
+#define SIZE_NAME_COLUMN_1           8
+static const char NAME_COLUMN_2[] = "time";
+#define SIZE_NAME_COLUMN_2           4
+static const char NAME_COLUMN_3[] = "uprise";
+#define SIZE_NAME_COLUMN_3           6
+static const char NAME_COLUMN_4[] = "lowering";
+#define SIZE_NAME_COLUMN_4           8
+
+typedef struct _job_s job_s;
+struct _job_s
 {
 	GString * name;
 	int pressure;
@@ -61,11 +89,222 @@ struct _job
 	int lowering;
 };
 
-GList * list_job = NULL;
+static guint hash_job(gconstpointer job)
+{
+	job_s * j = (job_s*)job;
+	return g_string_hash(j->name);
+}
+static gboolean equal_job(gconstpointer a,gconstpointer b)
+{
+	job_s * p_a = (job_s*)a;
+	job_s * p_b = (job_s*)b;
+	GString * s_a = p_a->name;
+	GString * s_b = p_b->name;
+	return g_string_equal(s_a,s_b);
+}
+static void destroy_job(gpointer job)
+{
+	job_s *j = (job_s*)job;
+	GString *s = j->name;
+	GDateTime *t = j->time;
+	g_string_free(s,TRUE);
+	g_date_time_unref(t);
+ 	g_slice_free1(sizeof(job_s),j);
+}
 
-static sqlite3 * database = NULL;
+static int fill_list_job(void)
+{
+	int rc;
+	sqlite3_stmt * query;
+	int check_column = NOT_OK;
+	job_s * job;
+
+	list_job = g_hash_table_new_full(hash_job,equal_job,destroy_job,NULL);
+
+	rc = sqlite3_prepare_v2(database,QUERY_ALL_JOB,-1,&query,NULL);
+	if(rc != SQLITE_OK){
+		g_critical("SQL error QUERY_ALL_JOB : %s",sqlite3_errmsg(database));
+		return FAILURE;
+	}
+	for(;;){
+		rc = sqlite3_step(query);
+		if(rc == SQLITE_DONE){
+			break;	/* данных в запросе нет*/
+		}
+		if(rc == SQLITE_ERROR ){
+			g_critical("SQL error QUERY_ALL_JOB step : %s",sqlite3_errmsg(database));
+			break;
+		}
+		if(rc == SQLITE_ROW){
+			const char * str;
+			gint64 t;
+
+			g_debug("%s",sqlite3_column_database_name(query,0));
+			g_debug("%s",sqlite3_column_table_name(query,0));
+
+			if(check_column != OK){
+				int amount_column;
+				amount_column = sqlite3_data_count(query);
+				if(amount_column != DEFAULT_AMOUNT_COLUMN){
+					g_critical("SQL error not correct table job : %d",amount_column);
+					break;
+				}
+				str = sqlite3_column_database_name(query,0);
+				str = g_strrstr_len(NAME_COLUMN_0,SIZE_NAME_COLUMN_0,str);
+				if(str == NULL){
+					g_critical("SQL error not correct column 0");
+					break;
+				}
+				str = sqlite3_column_database_name(query,1);
+				str = g_strrstr_len(NAME_COLUMN_1,SIZE_NAME_COLUMN_1,str);
+				if(str == NULL){
+					g_critical("SQL error not correct column 1");
+					break;
+				}
+				str = sqlite3_column_database_name(query,2);
+				str = g_strrstr_len(NAME_COLUMN_2,SIZE_NAME_COLUMN_2,str);
+				if(str == NULL){
+					g_critical("SQL error not correct column 2");
+					break;
+				}
+				str = sqlite3_column_database_name(query,3);
+				str = g_strrstr_len(NAME_COLUMN_3,SIZE_NAME_COLUMN_3,str);
+				if(str == NULL){
+					g_critical("SQL error not correct column 3");
+					break;
+				}
+				str = sqlite3_column_database_name(query,4);
+				str = g_strrstr_len(NAME_COLUMN_4,SIZE_NAME_COLUMN_4,str);
+				if(str == NULL){
+					g_critical("SQL error not correct column 4");
+					break;
+				}
+				check_column = OK;
+			}
+			job = g_slice_alloc0(sizeof(job_s));
+			str = (char *)sqlite3_column_text(query,NUMBER_NAME_COLUMN);
+			job->name = g_string_new(str);
+			job->pressure = sqlite3_column_int64(query,NUMBER_PRESSURE_COLUMN);
+			t = sqlite3_column_int64(query,NUMBER_TIME_COLUMN);
+			job->time = g_date_time_new_from_unix_local(t);
+			job->uprise = sqlite3_column_int64(query,NUMBER_UPRISE_COLUMN);
+			job->lowering = sqlite3_column_int64(query,NUMBER_LOWERING_COLUMN);
+
+			g_hash_table_add(list_job,job);
+			continue;
+		}
+		g_critical("SQL error QUERY_ALL_JOB end");
+		break;
+	}
+	sqlite3_finalize(query);
+	return SUCCESS;
+}
+
+static GDateTime * str_time_to_datetime(const char * str)
+{
+	gint hour = 0;
+	gint minut = 0;
+	gint second = 0;
+
+	/*str 00:00:00*/
+	if((str[2] != ':') || (str[5] != ':')){
+		return NULL;
+	}
+
+	hour = str[0] - '0';
+	hour *= 10;
+	hour += (str[1] - '0');
+	if( (hour < 0) || (hour > 24) ){
+		return NULL;
+	}
+
+	minut = str[3] - '0';
+	minut *= 10;
+	minut += (str[4] - '0');
+	if((minut < 0)||(minut>59)){
+		return NULL;
+	}
+	second = str[6] - '0';
+	second *= 10;
+	second += (str[7] - '0');
+	if((second < 0) || (second > 59)){
+		return NULL;
+	}
+	return g_date_time_new_local(2015,1,1,hour,minut,(gdouble)second);
+}
+#define MATCH_NAME      -1
+
+GString * query_row_job = NULL;
+/*проверка введеных значений лежит на вышестояшей функции*/
+static int insert_job(const char * name,const char *pressure,const char * time
+              ,const char * str_uprise,const char * str_lowering )
+{
+	job_s j;
+	job_s * pj;
+	char * sql_error;
+	int rc;
+
+	j.name = name;
+	rc = g_hash_table_contains(list_job,&j);
+	if( rc == TRUE){
+		return MATCH_NAME;
+	}
+
+	pj = g_slice_alloc0(sizeof(job_s));
+	pj->name = g_string_new(name);
+	pj->pressure = g_ascii_strtoll(pressure,NULL,10);
+	pj->time = str_time_to_datetime(time);
+	pj->uprise = g_ascii_strtoll(str_uprise,NULL,10);
+	pj->lowering = g_ascii_strtoll(str_lowering,NULL,10);
+
+	g_hash_table_add(list_job,pj);
+
+	if(query_row_job == NULL){
+		query_row_job = g_string_new(STR_INSERT_JOB);
+	}
+	g_string_printf(query_insert_job,"%s",STR_INSERT_JOB);
+	g_string_append_printf(query_insert_job,"\'%s\',",pj->name->str);
+	g_string_append_printf(query_insert_job,"%d,",pj->pressure);
+	g_string_append_printf(query_insert_job,"%ld,",(long int)g_date_time_to_unix(pj->time));
+	g_string_append_printf(query_insert_job,"%ld,%ld)",pj->uprise,pj->lowering);
+
+	rc = sqlite3_exec(database,query_insert_job->str,NULL,NULL,&sql_error);
+	if(rc != SQLITE_OK){
+		/*TODO окно пользователю что несмог записать*/
+		g_critical("SQL error QUERY_INSERT_JOB : %s",sql_error);
+		sqlite3_free(sql_error);
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+static const char QUERY_DELETE_ROW_JOB[] = "DELETE FROM job WHERE name=";
+
+int delete_job(const char * name)
+{
+	job_s j;
+	j.name = name;
+	int rc;
+	char * sql_error;
+
+	g_hash_table_remove(list_job,&j);
+	if(query_row_job == NULL){
+		query_row_job = g_string_new(QUERY_DELETE_ROW_JOB);
+	}
+	g_string_printf(query_row_job,"%s",QUERY_DELETE_ROW_JOB);
+	g_string_append_printf(query_row_job,"\'%s\'",name);
+
+	rc = sqlite3_exec(database,query_row_job->str,NULL,NULL,&sql_error);
+	if(rc != SQLITE_OK){
+		/*TODO окно пользователю что несмог удалить*/
+		g_critical("SQL error QUERY_DELETE_ROW_JOB : %s",sql_error);
+		sqlite3_free(sql_error);
+		return FAILURE;
+	}
+	return SUCCESS;
+}
+
 static int table_job = NOT_OK;
-
 static char STR_JOB_TABLE_NAME[] =     "job";
 #define SIZE_STR_JOB_TABLE_NAME          3
 static char STR_COL_NAME_JOB_TABLE[] = "name";
@@ -90,9 +329,6 @@ static int check_table_job(void * ud, int argc, char **argv, char ** col_name)
 	}
 	return 0;
 }
-char QUERY_JOB_TABLE[] = "SELECT * FROM sqlite_master WHERE type = 'table'";
-char QUERY_CREATE_JOB_TABLE[] =
-     "CREATE TABLE job(name PRIMARY KEY,pressure INTEGER,time INTEGER,uprise INTEGER,lowering INTEGER)";
 
 int init_db(void)
 {
@@ -130,10 +366,18 @@ int init_db(void)
 	}
 
 	g_message("Открыл базу данных");
+
+	rc = fill_list_job();
+	if(rc != SUCCESS){
+		;/*TODO можно перезаписать базу данных создать диалог */
+	}
+
 	return SUCCESS;
 }
 int deinit_db(void)
 {
+	g_hash_table_destroy(list_job);
+	list_job = NULL;
 	if(database != NULL){
 		sqlite3_close(database);
 		g_message("Закрыл базу данных");
@@ -144,53 +388,6 @@ int deinit_db(void)
 }
 
 /*****************************************************************************/
-
-
-GDateTime * set_time = NULL;
-
-GDateTime * str_time_to_datetime(const char * str)
-{
-	gint hour = 0;
-	gint minut = 0;
-	gint second = 0;
-
-	/*str 00:00:00*/
-	if((str[2] != ':') || (str[5] != ':')){
-		return NULL;
-	}
-
-	hour = str[0] - '0';
-	hour *= 10;
-	hour += (str[1] - '0');
-	if( (hour < 0) || (hour > 24) ){
-		return NULL;
-	}
-
-	minut = str[3] - '0';
-	minut *= 10;
-	minut += (str[4] - '0');
-	if((minut < 0)||(minut>59)){
-		return NULL;
-	}
-	second = str[6] - '0';
-	second *= 10;
-	second += (str[7] - '0');
-	if((second < 0) || (second > 59)){
-		return NULL;
-	}
-	return g_date_time_new_local(2015,1,1,hour,minut,(gdouble)second);
-}
-
-/*****************************************************************************/
-
-
-/*************************************/
-char QUERY_ALL_JOB[] = "SELECT * FROM job";
-/*************************************/
-int read_db(void)
-{
-	return SUCCESS;
-}
 
 /*****************************************************************************/
 GtkWidget * load_job_window = NULL;
@@ -250,10 +447,8 @@ int check_angle(const char * str_uprise,long int * v_uprise,const char * str_low
 	return SUCCESS;
 }
 
-GString * query_insert_job = NULL;
-char STR_INSERT_JOB[] = "INSERT INTO job VALUES (";
 
-int save_job(const char * name,const char *pressure,const char * time
+int _save_job(const char * name,const char *pressure,const char * time
             ,const char * str_uprise,const char * str_lowering )
 {
 	int rc;
@@ -261,33 +456,6 @@ int save_job(const char * name,const char *pressure,const char * time
 	long int v_uprise = 0;
 	long int v_lowering = 0;
 
-	if(query_insert_job == NULL){
-		query_insert_job = g_string_new(STR_INSERT_JOB);
-	}
-	g_string_printf(query_insert_job,"%s",STR_INSERT_JOB);
-	g_string_append_printf(query_insert_job,"\'%s\',",name);
-	g_string_append_printf(query_insert_job,"%s,",pressure);
-	set_time = str_time_to_datetime(time);
-	if(set_time == NULL){
-		return FAILURE;
-	}
-	g_string_append_printf(query_insert_job,"%ld,",(long int)g_date_time_to_unix(set_time));
-	g_date_time_unref(set_time);
-
-	rc = check_angle(str_uprise,&v_uprise,str_lowering,&v_lowering);
-	if(rc != SUCCESS){
-		return FAILURE;
-	}
-	g_string_append_printf(query_insert_job,"%ld,%ld)",v_uprise,v_lowering);
-
-	rc = sqlite3_exec(database,query_insert_job->str,NULL,NULL,&error_message);
-	if(rc != SQLITE_OK){
-		/*TODO проверка на имя работы*/
-		g_message("SQL error (2) : %s",error_message);
-		sqlite3_free(error_message);
-		return FAILURE;
-	}
-	return SUCCESS;
 }
 
 void create_job(GtkButton *b,gpointer d)
