@@ -41,29 +41,33 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#ifndef TOTAL_H
-#define TOTAL_H
+#ifndef CONTROL_H
+#define CONTROL_H
 
-#define SUCCESS          0
-#define FAILURE          1
+int init_control_device(char ** port);
+int deinit_control_device(void);
 
-#define OK               0
-#define NOT_OK           1
-
-#define DISCONNECT       FAILURE
-#define CONNECT          SUCCESS
-
-extern const char STR_NAME_PROGRAMM[];
-extern const char STR_LOGGING[];
-
-extern const char STR_KEY_FILE_NAME[];
-extern GKeyFile * ini_file;
-
-extern const char STR_NAME_ICON[];
-
-extern const char STR_NAME_DEFAULT_VIDEO[];
-
-extern const char STR_NAME_DB[];
-
+int set_wait_mode(void);
+int set_config_mode(void);
+int set_auto_mode(void);
+int set_manual_mode(void);
+int set_auto_null(void);
+int set_auto_start(void);
+int set_auto_pause(void);
+int set_auto_stop(void);
+int set_manual_null(void);
+int set_manual_up(void);
+int set_manual_down(void);
+int set_manual_left(void);
+int set_manual_right(void);
+int set_manual_on_drive(void);
+int set_manual_off_drive(void);
+int set_uprise_angle(int value);
+int set_lowering_angle(int value);
+uint16_t get_angle(void);
+uint16_t get_pressure(void);
+uint16_t get_sensors(void);
+uint16_t get_input(void);
+uint16_t get_console(void);
 #endif
 

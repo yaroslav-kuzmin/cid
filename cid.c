@@ -43,12 +43,14 @@
 
 /*****************************************************************************/
 #include <stdlib.h>
+#include <stdint.h>
 #include <glib/gprintf.h>
 #include <gtk/gtk.h>
 
 #include "total.h"
 #include "job.h"
 #include "video.h"
+#include "control.h"
 
 /*****************************************************************************/
 
@@ -279,11 +281,24 @@ int create_window_main(void)
 /*****************************************************************************/
 int main(int argc,char * argv[])
 {
+	int rc;
+	GtkWidget * md_err;
+	char * port;
+
 	gtk_init(&argc,&argv);
 
 	init_config();
 	init_logging();
 	g_message("Запуск системы : %s",STR_NAME_PROGRAMM);
+	rc = init_control_device(&port);
+	if(rc != CONNECT){
+		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_OK
+		                              ,"Несмог подключится к порту %s",port);
+		gtk_dialog_run(GTK_DIALOG(md_err));
+		gtk_widget_destroy (md_err);
+		return 0;
+	}
+
 	init_db();
 
 	create_window_main();
