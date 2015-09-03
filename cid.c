@@ -637,7 +637,7 @@ void main_destroy(GtkWidget * w,gpointer ud)
 
 #define MAIN_SPACING       3
 
-int create_main_window(void)
+int create_window_main(void)
 {
 	GError * err = NULL;
 	GdkPixbuf * icon = NULL;
@@ -653,6 +653,7 @@ int create_main_window(void)
 		gtk_window_set_default_icon(icon);
 	}
 
+	accel_group = gtk_accel_group_new();
 	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width(GTK_CONTAINER(main_window),MAIN_SPACING);
 	gtk_window_set_title(GTK_WINDOW(main_window),STR_NAME_PROGRAMM);
@@ -693,8 +694,7 @@ int main(int argc,char * argv[])
 	g_message("Запуск системы : %s",STR_NAME_PROGRAMM);
 	init_db();
 
-	accel_group = gtk_accel_group_new();
-	create_main_window();
+	create_window_main();
 
 	gtk_main();
 
