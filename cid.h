@@ -47,10 +47,9 @@
 int save_config(void);
 
 
-extern GtkWidget * main_window;
-extern GtkAccelGroup * accel_group;
+extern GtkWidget * win_main;
+extern GtkAccelGroup * accgro_main;
 
-void main_exit(GtkMenuItem * im,gpointer d);
 GtkWidget * create_menu_mode(void);
 
 #endif

@@ -46,7 +46,7 @@
 
 int init_db(void);
 int deinit_db(void);
-GtkWidget * create_job_panel(void);
-
+GtkWidget * create_menu_main(void);
+GtkWidget * create_control_panel(void);
 #endif
 

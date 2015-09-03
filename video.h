@@ -45,6 +45,7 @@
 #define VIDEO_H
 
 GtkWidget * create_video_stream(void);
+GtkWidget * create_menu_video(void);
 
 #endif
 

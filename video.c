@@ -160,6 +160,7 @@ static gpointer play_background(gpointer args)
 
 	gtk_image_set_from_pixbuf((GtkImage*) video_stream,image_default);
 	open_stream = NOT_OK;
+	/*TODO высвободить память*/
 	g_thread_exit(0);
 	return NULL;
 }
@@ -239,44 +240,111 @@ int init_rtsp(void)
 	g_message("Инизиализировал видео поток %dх%d",pCodecCtx->width,pCodecCtx->height);
 	return rc;
 }
-
+int deinit_rtsp(void)
+{
+		/*TODO проверка на освободение памяти буферами кадра*/
+		avformat_close_input(&pFormatCtx);
+		avformat_network_deinit();
+}
 /*****************************************************************************/
+static char STR_VIDEO[] = "Камера";
+static char STR_ON_VIDEO[]  = "Включить ";
+static char STR_OFF_VIDEO[] = "Выключить";
+static char STR_SETTING_VIDEO[] = "Настройка";
+
+static void activate_menu_video(GtkMenuItem * mi,gpointer ud)
+{
+	if(open_stream != OK){
+		/*TODO проверить соединение  */
+		/*TODO запустит видео поток*/
+		gtk_menu_item_set_label(mi,STR_OFF_VIDEO);
+		g_message("Включил видео поток");
+		open_stream = OK;
+	}
+	else{
+		/*TODO закрыть видео поток*/
+		gtk_menu_item_set_label(mi,STR_ON_VIDEO);
+		g_message("Выключил видео поток");
+		open_stream = NOT_OK;
+	}
+}
+static void activate_menu_setting(GtkMenuItem * mi,gpointer ud)
+{
+	g_message("Установил настройки видео потока");
+}
+
+GtkWidget * create_menu_video(void)
+{
+	GtkWidget * menite_video;
+	GtkWidget * men_video;
+	GtkWidget * menite_temp;
+
+	menite_video = gtk_menu_item_new_with_label(STR_VIDEO);
+
+	men_video = gtk_menu_new();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menite_video),men_video);
+
+	menite_temp = gtk_menu_item_new_with_label(STR_ON_VIDEO);
+	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_video),NULL);
+	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
+	                          ,'V',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
+	gtk_widget_show(menite_temp);
+
+	menite_temp = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
+	gtk_widget_show(menite_temp);
+
+	menite_temp = gtk_menu_item_new_with_label(STR_SETTING_VIDEO);
+	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_setting),NULL);
+	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
+	                          ,'S',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
+	gtk_widget_show(menite_temp);
+
+	gtk_widget_show(menite_video);
+	return menite_video;
+}
+
 int FPS = 40;/*40 милесекунд == 25 кадров/с */
 
 static void image_realize(GtkWidget *widget, gpointer data)
 {
+#if 0
 	if(open_stream == OK){
 		g_mutex_init(&mutex);
 		tid = g_thread_new("video",play_background,NULL);
 		g_timeout_add(FPS,play_image,NULL);
-		g_message("Видео запущено");
-	}
+	 	g_message("Видео запущено");
+ 	}
+#endif
 }
 
 static void image_unrealize(GtkWidget *widget, gpointer data)
 {
+#if 0
 	if(open_stream == OK){
 		exit_video_stream = OK;
 		g_thread_join(tid);
 		g_mutex_clear(&mutex);
-		avformat_close_input(&pFormatCtx);
-		avformat_network_deinit();
 		g_message("Ведео поток закрыт");
 		open_stream = NOT_OK;
 	}
+#endif
 }
 
 GtkWidget * create_video_stream(void)
 {
-	int rc;
 	GError * err = NULL;
 
+#if 0
+	/*TODO включение видео по нажатию в меню*/
 	/*TODO  первичная проверка правильности адресса камеры*/
-
 	rc = init_rtsp();
 	if(rc == SUCCESS){
 		open_stream = OK;
 	}
+#endif
 
 	video_stream = gtk_image_new();
 	gtk_widget_set_size_request(video_stream,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
