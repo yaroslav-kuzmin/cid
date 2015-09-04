@@ -723,7 +723,7 @@ void press_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
 	color.alpha = 1;
 	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
 	g_debug("Вправо");
-	set_manual_down();
+	set_manual_right();
 }
 void release_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
 {
