@@ -296,7 +296,8 @@ int main(int argc,char * argv[])
 		                              ,"Несмог подключится к порту %s",port);
 		gtk_dialog_run(GTK_DIALOG(md_err));
 		gtk_widget_destroy (md_err);
-		return 0;
+		/*TODO тестирование */
+		/*return 0;*/
 	}
 
 	init_db();

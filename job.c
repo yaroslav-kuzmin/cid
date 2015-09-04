@@ -592,6 +592,7 @@ GtkWidget * create_info(void)
 	/*TODO тестирование*/
 	job_iter_init();
 	current_job = job_iter_next();
+
 	fra_info = gtk_frame_new(STR_INFO);
 	gtk_frame_set_label_align(GTK_FRAME(fra_info),0.5,0.5);
 
@@ -619,6 +620,7 @@ GtkWidget * create_info(void)
 	gtk_widget_show(fra_info);
 	return fra_info;
 }
+/*************************************/
 
 GtkWidget * create_mode_auto(void)
 {
@@ -633,11 +635,23 @@ void clicked_button_manual_up(GtkButton * b,gpointer d)
 }
 void press_button_manual_up(GtkWidget * b,GdkEvent * e,gpointer ud)
 {
-	g_debug("Вверх");
+	GdkRGBA color;
+	color.red = 1;
+	color.green = 0;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
 	set_manual_up();
+	g_debug("Вверх");
 }
 void release_button_manual_up(GtkWidget * b,GdkEvent * e,gpointer ud)
 {
+	GdkRGBA color;
+	color.red = 0;
+	color.green = 1;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
 	g_debug("Стоп Вверх");
 	set_manual_null();
 }
@@ -648,11 +662,23 @@ void clicked_button_manual_down(GtkButton * b,gpointer d)
 }
 void press_button_manual_down(GtkWidget * b,GdkEvent * e,gpointer ud)
 {
+	GdkRGBA color;
+	color.red = 1;
+	color.green = 0;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
 	g_debug("Вниз");
 	set_manual_down();
 }
 void release_button_manual_down(GtkWidget * b,GdkEvent * e,gpointer ud)
 {
+	GdkRGBA color;
+	color.red = 0;
+	color.green = 1;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
 	g_debug("Стоп Вниз");
 	set_manual_null();
 }
@@ -661,10 +687,54 @@ void clicked_button_manual_left(GtkButton * b,gpointer d)
 {
 	g_message("Влево ручная работа");
 }
+void press_button_manual_left(GtkWidget * b,GdkEvent * e,gpointer ud)
+{
+	GdkRGBA color;
+	color.red = 1;
+	color.green = 0;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
+	g_debug("Влево");
+	set_manual_left();
+}
+void release_button_manual_left(GtkWidget * b,GdkEvent * e,gpointer ud)
+{
+	GdkRGBA color;
+	color.red = 0;
+	color.green = 1;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
+	g_debug("Стоп Влево");
+	set_manual_null();
+}
 
 void clicked_button_manual_right(GtkButton * b,gpointer d)
 {
 	g_message("Вправо ручная работа");
+}
+void press_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
+{
+	GdkRGBA color;
+	color.red = 1;
+	color.green = 0;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
+	g_debug("Вправо");
+	set_manual_down();
+}
+void release_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
+{
+	GdkRGBA color;
+	color.red = 0;
+	color.green = 1;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
+	g_debug("Стоп Вправо");
+	set_manual_null();
 }
 
 void clicked_button_manual_close(GtkButton * b,gpointer d)
@@ -711,9 +781,13 @@ GtkWidget * create_mode_manual(void)
 
 	but_left = gtk_button_new_with_label(STR_BUTTON_MANUAL_LEFT);
 	g_signal_connect(but_left,"clicked",G_CALLBACK(clicked_button_manual_left),NULL);
+	g_signal_connect(but_down,"button-press-event",G_CALLBACK(press_button_manual_left),NULL);
+	g_signal_connect(but_down,"button-release-event",G_CALLBACK(release_button_manual_left),NULL);
 
 	but_right = gtk_button_new_with_label(STR_BUTTON_MANUAL_RIGHT);
 	g_signal_connect(but_right,"clicked",G_CALLBACK(clicked_button_manual_right),NULL);
+	g_signal_connect(but_down,"button-press-event",G_CALLBACK(press_button_manual_right),NULL);
+	g_signal_connect(but_down,"button-release-event",G_CALLBACK(release_button_manual_right),NULL);
 
 	but_close = gtk_button_new_with_label(STR_BUTTON_MANUAL_CLOSE);
 	g_signal_connect(but_close,"clicked",G_CALLBACK(clicked_button_manual_close),NULL);
@@ -742,12 +816,15 @@ GtkWidget * create_mode_manual(void)
 	return fra_mode_manual;
 }
 /*************************************/
+
 GtkWidget * create_job_load(void)
 {
+
 	fra_job_load = gtk_frame_new(STR_JOB_LOAD);
 	gtk_frame_set_label_align(GTK_FRAME(fra_job_load),0.5,0.5);
 	return fra_job_load;
 }
+/*************************************/
 
 GtkWidget * create_job_save(void)
 {
