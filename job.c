@@ -577,9 +577,12 @@ GtkWidget * create_menu_main(void)
 /*************************************/
 static char STR_NOT_DEVICE[] = "Загрузите информацию об изделии";
 static char STR_PRESSURE[] = "Рабочие давление, атм";
+static char STR_PRESSURE_DEFAULT[] = "0";
 static char STR_TIME_JOB[] = "Время работы";
-static char STR_UPRISE_ANGEL[] =   "Угол подъема, градусов";
+static char STR_TIME_JOB_DEFAULT[] = "00:00:00";
+static char STR_UPRISE_ANGEL[] = "Угол подъема, градусов";
 static char STR_LOWERING_ANGEL[] = "Угол опускания, градусов";
+static char STR_ANGEL_DEFAULT[] = "00";
 
 static GtkWidget * lab_info_name_job = NULL;
 static GtkWidget * lab_info_pressure = NULL;
@@ -609,7 +612,7 @@ GtkWidget * create_info(void)
 	pancon_info = gtk_widget_get_pango_context(lab_info_name_job);
 	panfondes_info = pango_context_get_font_description(pancon_info);
 	pango_font_description_set_size(panfondes_info,30000);
-	gtk_widget_override_font(lab_info,panfondes_info);
+	gtk_widget_override_font(lab_info_name_job,panfondes_info);
 	color_info.red = 0;
 	color_info.green = 0;
 	color_info.blue = 1;
@@ -617,22 +620,32 @@ GtkWidget * create_info(void)
 	gtk_widget_override_color(lab_info_name_job,GTK_STATE_FLAG_NORMAL,&color_info);
 
 	lab_pressure = gtk_label_new(STR_PRESSURE);
-	lab_info_pressure = gtk_label_new("0");
+	lab_info_pressure = gtk_label_new(STR_PRESSURE_DEFAULT);
 	lab_time = gtk_label_new(STR_TIME_JOB);
+	lab_info_time = gtk_label_new(STR_TIME_JOB_DEFAULT);
 	lab_uprise = gtk_label_new(STR_UPRISE_ANGEL);
+	lab_info_uprise = gtk_label_new(STR_ANGEL_DEFAULT);
 	lab_lowering = gtk_label_new(STR_LOWERING_ANGEL);
+	lab_info_lowering = gtk_label_new(STR_ANGEL_DEFAULT);
 
-	gtk_container_add(GTK_CONTAINER(fra_info),gri_info);
+	gtk_container_add(GTK_CONTAINER(fra_info),GTK_WIDGET(gri_info));
 	gtk_grid_attach(gri_info,lab_info_name_job,0,0,3,2);
 	gtk_grid_attach(gri_info,lab_pressure,0,2,1,1);
+	gtk_grid_attach(gri_info,lab_info_pressure,2,2,1,1);
 	gtk_grid_attach(gri_info,lab_time,0,3,1,1);
+	gtk_grid_attach(gri_info,lab_info_time,2,3,1,1);
 	gtk_grid_attach(gri_info,lab_uprise,0,4,1,1);
+	gtk_grid_attach(gri_info,lab_info_uprise,2,4,1,1);
 	gtk_grid_attach(gri_info,lab_lowering,0,5,1,1);
+	gtk_grid_attach(gri_info,lab_info_lowering,2,5,1,1);
 
-
-	gtk_widget_show(lab_lowering)l
+	gtk_widget_show(lab_info_lowering);
+	gtk_widget_show(lab_lowering);
+	gtk_widget_show(lab_info_uprise);
 	gtk_widget_show(lab_uprise);
-	gtk_widget_show(lab_time)
+	gtk_widget_show(lab_info_time);
+	gtk_widget_show(lab_time);
+	gtk_widget_show(lab_info_pressure);
 	gtk_widget_show(lab_pressure);
 	gtk_widget_show(lab_info_name_job);
 	gtk_widget_show(GTK_WIDGET(gri_info));
@@ -842,14 +855,159 @@ GtkWidget * create_mode_manual(void)
 /* окно закрузить работу             */
 /*************************************/
 
+void clicked_button_load_job(GtkButton * but,GtkTreeView * tre_job)
+{
+}
+
+void clicked_button_del_job(GtkButton * but,GtkTreeView * tre_job)
+{
+}
+enum {
+	COLUMMN_NAME = 0,
+	NUM_COLUMN
+};
+
+int sort_model_list_job(GtkTreeModel *model
+                       ,GtkTreeIter  *a
+                       ,GtkTreeIter  *b
+                       ,gpointer      userdata)
+
+{
+	gint rc = 0;
+	gchar *name1, *name2;
+
+  gtk_tree_model_get(model, a, COLUMMN_NAME, &name1, -1);
+  gtk_tree_model_get(model, b, COLUMMN_NAME, &name2, -1);
+
+	if (name1 == NULL || name2 == NULL){
+		if (name1 == NULL && name2 == NULL)
+			return rc; /* both equal => ret = 0 */
+		rc = (name1 == NULL) ? -1 : 1;
+	}
+	else{
+		rc = g_utf8_collate(name1,name2);
+	}
+	g_free(name1);
+	g_free(name2);
+	return rc;
+}
+
+static GtkTreeModel * create_model_list_job(void)
+{
+	GtkListStore * model;
+	GtkTreeSortable *sortable;
+	GtkTreeIter iter;
+	job_s * pj_temp;
+
+	model = gtk_list_store_new(NUM_COLUMN,G_TYPE_STRING);
+
+	job_iter_init();
+	for(;;){
+		pj_temp = job_iter_next();
+		if(pj_temp == NULL){
+			break;
+		}
+		gtk_list_store_append(model,&iter);
+		gtk_list_store_set(model,&iter,COLUMMN_NAME,pj_temp->name->str,-1);
+	}
+	sortable = GTK_TREE_SORTABLE(model);
+	gtk_tree_sortable_set_sort_func(sortable,0,sort_model_list_job,NULL,NULL);
+	gtk_tree_sortable_set_sort_column_id(sortable,0,GTK_SORT_ASCENDING);
+	return GTK_TREE_MODEL(sortable);
+}
+
+
+void row_activated_tree_job(GtkTreeView *tree_view
+                           ,GtkTreePath *path
+                           ,GtkTreeViewColumn *column
+                           ,gpointer           user_data)
+{
+	int rc ;
+	char * str;
+	GtkTreeModel * model;
+	GtkTreeIter iter;
+
+	GtkTreeSelection * select =	gtk_tree_view_get_selection (tree_view);
+	rc = gtk_tree_selection_get_selected(select,&model,&iter);
+	if(rc == TRUE){
+		gtk_tree_model_get(model,&iter,0,&str,-1);
+		g_debug(" row-activated :> %s",str);
+	}
+}
+
+static char STR_NAME_COLUMN_JOB[] = "Наименование Работы";
+static int add_column_tree_job(GtkTreeView * tv)
+{
+	GtkCellRenderer * renderer;
+	GtkTreeViewColumn *column;
+
+	renderer = gtk_cell_renderer_text_new();
+	g_object_set(renderer,"editable",FALSE,NULL);/*установка свойств*/
+
+	column = gtk_tree_view_column_new_with_attributes(STR_NAME_COLUMN_JOB,renderer,"text",COLUMMN_NAME,NULL);
+	/*gtk_tree_view_column_set_sizing (GTK_TREE_VIEW_COLUMN (column), GTK_TREE_VIEW_COLUMN_FIXED);*/
+	/*gtk_tree_view_column_set_fixed_width (GTK_TREE_VIEW_COLUMN (column), 50);*/
+
+	gtk_tree_view_column_set_sort_order(GTK_TREE_VIEW_COLUMN(column),GTK_SORT_ASCENDING);
+	gtk_tree_view_column_set_sort_indicator(GTK_TREE_VIEW_COLUMN(column),TRUE);
+	gtk_tree_view_append_column (tv, column);
+
+	return 0;
+}
+static char STR_DEL_JOB[] = "Удалить";
+
 GtkWidget * create_job_load(void)
 {
-	/*TODO тестирование*/
+	GtkWidget * box_vertical;
+	GtkWidget * scrwin_job;
+	GtkWidget * tre_job;
+	GtkTreeModel * tremod_job;
+	GtkWidget * box_horizontal;
+	GtkWidget * but_load;
+	GtkWidget * but_del;
+
 	job_iter_init();
 	current_job = job_iter_next();
-	/*******************/
+
 	fra_job_load = gtk_frame_new(STR_JOB_LOAD);
 	gtk_frame_set_label_align(GTK_FRAME(fra_job_load),0.5,0.5);
+
+	box_vertical = gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
+
+	scrwin_job  = gtk_scrolled_window_new (NULL,NULL);
+	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (scrwin_job),GTK_SHADOW_ETCHED_IN);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scrwin_job),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
+
+	tremod_job = create_model_list_job();
+
+	tre_job = gtk_tree_view_new_with_model(tremod_job);
+	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(tre_job), TRUE);
+	gtk_tree_selection_set_mode(gtk_tree_view_get_selection (GTK_TREE_VIEW (tre_job))
+	                           ,GTK_SELECTION_SINGLE);
+	g_signal_connect(tre_job,"row-activated",G_CALLBACK(row_activated_tree_job),NULL);
+
+	add_column_tree_job(GTK_TREE_VIEW(tre_job));
+
+	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
+	but_load = gtk_button_new_with_label(STR_LOAD_JOB);
+	g_signal_connect(but_load,"clicked",G_CALLBACK(clicked_button_load_job),tre_job);
+	but_del = gtk_button_new_with_label(STR_DEL_JOB);
+	g_signal_connect(but_del,"clicked",G_CALLBACK(clicked_button_del_job),tre_job);
+
+	gtk_container_add(GTK_CONTAINER(fra_job_load),box_vertical);
+	gtk_box_pack_start(GTK_BOX(box_vertical),scrwin_job,FALSE,TRUE,5);
+	gtk_container_add(GTK_CONTAINER(scrwin_job),tre_job);
+	gtk_box_pack_start(GTK_BOX(box_vertical),box_horizontal,TRUE,TRUE,5);
+	gtk_box_pack_start(GTK_BOX(box_horizontal),but_load,FALSE,TRUE,5);
+	gtk_box_pack_start(GTK_BOX(box_horizontal),but_del,FALSE,TRUE,5);
+
+	gtk_widget_show(but_del);
+	gtk_widget_show(but_load);
+	gtk_widget_show(box_horizontal);
+	gtk_widget_show(tre_job);
+	gtk_widget_show(scrwin_job);
+	gtk_widget_show(box_vertical);
+	gtk_widget_hide(fra_job_load);
 	return fra_job_load;
 }
 /*************************************/
