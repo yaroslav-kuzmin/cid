@@ -427,9 +427,11 @@ static char STR_JOB_LOAD[] = "Загрузить работу";
 static char STR_JOB_SAVE[] = "Новая работа";
 
 /*****************************************************************************/
-/*  подменю управление                                                       */
+/* Основное меню программы                                                   */
 /*****************************************************************************/
-
+/*************************************/
+/*  подменю управление               */
+/*************************************/
 void activate_menu_auto_mode(GtkMenuItem * im,gpointer d)
 {
 	gtk_widget_hide(fra_info);
@@ -439,7 +441,6 @@ void activate_menu_auto_mode(GtkMenuItem * im,gpointer d)
 	gtk_widget_show(fra_mode_auto);
 	g_message("%s",STR_MODE_AUTO);
 }
-
 void activate_menu_manual_mode(GtkMenuItem * im,gpointer d)
 {
 	gtk_widget_hide(fra_info);
@@ -452,11 +453,9 @@ void activate_menu_manual_mode(GtkMenuItem * im,gpointer d)
 
 	g_message("%s",STR_MODE_MANUAL);
 }
-
 char STR_MODE[] = "Режим";
 char STR_AUTO_MODE[] = "автоматический";
 char STR_MANUAL_MODE[] = "ручной";
-
 GtkWidget * create_menu_mode(void)
 {
 	GtkWidget * menite_mode;
@@ -485,10 +484,9 @@ GtkWidget * create_menu_mode(void)
 	gtk_widget_show(menite_mode);
 	return menite_mode;
 }
-/*****************************************************************************/
-/* главное меню : подменю работа                                             */
-/*****************************************************************************/
-
+/*************************************/
+/* главное меню : подменю работа     */
+/*************************************/
 void activate_menu_load_job(GtkMenuItem * b,gpointer d)
 {
 	gtk_widget_hide(fra_info);
@@ -498,7 +496,6 @@ void activate_menu_load_job(GtkMenuItem * b,gpointer d)
 	gtk_widget_show(fra_job_load);
 	g_message("%s",STR_JOB_LOAD);
 }
-
 void activate_menu_create_job(GtkMenuItem * b,gpointer d)
 {
 	gtk_widget_hide(fra_info);
@@ -508,17 +505,13 @@ void activate_menu_create_job(GtkMenuItem * b,gpointer d)
 	gtk_widget_show(fra_job_save);
 	g_message("%s",STR_JOB_SAVE);
 }
-
 static char STR_JOB[] = "Работа";
 static char STR_LOAD_JOB[] = "Загрузить";
 static char STR_CREATE_JOB[] = "Создать";
 static char STR_EXIT[] = "ВЫХОД";
-
-
 void unrealize_menubar_main(GtkWidget * w,gpointer ud)
 {
 }
-
 void activate_menu_exit(GtkMenuItem * im,gpointer d)
 {
 	gtk_widget_destroy(win_main);
@@ -576,35 +569,44 @@ GtkWidget * create_menu_main(void)
 
  	return menbar_main;
 }
-
 /*****************************************************************************/
 /* Панель управления и информации                                            */
 /*****************************************************************************/
+/*************************************/
+/* окно информации о работе          */
+/*************************************/
 static char STR_NOT_DEVICE[] = "Загрузите информацию об изделии";
+static char STR_PRESSURE[] = "Рабочие давление, атм";
+static char STR_TIME_JOB[] = "Время работы";
+static char STR_UPRISE_ANGEL[] =   "Угол подъема, градусов";
+static char STR_LOWERING_ANGEL[] = "Угол опускания, градусов";
+
+static GtkWidget * lab_info_name_job = NULL;
+static GtkWidget * lab_info_pressure = NULL;
+static GtkWidget * lab_info_time = NULL;
+static GtkWidget * lab_info_uprise = NULL;
+static GtkWidget * lab_info_lowering = NULL;
+
 /*TODO сделать описание всех значений работы*/
 GtkWidget * create_info(void)
 {
-	GtkWidget * lab_info;
+	GtkGrid * gri_info;
+	GtkWidget * lab_pressure;
+	GtkWidget * lab_time;
+	GtkWidget * lab_uprise;
+	GtkWidget * lab_lowering;
+
 	PangoContext * pancon_info;
 	PangoFontDescription * panfondes_info;
 	GdkRGBA color_info;
 
-	/*TODO тестирование*/
-	job_iter_init();
-	current_job = job_iter_next();
-
 	fra_info = gtk_frame_new(STR_INFO);
 	gtk_frame_set_label_align(GTK_FRAME(fra_info),0.5,0.5);
 
-	if(current_job != NULL){
-		lab_info = gtk_label_new(current_job->name->str);
-	}
-	else{
-		lab_info = gtk_label_new(STR_NOT_DEVICE);
-	}
-	/**/
+	gri_info = GTK_GRID(gtk_grid_new());
 
-	pancon_info = gtk_widget_get_pango_context(lab_info);
+	lab_info_name_job = gtk_label_new(STR_NOT_DEVICE);
+	pancon_info = gtk_widget_get_pango_context(lab_info_name_job);
 	panfondes_info = pango_context_get_font_description(pancon_info);
 	pango_font_description_set_size(panfondes_info,30000);
 	gtk_widget_override_font(lab_info,panfondes_info);
@@ -612,14 +614,33 @@ GtkWidget * create_info(void)
 	color_info.green = 0;
 	color_info.blue = 1;
 	color_info.alpha = 1;
-	gtk_widget_override_color(lab_info,GTK_STATE_FLAG_NORMAL,&color_info);
+	gtk_widget_override_color(lab_info_name_job,GTK_STATE_FLAG_NORMAL,&color_info);
 
-	gtk_container_add(GTK_CONTAINER(fra_info),lab_info);
+	lab_pressure = gtk_label_new(STR_PRESSURE);
+	lab_info_pressure = gtk_label_new("0");
+	lab_time = gtk_label_new(STR_TIME_JOB);
+	lab_uprise = gtk_label_new(STR_UPRISE_ANGEL);
+	lab_lowering = gtk_label_new(STR_LOWERING_ANGEL);
 
-	gtk_widget_show(lab_info);
+	gtk_container_add(GTK_CONTAINER(fra_info),gri_info);
+	gtk_grid_attach(gri_info,lab_info_name_job,0,0,3,2);
+	gtk_grid_attach(gri_info,lab_pressure,0,2,1,1);
+	gtk_grid_attach(gri_info,lab_time,0,3,1,1);
+	gtk_grid_attach(gri_info,lab_uprise,0,4,1,1);
+	gtk_grid_attach(gri_info,lab_lowering,0,5,1,1);
+
+
+	gtk_widget_show(lab_lowering)l
+	gtk_widget_show(lab_uprise);
+	gtk_widget_show(lab_time)
+	gtk_widget_show(lab_pressure);
+	gtk_widget_show(lab_info_name_job);
+	gtk_widget_show(GTK_WIDGET(gri_info));
 	gtk_widget_show(fra_info);
 	return fra_info;
 }
+/*************************************/
+/*окно работа в автоматическом режиме*/
 /*************************************/
 
 GtkWidget * create_mode_auto(void)
@@ -628,6 +649,8 @@ GtkWidget * create_mode_auto(void)
 	gtk_frame_set_label_align(GTK_FRAME(fra_mode_auto),0.5,0.5);
 	return fra_mode_auto;
 }
+/*************************************/
+/* окно работа в ручном режиме       */
 /*************************************/
 void clicked_button_manual_up(GtkButton * b,gpointer d)
 {
@@ -816,14 +839,21 @@ GtkWidget * create_mode_manual(void)
 	return fra_mode_manual;
 }
 /*************************************/
+/* окно закрузить работу             */
+/*************************************/
 
 GtkWidget * create_job_load(void)
 {
-
+	/*TODO тестирование*/
+	job_iter_init();
+	current_job = job_iter_next();
+	/*******************/
 	fra_job_load = gtk_frame_new(STR_JOB_LOAD);
 	gtk_frame_set_label_align(GTK_FRAME(fra_job_load),0.5,0.5);
 	return fra_job_load;
 }
+/*************************************/
+/* окно создать работу               */
 /*************************************/
 
 GtkWidget * create_job_save(void)
@@ -833,6 +863,9 @@ GtkWidget * create_job_save(void)
 	return fra_job_save;
 }
 
+/*************************************/
+/* основное окно                     */
+/*************************************/
 GtkWidget * create_control_panel(void)
 {
 	GtkWidget * gri_control;
@@ -857,6 +890,7 @@ GtkWidget * create_control_panel(void)
 	return gri_control;
 }
 /*****************************************************************************/
+
 #if 0
 GtkWidget * l_control;
 GtkWidget * b_auto_start;
@@ -949,10 +983,6 @@ void create_job(GtkButton *b,gpointer d)
 	g_message("Сохранить работу");
 }
 
-void create_job_window_destroy(GtkWidget * w,gpointer d)
-{
-	g_message("create_job_window destroy");
-}
 /*****************************************************************************/
 
 
@@ -960,21 +990,6 @@ GtkWidget * info_panel = NULL;
 GString * s_name_job_info_panel = NULL;
 GtkWidget * w_name_job_info_panel = NULL;
 
-
-void auto_start_mode(GtkButton * b,gpointer d)
-{
-	g_message("Запуск автоматической работы");
-}
-
-void auto_stop_mode(GtkButton * b,gpointer d)
-{
-	g_message("Останов автоматической работы");
-}
-
-void auto_pause_mode(GtkButton * b,gpointer d)
-{
-	g_message("Пауза автоматической работы");
-}
 
 
 char STR_CONTROL_PANEL[] = "УПРАВЛЕНИЕ";
@@ -1007,10 +1022,6 @@ char STR_BUTTON_AUTO_PAUSE[] = "ПАУЗА";
 
 char STR_SET_VALUE[] =     " Установлено ";
 char STR_CURRENT_VALUE[] = " Текущие     ";
-char STR_PRESSURE[] = "Рабочие давление, атм";
-char STR_TIME_JOB[] = "Время работы";
-char STR_UPRISE_ANGEL[] =   "Угол подъема, градусов";
-char STR_LOWERING_ANGEL[] = "Угол опускания, градусов";
 
 GtkWidget * w_pressure_set = NULL;
 GtkWidget * w_pressure_current = NULL;
@@ -1124,27 +1135,7 @@ GtkWidget * create_set_panel(void)
 
 	return iframe;
 }
-/**************************************/
 
-GtkWidget * control_panel = NULL;
-
-#define CONTROL_SPACING        1
-
-GtkWidget * create_control_panel(void)
-{
-	GtkWidget * cbutton;
-	GtkWidget * spanel;
-
-	control_panel = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,CONTROL_SPACING);
-
-	cbutton = create_control_button();
-	spanel = create_set_panel();
-
-	gtk_box_pack_start(GTK_BOX(control_panel),cbutton,TRUE,TRUE,CONTROL_SPACING);
-	gtk_box_pack_start(GTK_BOX(control_panel),spanel,TRUE,TRUE,CONTROL_SPACING);
-	gtk_widget_show(control_panel);
-	return control_panel;
-}
 
 #endif
 /*****************************************************************************/
