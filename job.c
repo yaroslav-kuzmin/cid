@@ -114,7 +114,7 @@ static void destroy_job(gpointer job)
  	g_slice_free1(sizeof(job_s),j);
 }
 
-static int fill_list_job(void)
+static int fill_list_job_db(void)
 {
 	int rc;
 	sqlite3_stmt * query;
@@ -228,7 +228,7 @@ static GDateTime * str_time_to_datetime(const char * str)
 	if((second < 0) || (second > 59)){
 		return NULL;
 	}
-	return g_date_time_new_local(2015,1,1,hour,minut,(gdouble)second);
+	return g_date_time_new_local(2015,9,6,hour,minut,(gdouble)second);
 }
 #define MATCH_NAME      -1
 
@@ -236,7 +236,7 @@ job_s temp_job = {0};
 GString * query_row_job = NULL;
 
 /*проверка введеных значений лежит на вышестояшей функции*/
-static int insert_job(const char * name,const char *pressure,const char * time
+static int insert_job_db(const char * name,const char *pressure,const char * time
               ,const char * str_uprise,const char * str_lowering )
 {
 	job_s * pj;
@@ -284,7 +284,7 @@ static int insert_job(const char * name,const char *pressure,const char * time
 }
 static const char QUERY_DELETE_ROW_JOB[] = "DELETE FROM job WHERE name=";
 
-int delete_job(const char * name)
+int delete_job_db(const char * name)
 {
 	int rc;
 	char * sql_error;
@@ -334,7 +334,7 @@ static char STR_JOB_TABLE_NAME[] =     "job";
 #define SIZE_STR_JOB_TABLE_NAME          3
 static char STR_COL_NAME_JOB_TABLE[] = "name";
 #define SIZE_STR_COL_NAME_JOB_TABLE      4
-static int check_table_job(void * ud, int argc, char **argv, char ** col_name)
+static int check_table_job_db(void * ud, int argc, char **argv, char ** col_name)
 {
 	int i;
 	char * name;
@@ -374,7 +374,7 @@ int init_db(void)
 		return FAILURE;
 	}
 
-	rc = sqlite3_exec(database,QUERY_JOB_TABLE,check_table_job,NULL,&error_message);
+	rc = sqlite3_exec(database,QUERY_JOB_TABLE,check_table_job_db,NULL,&error_message);
 	if( rc != SQLITE_OK ){
 		g_critical("SQL error QUERY_JOB_TABLE : %s\n",error_message);
 		sqlite3_free(error_message);
@@ -391,7 +391,7 @@ int init_db(void)
 	}
 	g_message("Открыл базу данных");
 
-	rc = fill_list_job();
+	rc = fill_list_job_db();
 	if(rc != SUCCESS){
 		;/*TODO можно перезаписать базу данных создать диалог */
 	}
@@ -493,6 +493,7 @@ void activate_menu_load_job(GtkMenuItem * b,gpointer d)
 	gtk_widget_hide(fra_mode_auto);
 	gtk_widget_hide(fra_mode_manual);
 	gtk_widget_hide(fra_job_save);
+
 	gtk_widget_show(fra_job_load);
 	g_message("%s",STR_JOB_LOAD);
 }
@@ -686,6 +687,11 @@ GtkWidget * create_info(void)
 /*************************************/
 /*окно работа в автоматическом режиме*/
 /*************************************/
+
+char STR_CONTROL_PANEL[] = "УПРАВЛЕНИЕ";
+char STR_BUTTON_AUTO_START[] = "СТАРТ";
+char STR_BUTTON_AUTO_STOP[]  = "СТОП";
+char STR_BUTTON_AUTO_PAUSE[] = "ПАУЗА";
 
 GtkWidget * create_mode_auto(void)
 {
@@ -883,7 +889,7 @@ GtkWidget * create_mode_manual(void)
 	return fra_mode_manual;
 }
 /*************************************/
-/* окно закрузить работу             */
+/* окно загрузить работу             */
 /*************************************/
 enum {
 	COLUMMN_NAME = 0,
@@ -931,7 +937,6 @@ int select_current_job(GtkTreeView * tre_job)
 	set_current_value_info();
 	gtk_widget_hide(fra_job_load);
 	gtk_widget_show(fra_info);
-	g_debug(" load job :> %s",name);
 	return SUCCESS;
 }
 void clicked_button_load_job(GtkButton * but,GtkTreeView * tre_job)
@@ -948,6 +953,10 @@ void clicked_button_del_job(GtkButton * but,GtkTreeView * tre_job)
 	GtkTreeSelection * select;
 
 	name = select_row_activated(tre_job);
+	if(name == NULL){
+		g_critical("Cписок выбора не корректный (1)");
+		return ;
+	}
 
 	if(temp_job.name == NULL){
 	 	temp_job.name = g_string_new(name);
@@ -958,9 +967,10 @@ void clicked_button_del_job(GtkButton * but,GtkTreeView * tre_job)
 	rc = g_hash_table_remove(list_job,&temp_job);
 	if(rc != TRUE){
 		g_critical("Таблица хешей не корректна (1)");
+		return;
 	}
 
-	delete_job(name); /*из базы данных*/
+	delete_job_db(name); /*из базы данных*/
 
 	select =	gtk_tree_view_get_selection (tre_job);
 	rc = gtk_tree_selection_get_selected(select,&model,&iter);
@@ -1054,11 +1064,11 @@ static int add_column_tree_job(GtkTreeView * tv)
 }
 static char STR_DEL_JOB[] = "Удалить";
 
+GtkWidget * tree_view_job;
 GtkWidget * create_job_load(void)
 {
 	GtkWidget * box_vertical;
 	GtkWidget * scrwin_job;
-	GtkWidget * tre_job;
 	GtkTreeModel * tremod_job;
 	GtkWidget * box_horizontal;
 	GtkWidget * but_load;
@@ -1081,30 +1091,30 @@ GtkWidget * create_job_load(void)
 
 	tremod_job = create_model_list_job();
 
-	tre_job = gtk_tree_view_new_with_model(tremod_job);
-	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(tre_job), TRUE);
-	gtk_tree_selection_set_mode(gtk_tree_view_get_selection (GTK_TREE_VIEW (tre_job))
+	tree_view_job = gtk_tree_view_new_with_model(tremod_job);
+	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(tree_view_job), TRUE);
+	gtk_tree_selection_set_mode(gtk_tree_view_get_selection (GTK_TREE_VIEW (tree_view_job))
 	                           ,GTK_SELECTION_SINGLE);
 	/*gtk_widget_set_halign(tre_job,GTK_ALIGN_FILL);*/
 	/*gtk_widget_set_valign(tre_job,GTK_ALIGN_FILL);*/
-	gtk_widget_set_hexpand(tre_job,TRUE);
-	gtk_widget_set_vexpand (tre_job,TRUE);
-	g_signal_connect(tre_job,"row-activated",G_CALLBACK(row_activated_tree_job),NULL);
+	gtk_widget_set_hexpand(tree_view_job,TRUE);
+	gtk_widget_set_vexpand (tree_view_job,TRUE);
+	g_signal_connect(tree_view_job,"row-activated",G_CALLBACK(row_activated_tree_job),NULL);
 
-	add_column_tree_job(GTK_TREE_VIEW(tre_job));
+	add_column_tree_job(GTK_TREE_VIEW(tree_view_job));
 
 	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
 	/*gtk_box_set_homogeneous(GTK_BOX(box_horizontal),TRUE);*/
 	but_load = gtk_button_new_with_label(STR_LOAD_JOB);
 	gtk_widget_set_halign(but_load,GTK_ALIGN_CENTER);
-	g_signal_connect(but_load,"clicked",G_CALLBACK(clicked_button_load_job),tre_job);
+	g_signal_connect(but_load,"clicked",G_CALLBACK(clicked_button_load_job),tree_view_job);
 	but_del = gtk_button_new_with_label(STR_DEL_JOB);
 	gtk_widget_set_halign(but_load,GTK_ALIGN_CENTER);
-	g_signal_connect(but_del,"clicked",G_CALLBACK(clicked_button_del_job),tre_job);
+	g_signal_connect(but_del,"clicked",G_CALLBACK(clicked_button_del_job),tree_view_job);
 
 	gtk_container_add(GTK_CONTAINER(fra_job_load),box_vertical);
 	gtk_box_pack_start(GTK_BOX(box_vertical),scrwin_job,FALSE,TRUE,5);
-	gtk_container_add(GTK_CONTAINER(scrwin_job),tre_job);
+	gtk_container_add(GTK_CONTAINER(scrwin_job),tree_view_job);
 	gtk_box_pack_start(GTK_BOX(box_vertical),box_horizontal,FALSE,TRUE,5);
 	gtk_box_pack_start(GTK_BOX(box_horizontal),but_load,FALSE,TRUE,5);
 	gtk_box_pack_start(GTK_BOX(box_horizontal),but_del,FALSE,TRUE,5);
@@ -1112,7 +1122,7 @@ GtkWidget * create_job_load(void)
 	gtk_widget_show(but_del);
 	gtk_widget_show(but_load);
 	gtk_widget_show(box_horizontal);
-	gtk_widget_show(tre_job);
+	gtk_widget_show(tree_view_job);
 	gtk_widget_show(scrwin_job);
 	gtk_widget_show(box_vertical);
 	gtk_widget_hide(fra_job_load);
@@ -1121,11 +1131,242 @@ GtkWidget * create_job_load(void)
 /*************************************/
 /* окно создать работу               */
 /*************************************/
+static char STR_NAME_JOB[] = "Наименование работ";
+static char STR_NAME_JOB_DEFAULT[] = "Изделие 000";
+static char STR_DEFAULT_PRESSURE[] = "2";
+static char STR_SAVE_JOB[] = "Сохранить работу";
+
+static GtkEntryBuffer * entbuff_name_job;
+static GtkEntryBuffer * entbuff_pressure;
+static GtkEntryBuffer * entbuff_time;
+static GtkEntryBuffer * entbuff_uprise;
+static GtkEntryBuffer * entbuff_lowering;
+
+int check_entry_pressure(const char * pressure)
+{
+	char * c;
+	c = g_strrstr_len(pressure,1,STR_DEFAULT_PRESSURE);
+	if(c == NULL){
+		return FAILURE;
+	}
+	return SUCCESS;
+}
+/*TODO обединеть с проверкой в базе данных*/
+int check_entry_time(const char * str)
+{
+	gint hour = 0;
+	gint minut = 0;
+	gint second = 0;
+
+	/*str 00:00:00*/
+	if((str[2] != ':') || (str[5] != ':')){
+		return FAILURE;
+	}
+
+	hour = str[0] - '0';
+	hour *= 10;
+	hour += (str[1] - '0');
+	if( (hour < 0) || (hour > 24) ){
+		return FAILURE;
+	}
+
+	minut = str[3] - '0';
+	minut *= 10;
+	minut += (str[4] - '0');
+	if((minut < 0)||(minut>59)){
+		return FAILURE;
+	}
+	second = str[6] - '0';
+	second *= 10;
+	second += (str[7] - '0');
+	if((second < 0) || (second > 59)){
+		return FAILURE;
+	}
+	return SUCCESS;
+}
+
+int check_entry_angle(const char * str_uprise,const char * str_lowering)
+{
+	gint64 t_uprise  = g_ascii_strtoll(str_uprise,NULL,10);
+	gint64 t_lowering = g_ascii_strtoll(str_lowering,NULL,10);
+
+	if(t_uprise <= t_lowering){
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
+void clicked_button_save_job(GtkButton * b,gpointer d)
+{
+	int rc;
+	gpointer pt = NULL;
+	GtkListStore * model;
+	GtkTreeIter iter;
+	const char * name = gtk_entry_buffer_get_text(entbuff_name_job);
+	const char * pressure = gtk_entry_buffer_get_text(entbuff_pressure);
+	const char * time = gtk_entry_buffer_get_text(entbuff_time);
+	const char * uprise = gtk_entry_buffer_get_text(entbuff_uprise);
+	const char * lowering = gtk_entry_buffer_get_text(entbuff_lowering);
+
+	rc = check_entry_pressure(pressure);
+	if(rc != SUCCESS){
+		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+		                              ,GTK_BUTTONS_CLOSE,"Введеное давление не корректно!");
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy(error);
+		return;
+	}
+
+	rc = check_entry_time(time);
+	if(rc != SUCCESS){
+		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+		                              ,GTK_BUTTONS_CLOSE,"Введеное время не корректно!");
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy(error);
+		return;
+	}
+	rc = check_entry_angle(uprise,lowering);
+	if(rc != SUCCESS){
+		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+		                              ,GTK_BUTTONS_CLOSE,"Введеное значение углов не корректно!");
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy(error);
+		return;
+	}
+	rc = insert_job_db(name,pressure,time,uprise,lowering);
+	if(rc == MATCH_NAME){
+		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+		                              ,GTK_BUTTONS_CLOSE,"Введеное имя работы есть в базе данных!");
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy(error);
+		return;
+	}
+	if(rc == FAILURE){
+		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+		                              ,GTK_BUTTONS_CLOSE,"Нет возможности записать в базу данных!");
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy(error);
+		return;
+	}
+
+	model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view_job)));
+	gtk_list_store_append(model,&iter);
+	gtk_list_store_set(model,&iter,COLUMMN_NAME,name,-1);
+
+	if(temp_job.name == NULL){
+	 	temp_job.name = g_string_new(name);
+	}
+	g_string_truncate(temp_job.name,0);
+	g_string_append(temp_job.name,name);
+
+	g_hash_table_lookup_extended(list_job,&temp_job,&pt,NULL);
+	if(pt == NULL){
+		g_critical("Таблица хешей не корректна (0)");
+		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+		                              ,GTK_BUTTONS_CLOSE,"Нет возможности записать в базу данных!");
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy(error);
+		current_job = NULL;
+	}
+	else{
+		current_job = (job_s *)pt;
+	}
+
+	set_current_value_info();
+	gtk_widget_hide(fra_job_save);
+	gtk_widget_show(fra_info);
+	return ;
+}
+
+GtkWidget * create_entry_job_save(void)
+{
+	GtkWidget * gri_entry;
+	GtkWidget * lab_name;
+	GtkWidget * lab_pressure;
+	GtkWidget * lab_time;
+	GtkWidget * lab_uprise;
+	GtkWidget * lab_lowering;
+	GtkWidget * ent_name;
+	GtkWidget * ent_pressure;
+	GtkWidget * ent_time;
+	GtkWidget * ent_uprise;
+	GtkWidget * ent_lowering;
+	GtkWidget * but_save;
+
+	gri_entry = gtk_grid_new();
+
+	lab_name = gtk_label_new(STR_NAME_JOB);
+	lab_pressure = gtk_label_new(STR_PRESSURE);
+	lab_time = gtk_label_new(STR_TIME_JOB);
+	lab_uprise = gtk_label_new(STR_UPRISE_ANGEL);
+	lab_lowering = gtk_label_new(STR_LOWERING_ANGEL);
+
+	/*TODO сделать проверку на вводимые данные */
+	entbuff_name_job = gtk_entry_buffer_new(STR_NAME_JOB_DEFAULT,-1);
+	ent_name = gtk_entry_new_with_buffer(entbuff_name_job);
+	entbuff_pressure = gtk_entry_buffer_new(STR_DEFAULT_PRESSURE,-1);
+	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_pressure),1);
+	ent_pressure = gtk_entry_new_with_buffer(entbuff_pressure);
+	entbuff_time = gtk_entry_buffer_new(STR_TIME_JOB_DEFAULT,-1);
+	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_time),8);
+	ent_time = gtk_entry_new_with_buffer(entbuff_time);
+	entbuff_uprise = gtk_entry_buffer_new(STR_ANGEL_DEFAULT,-1);
+	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_uprise),2);
+	ent_uprise = gtk_entry_new_with_buffer(entbuff_uprise);
+	entbuff_lowering = gtk_entry_buffer_new(STR_ANGEL_DEFAULT,-1);
+	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_lowering),2);
+	ent_lowering = gtk_entry_new_with_buffer(entbuff_lowering);
+	but_save = gtk_button_new_with_label(STR_SAVE_JOB);
+	g_signal_connect(but_save,"clicked",G_CALLBACK(clicked_button_save_job),NULL);
+
+	gtk_grid_attach(GTK_GRID(gri_entry),lab_name    ,0,0,1,1);
+	gtk_grid_attach(GTK_GRID(gri_entry),lab_pressure,0,1,1,1);
+	gtk_grid_attach(GTK_GRID(gri_entry),lab_time    ,0,2,1,1);
+	gtk_grid_attach(GTK_GRID(gri_entry),lab_uprise  ,0,3,1,1);
+	gtk_grid_attach(GTK_GRID(gri_entry),lab_lowering,0,4,1,1);
+	gtk_grid_attach(GTK_GRID(gri_entry),ent_name    ,1,0,1,1);
+	gtk_grid_attach(GTK_GRID(gri_entry),ent_pressure,1,1,1,1);
+	gtk_grid_attach(GTK_GRID(gri_entry),ent_time    ,1,2,1,1);
+	gtk_grid_attach(GTK_GRID(gri_entry),ent_uprise  ,1,3,1,1);
+	gtk_grid_attach(GTK_GRID(gri_entry),ent_lowering,1,4,1,1);
+	gtk_grid_attach(GTK_GRID(gri_entry),but_save    ,0,5,2,1);
+
+	gtk_widget_show(but_save);
+	gtk_widget_show(ent_lowering);
+	gtk_widget_show(ent_uprise);
+	gtk_widget_show(ent_time);
+	gtk_widget_show(ent_pressure);
+	gtk_widget_show(ent_name);
+	gtk_widget_show(lab_lowering);
+	gtk_widget_show(lab_uprise);
+	gtk_widget_show(lab_time);
+	gtk_widget_show(lab_pressure);
+	gtk_widget_show(lab_name);
+	gtk_widget_show(gri_entry);
+	return gri_entry;
+}
 
 GtkWidget * create_job_save(void)
 {
+	GtkWidget * box_horizontal;
+	GtkWidget * temp;
+
+	/*GtkWidget * gri_button;*/
+
 	fra_job_save = gtk_frame_new(STR_JOB_SAVE);
 	gtk_frame_set_label_align(GTK_FRAME(fra_job_save),0.5,0.5);
+	gtk_container_set_border_width(GTK_CONTAINER(fra_job_save),5);
+
+	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
+
+	gtk_container_add(GTK_CONTAINER(fra_job_save),box_horizontal);
+
+	temp = create_entry_job_save();
+	gtk_box_pack_start(GTK_BOX(box_horizontal),temp,TRUE,TRUE,5);
+
+	gtk_widget_show(box_horizontal);
+	gtk_widget_hide(fra_job_save);
 	return fra_job_save;
 }
 
@@ -1155,253 +1396,4 @@ GtkWidget * create_control_panel(void)
 	gtk_widget_show(gri_control);
 	return gri_control;
 }
-/*****************************************************************************/
-
-#if 0
-GtkWidget * l_control;
-GtkWidget * b_auto_start;
-GtkWidget * b_auto_stop;
-GtkWidget * b_auto_pause;
-
-
-GtkWidget * load_job_window = NULL;
-GtkWidget * create_job_window = NULL;
-
-GtkEntryBuffer * eb_name_job = NULL;
-GtkEntryBuffer * eb_pressure = NULL;
-GtkEntryBuffer * eb_time = NULL;
-GtkEntryBuffer * eb_uprise = NULL;
-GtkEntryBuffer * eb_lowering = NULL;
-
-/*****************************************************************************/
-char STR_DEFAULT_PRESSURE[] = "2";
-
-int check_pressure(const char * pressure)
-{
-	char * c;
-	c = g_strrstr_len(pressure,1,STR_DEFAULT_PRESSURE);
-	if(c == NULL){
-		return FAILURE;
-	}
-	return SUCCESS;
-}
-
-int check_time(const char * time)
-{
-	return SUCCESS;
-}
-
-int check_angle(const char * str_uprise,long int * v_uprise,const char * str_lowering,long int * v_lowering)
-{
-	gint64 t_uprise  = g_ascii_strtoll(str_uprise,NULL,10);
-	gint64 t_lowering = g_ascii_strtoll(str_lowering,NULL,10);
-
-	if(t_uprise <= t_lowering){
-		/*TODO*/
-		return FAILURE;
-	}
-	*v_uprise = t_uprise;
-	*v_lowering = t_lowering;
-
-	return SUCCESS;
-}
-
-void create_job(GtkButton *b,gpointer d)
-{
-	int rc;
-	GtkWidget * error;
-
-	rc = check_name_job(gtk_entry_buffer_get_text(eb_name_job));
-	if(rc != SUCCESS){
-		return ;
-	}
-	g_debug(" :> %s",gtk_entry_buffer_get_text(eb_name_job));
-
-	rc = check_pressure(gtk_entry_buffer_get_text(eb_pressure));
-	if(rc != SUCCESS){
-		return ;
-	}
-	g_debug(" :> %s",gtk_entry_buffer_get_text(eb_pressure));
-
-	rc = check_time(gtk_entry_buffer_get_text(eb_time));
-	if(rc != SUCCESS){
-		return;
-	}
-	g_debug(" :> %s",gtk_entry_buffer_get_text(eb_time));
-
-	g_debug(" :> %s",gtk_entry_buffer_get_text(eb_uprise));
-	g_debug(" :> %s",gtk_entry_buffer_get_text(eb_lowering));
-
-	rc = insert_job(gtk_entry_buffer_get_text(eb_name_job)
-	             ,gtk_entry_buffer_get_text(eb_pressure)
-	             ,gtk_entry_buffer_get_text(eb_time)
-	             ,gtk_entry_buffer_get_text(eb_uprise)
-	             ,gtk_entry_buffer_get_text(eb_lowering));
-	if(rc != SUCCESS){
-		error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
-		                              ,GTK_BUTTONS_CLOSE,"Введеные данные не корректны");
-		gtk_dialog_run(GTK_DIALOG(error));
-		gtk_widget_destroy(error);
-		return;
-	}
-
-	gtk_widget_destroy(create_job_window);
-	g_message("Сохранить работу");
-}
-
-/*****************************************************************************/
-
-
-GtkWidget * info_panel = NULL;
-GString * s_name_job_info_panel = NULL;
-GtkWidget * w_name_job_info_panel = NULL;
-
-
-
-char STR_CONTROL_PANEL[] = "УПРАВЛЕНИЕ";
-char STR_BUTTON_AUTO_START[] = "СТАРТ";
-char STR_BUTTON_AUTO_STOP[]  = "СТОП";
-char STR_BUTTON_AUTO_PAUSE[] = "ПАУЗА";
-#define CONTROL_BUTTON_SPACING        3
-
-
-
-	gtk_grid_attach(GTK_GRID(cgrid),l_control,1,0,4,1);
-
-	gtk_grid_attach(GTK_GRID(cgrid),b_auto_start,0,1,2,1);
-	gtk_grid_attach(GTK_GRID(cgrid),b_auto_stop,2,1,2,1);
-	gtk_grid_attach(GTK_GRID(cgrid),b_auto_pause,4,1,2,1);
-
-
-	gtk_widget_show(b_auto_pause);
-	gtk_widget_show(b_auto_stop);
-	gtk_widget_show(b_auto_start);
-	gtk_widget_show(l_control);
-
-	gtk_widget_show(cgrid);
-	gtk_widget_show(cframe);
-
-	return cframe;
-}
-
-/**************************************/
-
-char STR_SET_VALUE[] =     " Установлено ";
-char STR_CURRENT_VALUE[] = " Текущие     ";
-
-GtkWidget * w_pressure_set = NULL;
-GtkWidget * w_pressure_current = NULL;
-GtkWidget * w_time_set = NULL;
-GtkWidget * w_time_current = NULL;
-GtkWidget * w_uprise_set = NULL;
-GtkWidget * w_uprise_current = NULL;
-GtkWidget * w_lowering_set = NULL;
-GtkWidget * w_lowering_current = NULL;
-GString * s_pressure_set = NULL;
-GString * s_pressure_current = NULL;
-GString * s_time_set = NULL;
-GString * s_time_current = NULL;
-GString * s_uprise_set = NULL;
-GString * s_uprise_current = NULL;
-GString * s_lowering_set = NULL;
-GString * s_lowering_current = NULL;
-
-#define SET_PANEL_SPACING           1
-
-GtkWidget * create_set_panel(void)
-{
-	GtkWidget * iframe;
-	GtkWidget * igrid;
-	GtkWidget * set_value;
-	GtkWidget * current_value;
-	GtkWidget * pressure;
-	GtkWidget * time;
-	GtkWidget * uprise;
-	GtkWidget * lowering;
-
-
-	igrid = gtk_grid_new();
-	gtk_container_set_border_width(GTK_CONTAINER(igrid),SET_PANEL_SPACING);
-
-	set_value = gtk_label_new(STR_SET_VALUE);
-	current_value = gtk_label_new(STR_CURRENT_VALUE);
-
-	pressure = gtk_label_new(STR_PRESSURE);
-	gtk_widget_set_halign(pressure,GTK_ALIGN_START);
-	s_pressure_set = g_string_new(NULL);
-	g_string_append_printf(s_pressure_set," %d ",TEMP_PRESSURE);
-	w_pressure_set = gtk_label_new(s_pressure_set->str);
-	s_pressure_current = g_string_new(NULL);
-	g_string_append_printf(s_pressure_current," %d ",TEMP_PRESSURE);
-	w_pressure_current = gtk_label_new(s_pressure_current->str);
-
-	time = gtk_label_new(STR_TIME_JOB);
-	gtk_widget_set_halign(time,GTK_ALIGN_START);
-	s_time_set = g_string_new(NULL);
-	g_string_append_printf(s_time_set," %02d:%02d:%02d",TEMP_HOUR,TEMP_MINUTE,TEMP_SECOND);
-	w_time_set = gtk_label_new(s_time_set->str);
-	s_time_current = g_string_new(NULL);
-	g_string_append_printf(s_time_current," %02d:%02d:%02d",TEMP_HOUR,TEMP_MINUTE-2,TEMP_SECOND-2);
-	w_time_current = gtk_label_new(s_time_current->str);
-
-	uprise = gtk_label_new(STR_UPRISE_ANGEL);
-	gtk_widget_set_halign(uprise,GTK_ALIGN_START);
-	s_uprise_set = g_string_new(NULL);
-	g_string_append_printf(s_uprise_set," %d ",TEMP_UPRISE_ANGEL);
-	w_uprise_set = gtk_label_new(s_uprise_set->str);
-	s_uprise_current = g_string_new(NULL);
-	g_string_append_printf(s_uprise_current," %d ",TEMP_UPRISE_ANGEL - 10);
-	w_uprise_current = gtk_label_new(s_uprise_current->str);
-
-	lowering = gtk_label_new(STR_LOWERING_ANGEL);
-	gtk_widget_set_halign(lowering,GTK_ALIGN_START);
-	s_lowering_set = g_string_new(NULL);
-	g_string_append_printf(s_lowering_set," %d ",TEMP_LOWERING_ANGLE);
-	w_lowering_set = gtk_label_new(s_lowering_set->str);
-	s_lowering_current = g_string_new(NULL);
-	g_string_append_printf(s_lowering_current," %d ",TEMP_UPRISE_ANGEL - 10);
-	w_lowering_current = gtk_label_new(s_lowering_current->str);
-
-	gtk_container_add(GTK_CONTAINER(iframe),igrid);
-	gtk_grid_attach(GTK_GRID(igrid),set_value         ,2,0,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),current_value     ,3,0,1,1);
-
-	gtk_grid_attach(GTK_GRID(igrid),pressure          ,0,1,2,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_pressure_set    ,2,1,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_pressure_current,3,1,1,1);
-
-	gtk_grid_attach(GTK_GRID(igrid),time              ,0,2,2,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_time_set        ,2,2,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_time_current    ,3,2,1,1);
-
-	gtk_grid_attach(GTK_GRID(igrid),uprise            ,0,3,2,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_uprise_set      ,2,3,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_uprise_current  ,3,3,1,1);
-
-	gtk_grid_attach(GTK_GRID(igrid),lowering          ,0,4,2,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_lowering_set    ,2,4,1,1);
-	gtk_grid_attach(GTK_GRID(igrid),w_lowering_current,3,4,1,1);
-
-	gtk_widget_show(w_lowering_current);
-	gtk_widget_show(w_lowering_set);
-	gtk_widget_show(lowering);
-	gtk_widget_show(w_uprise_current);
-	gtk_widget_show(w_uprise_set);
-	gtk_widget_show(uprise);
-	gtk_widget_show(w_time_current);
-	gtk_widget_show(w_time_set);
-	gtk_widget_show(time);
-	gtk_widget_show(w_pressure_current);
-	gtk_widget_show(w_pressure_set);
-	gtk_widget_show(pressure);
-	gtk_widget_show(current_value);
-	gtk_widget_show(set_value);
-	gtk_widget_show(igrid);
-	gtk_widget_show(iframe);
-
-	return iframe;
-}
-
-
-#endif
 /*****************************************************************************/
