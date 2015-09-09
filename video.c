@@ -295,7 +295,7 @@ int deinit_video_stream(void)
 static char STR_VIDEO[] = "Камера";
 static char STR_ON_VIDEO[]  = "Включить ";
 static char STR_OFF_VIDEO[] = "Выключить";
-static char STR_SETTING_VIDEO[] = "Настройка";
+/*static char STR_SETTING_VIDEO[] = "Настройка";*/
 
 static void activate_menu_video(GtkMenuItem * mi,gpointer ud)
 {
@@ -308,11 +308,12 @@ static void activate_menu_video(GtkMenuItem * mi,gpointer ud)
 		deinit_video_stream();
 	}
 }
+/*
 static void activate_menu_setting(GtkMenuItem * mi,gpointer ud)
 {
 	g_message("Установил настройки видео потока");
 }
-
+*/
 GtkWidget * create_menu_video(void)
 {
 	GtkWidget * menite_video;
@@ -335,11 +336,14 @@ GtkWidget * create_menu_video(void)
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
 	gtk_widget_show(menite_temp);
 
+	/*TODO добавить настройки*/
+/*
 	menite_temp = gtk_menu_item_new_with_label(STR_SETTING_VIDEO);
 	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_setting),NULL);
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
 	                          ,'S',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
+*/
 	gtk_widget_show(menite_temp);
 
 	gtk_widget_show(menite_video);
