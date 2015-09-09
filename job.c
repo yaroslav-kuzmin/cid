@@ -413,6 +413,7 @@ int deinit_db(void)
 /*****************************************************************************/
 /*  общие элементы управления                                                */
 /*****************************************************************************/
+GString * temp_string = NULL;
 job_s * current_job = NULL;
 GtkWidget * fra_info = NULL;
 GtkWidget * fra_mode_auto = NULL;
@@ -432,13 +433,23 @@ static char STR_JOB_SAVE[] = "Новая работа";
 /*************************************/
 /*  подменю управление               */
 /*************************************/
+int first_auto_mode = NOT_OK;
+
 void activate_menu_auto_mode(GtkMenuItem * im,gpointer d)
 {
 	gtk_widget_hide(fra_info);
 	gtk_widget_hide(fra_mode_manual);
-	gtk_widget_hide(fra_job_load);
 	gtk_widget_hide(fra_job_save);
-	gtk_widget_show(fra_mode_auto);
+
+	if(current_job == NULL){
+		gtk_widget_hide(fra_mode_auto);
+		gtk_widget_show(fra_job_load);
+		first_auto_mode = OK;
+	}
+	else{
+		gtk_widget_hide(fra_job_load);
+		gtk_widget_show(fra_mode_auto);
+	}
 	g_message("%s",STR_MODE_AUTO);
 }
 void activate_menu_manual_mode(GtkMenuItem * im,gpointer d)
@@ -591,11 +602,10 @@ static GtkWidget * lab_info_time = NULL;
 static GtkWidget * lab_info_uprise = NULL;
 static GtkWidget * lab_info_lowering = NULL;
 
-GString * temp_value = NULL;
 int set_current_value_info(void)
 {
-	if(temp_value == NULL){
-		temp_value = g_string_new(NULL);
+	if(temp_string == NULL){
+		temp_string = g_string_new(NULL);
 	}
 	if(current_job == NULL){
 		gtk_label_set_text(GTK_LABEL(lab_info_name_job),STR_NOT_DEVICE);
@@ -606,17 +616,17 @@ int set_current_value_info(void)
 	}
 	else{
 		gtk_label_set_text(GTK_LABEL(lab_info_name_job),current_job->name->str);
-		g_string_printf(temp_value,"%d",current_job->pressure);
-		gtk_label_set_text(GTK_LABEL(lab_info_pressure),temp_value->str);
-		g_string_printf(temp_value,"%02d:%02d:%02d"
+		g_string_printf(temp_string,"%d",current_job->pressure);
+		gtk_label_set_text(GTK_LABEL(lab_info_pressure),temp_string->str);
+		g_string_printf(temp_string,"%02d:%02d:%02d"
 		               ,g_date_time_get_hour(current_job->time)
 		               ,g_date_time_get_minute(current_job->time)
 		               ,g_date_time_get_second(current_job->time));
-		gtk_label_set_text(GTK_LABEL(lab_info_time),temp_value->str);
-		g_string_printf(temp_value,"%d",current_job->uprise);
-		gtk_label_set_text(GTK_LABEL(lab_info_uprise),temp_value->str);
-		g_string_printf(temp_value,"%d",current_job->lowering);
-		gtk_label_set_text(GTK_LABEL(lab_info_lowering),temp_value->str);
+		gtk_label_set_text(GTK_LABEL(lab_info_time),temp_string->str);
+		g_string_printf(temp_string,"%d",current_job->uprise);
+		gtk_label_set_text(GTK_LABEL(lab_info_uprise),temp_string->str);
+		g_string_printf(temp_string,"%d",current_job->lowering);
+		gtk_label_set_text(GTK_LABEL(lab_info_lowering),temp_string->str);
 	}
 	return SUCCESS;
 }
@@ -688,10 +698,12 @@ GtkWidget * create_info(void)
 /*окно работа в автоматическом режиме*/
 /*************************************/
 
-char STR_CONTROL_PANEL[] = "УПРАВЛЕНИЕ";
-char STR_BUTTON_AUTO_START[] = "СТАРТ";
-char STR_BUTTON_AUTO_STOP[]  = "СТОП";
-char STR_BUTTON_AUTO_PAUSE[] = "ПАУЗА";
+static char STR_BUTTON_AUTO_START[] = "СТАРТ";
+static char STR_BUTTON_AUTO_STOP[]  = "СТОП";
+static char STR_BUTTON_AUTO_PAUSE[] = "ПАУЗА";
+static char STR_SET_VALUE[] = "Установленое значение";
+static char STR_CURRENT_VALUE[] = "Текущее значение";
+
 void clicked_button_auto_start(GtkButton * b,gpointer d)
 {
 	g_debug("start");
@@ -705,13 +717,132 @@ void clicked_button_auto_pause(GtkButton * b,gpointer d)
 	g_debug("pause");
 }
 
+struct _label_auto_mode_s
+{
+	GtkWidget * pressure;
+	GtkWidget * time;
+	GtkWidget * uprise;
+	GtkWidget * lowering;
+};
+typedef struct _label_auto_mode_s  label_auto_mode_s;
+
+label_auto_mode_s label_auto_mode;
+GtkWidget * lab_auto_mode_name_job;
+GtkWidget * lab_auto_mode_pressure;
+GtkWidget * lab_auto_mode_time;
+GtkWidget * lab_auto_mode_uprise;
+GtkWidget * lab_auto_mode_lowering;
+
+int set_current_value_auto_mode(void)
+{
+	/*TODO считывать значание с регистров*/
+	gtk_label_set_text(GTK_LABEL(label_auto_mode.pressure),"2");
+	gtk_label_set_text(GTK_LABEL(label_auto_mode.time),"00:01:54");
+	gtk_label_set_text(GTK_LABEL(label_auto_mode.uprise),"34");
+	gtk_label_set_text(GTK_LABEL(label_auto_mode.lowering),"34");
+	return SUCCESS;
+}
+
+/*g_timeout_add(милисекунды,fun,userdata);*/
+/* int fun (userdata)*/
+/* return TRUE продолжать*/
+/* return FALSE закончить*/
+
+int set_preset_value_auto_mode(void)
+{
+	if(current_job == NULL){
+		g_critical("не выбрана работа!");
+		return FAILURE;
+	}
+	gtk_label_set_text(GTK_LABEL(lab_auto_mode_name_job),current_job->name->str);
+	g_string_printf(temp_string,"%d",current_job->pressure);
+	gtk_label_set_text(GTK_LABEL(lab_auto_mode_pressure),temp_string->str);
+	g_string_printf(temp_string,"%02d:%02d:%02d"
+	               ,g_date_time_get_hour(current_job->time)
+	               ,g_date_time_get_minute(current_job->time)
+	               ,g_date_time_get_second(current_job->time));
+	gtk_label_set_text(GTK_LABEL(lab_auto_mode_time),temp_string->str);
+	g_string_printf(temp_string,"%d",current_job->uprise);
+	gtk_label_set_text(GTK_LABEL(lab_auto_mode_uprise),temp_string->str);
+	g_string_printf(temp_string,"%d",current_job->lowering);
+	gtk_label_set_text(GTK_LABEL(lab_auto_mode_lowering),temp_string->str);
+	return SUCCESS;
+}
+
 GtkWidget * create_label_mode_auto(void)
 {
+	GtkWidget * fra_auto;
 	GtkWidget * gri_auto;
+	GtkWidget * lab_set;
+	GtkWidget * lab_current;
+	GtkWidget * lab_pressure;
+	GtkWidget * lab_time;
+	GtkWidget * lab_uprise;
+	GtkWidget * lab_lowering;
+
+	fra_auto = gtk_frame_new(STR_INFO);
+	gtk_container_set_border_width(GTK_CONTAINER(fra_auto),5);
+
 	gri_auto = gtk_grid_new();
 
-	gtk_widget_show(gri_auto);	
-	return gri_auto;
+	lab_auto_mode_name_job = gtk_label_new(STR_NOT_DEVICE);
+
+	lab_set = gtk_label_new(STR_SET_VALUE);
+	lab_current = gtk_label_new(STR_CURRENT_VALUE);
+	lab_pressure = gtk_label_new(STR_PRESSURE);
+	lab_time = gtk_label_new(STR_TIME_JOB);
+	lab_uprise = gtk_label_new(STR_UPRISE_ANGEL);
+	lab_lowering = gtk_label_new(STR_LOWERING_ANGEL);
+	lab_auto_mode_pressure = gtk_label_new(STR_PRESSURE_DEFAULT);
+	lab_auto_mode_time = gtk_label_new(STR_TIME_JOB_DEFAULT);
+	lab_auto_mode_uprise = gtk_label_new(STR_ANGLE_DEFAULT);
+	lab_auto_mode_lowering = gtk_label_new(STR_ANGLE_DEFAULT);
+	label_auto_mode.pressure = gtk_label_new(STR_PRESSURE_DEFAULT);
+	label_auto_mode.time = gtk_label_new(STR_TIME_JOB_DEFAULT);
+	label_auto_mode.uprise = gtk_label_new(STR_ANGLE_DEFAULT);
+	label_auto_mode.lowering = gtk_label_new(STR_ANGLE_DEFAULT);
+
+	gtk_container_add(GTK_CONTAINER(fra_auto),gri_auto);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_auto_mode_name_job  ,0,0,3,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_set                 ,1,1,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_current             ,2,1,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_pressure            ,0,2,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_time                ,0,3,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_uprise              ,0,4,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_lowering            ,0,5,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_auto_mode_pressure  ,1,2,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_auto_mode_time      ,1,3,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_auto_mode_uprise    ,1,4,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),lab_auto_mode_lowering  ,1,5,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),label_auto_mode.pressure,2,2,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),label_auto_mode.time    ,2,3,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),label_auto_mode.uprise  ,2,4,1,1);
+	gtk_grid_attach(GTK_GRID(gri_auto),label_auto_mode.lowering,2,5,1,1);
+
+	gtk_widget_show(label_auto_mode.lowering);
+	gtk_widget_show(label_auto_mode.uprise);
+	gtk_widget_show(label_auto_mode.time);
+	gtk_widget_show(label_auto_mode.pressure);
+	gtk_widget_show(lab_auto_mode_lowering);
+	gtk_widget_show(lab_auto_mode_uprise);
+	gtk_widget_show(lab_auto_mode_time);
+	gtk_widget_show(lab_auto_mode_pressure);
+	gtk_widget_show(lab_lowering);
+	gtk_widget_show(lab_uprise);
+	gtk_widget_show(lab_time);
+	gtk_widget_show(lab_pressure);
+	gtk_widget_show(lab_current);
+	gtk_widget_show(lab_set);
+	gtk_widget_show(lab_auto_mode_name_job);
+	gtk_widget_show(gri_auto);
+	gtk_widget_show(fra_auto);
+	return fra_auto;
+}
+
+void show_frame_auto_mode(GtkWidget * w,gpointer ud)
+{
+	set_preset_value_auto_mode();
+	set_current_value_auto_mode();
 }
 
 GtkWidget * create_mode_auto(void)
@@ -725,6 +856,7 @@ GtkWidget * create_mode_auto(void)
 
 	fra_mode_auto = gtk_frame_new(STR_MODE_AUTO);
 	gtk_frame_set_label_align(GTK_FRAME(fra_mode_auto),0.5,0.5);
+	g_signal_connect(fra_mode_auto,"show",G_CALLBACK(show_frame_auto_mode),NULL);
 
 	box_hor_main = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
 	gtk_widget_set_halign(box_hor_main,GTK_ALIGN_FILL);
@@ -980,8 +1112,15 @@ int select_current_job(GtkTreeView * tre_job)
 	}
 	current_job = (job_s *)pt;
 	set_current_value_info();
+
 	gtk_widget_hide(fra_job_load);
-	gtk_widget_show(fra_info);
+	if(first_auto_mode == OK){
+		first_auto_mode = NOT_OK;
+		gtk_widget_show(fra_mode_auto);
+	}
+	else{
+		gtk_widget_show(fra_info);
+	}
 	return SUCCESS;
 }
 void clicked_button_load_job(GtkButton * but,GtkTreeView * tre_job)
@@ -1118,9 +1257,6 @@ GtkWidget * create_job_load(void)
 	GtkWidget * box_horizontal;
 	GtkWidget * but_load;
 	GtkWidget * but_del;
-
-	job_iter_init();
-	current_job = job_iter_next();
 
 	fra_job_load = gtk_frame_new(STR_JOB_LOAD);
 	gtk_frame_set_label_align(GTK_FRAME(fra_job_load),0.5,0.5);
