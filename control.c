@@ -432,6 +432,14 @@ uint16_t get_console(void)
 	return rc[0];
 }
 
+int set_null_mode(void)
+{
+	set_wait_mode();
+	set_auto_null();
+	set_manual_null();
+	return SUCCESS;
+}
+
 int init_control_device(char ** name)
 {
 	int rc;
@@ -443,8 +451,7 @@ int init_control_device(char ** name)
 	if(rc == DISCONNECT){
 		return rc;
 	}
-	set_auto_null();
-	set_wait_mode();
+	set_null_mode();
 	return CONNECT;
 }
 

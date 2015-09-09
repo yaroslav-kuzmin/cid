@@ -42,6 +42,7 @@
 /*****************************************************************************/
 
 /*****************************************************************************/
+#include <glib/gprintf.h> /*TODO test only*/
 #include <gtk/gtk.h>
 #include <sqlite3.h>
 
@@ -427,41 +428,105 @@ static char STR_MODE_MANUAL[] = "Ручное Управление";
 static char STR_JOB_LOAD[] = "Загрузить работу";
 static char STR_JOB_SAVE[] = "Новая работа";
 
+/*g_timeout_add(милисекунды,fun,userdata);*/
+/* int fun (userdata)*/
+/* return TRUE продолжать*/
+/* return FALSE закончить*/
+
 /*****************************************************************************/
 /* Основное меню программы                                                   */
 /*****************************************************************************/
+#define INFO_FRAME         0
+#define LOAD_JOB_FRAME     1
+#define SAVE_JOB_FRAME     2
+#define AUTO_MODE_FRAME    3
+#define MANUAL_MODE_FRAME  4
+
+int current_frame = INFO_FRAME;
+int first_auto_mode = NOT_OK;
+int auto_mode_start = NOT_OK;
+
+int select_frame(int frame)
+{
+	if(current_frame == AUTO_MODE_FRAME){
+		if(auto_mode_start == OK){
+			GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+			                              ,GTK_BUTTONS_CLOSE,"Остановите Установку!");
+			gtk_dialog_run(GTK_DIALOG(error));
+			gtk_widget_destroy(error);
+			return FAILURE;
+		}
+	}
+
+	switch(frame){
+		case INFO_FRAME:{
+			gtk_widget_hide(fra_job_load);
+			gtk_widget_hide(fra_job_save);
+			gtk_widget_hide(fra_mode_auto);
+			gtk_widget_hide(fra_mode_manual);
+			gtk_widget_show(fra_info);
+			current_frame = INFO_FRAME;
+			break;
+		}
+		case LOAD_JOB_FRAME:{
+			gtk_widget_hide(fra_info);
+			gtk_widget_hide(fra_mode_auto);
+			gtk_widget_hide(fra_mode_manual);
+			gtk_widget_hide(fra_job_save);
+			gtk_widget_show(fra_job_load);
+			current_frame = LOAD_JOB_FRAME;
+			break;
+		}
+		case SAVE_JOB_FRAME:{
+			gtk_widget_hide(fra_info);
+			gtk_widget_hide(fra_mode_auto);
+			gtk_widget_hide(fra_mode_manual);
+			gtk_widget_hide(fra_job_load);
+			gtk_widget_show(fra_job_save);
+			current_frame = SAVE_JOB_FRAME;
+			break;
+		}
+		case AUTO_MODE_FRAME:{
+			gtk_widget_hide(fra_info);
+			gtk_widget_hide(fra_mode_manual);
+			gtk_widget_hide(fra_job_save);
+			if(current_job == NULL){
+				gtk_widget_hide(fra_mode_auto);
+				gtk_widget_show(fra_job_load);
+				first_auto_mode = OK;
+				current_frame = LOAD_JOB_FRAME;
+			}
+			else{
+				gtk_widget_hide(fra_job_load);
+				gtk_widget_show(fra_mode_auto);
+				current_frame = AUTO_MODE_FRAME;
+			}
+			break;
+		}
+		case MANUAL_MODE_FRAME:{
+			gtk_widget_hide(fra_info);
+			gtk_widget_hide(fra_mode_auto);
+			gtk_widget_hide(fra_job_load);
+			gtk_widget_hide(fra_job_save);
+			gtk_widget_show(fra_mode_manual);
+			current_frame = MANUAL_MODE_FRAME;
+			break;
+		}
+	}
+	return SUCCESS;
+}
 /*************************************/
 /*  подменю управление               */
 /*************************************/
-int first_auto_mode = NOT_OK;
 
 void activate_menu_auto_mode(GtkMenuItem * im,gpointer d)
 {
-	gtk_widget_hide(fra_info);
-	gtk_widget_hide(fra_mode_manual);
-	gtk_widget_hide(fra_job_save);
-
-	if(current_job == NULL){
-		gtk_widget_hide(fra_mode_auto);
-		gtk_widget_show(fra_job_load);
-		first_auto_mode = OK;
-	}
-	else{
-		gtk_widget_hide(fra_job_load);
-		gtk_widget_show(fra_mode_auto);
-	}
+	select_frame(AUTO_MODE_FRAME);
 	g_message("%s",STR_MODE_AUTO);
 }
 void activate_menu_manual_mode(GtkMenuItem * im,gpointer d)
 {
-	gtk_widget_hide(fra_info);
-	gtk_widget_hide(fra_mode_auto);
-	gtk_widget_hide(fra_job_load);
-	gtk_widget_hide(fra_job_save);
-	gtk_widget_show(fra_mode_manual);
-
-	set_manual_mode();
-
+	select_frame(MANUAL_MODE_FRAME);
 	g_message("%s",STR_MODE_MANUAL);
 }
 char STR_MODE[] = "Режим";
@@ -500,21 +565,12 @@ GtkWidget * create_menu_mode(void)
 /*************************************/
 void activate_menu_load_job(GtkMenuItem * b,gpointer d)
 {
-	gtk_widget_hide(fra_info);
-	gtk_widget_hide(fra_mode_auto);
-	gtk_widget_hide(fra_mode_manual);
-	gtk_widget_hide(fra_job_save);
-
-	gtk_widget_show(fra_job_load);
+	select_frame(LOAD_JOB_FRAME);
 	g_message("%s",STR_JOB_LOAD);
 }
-void activate_menu_create_job(GtkMenuItem * b,gpointer d)
+void activate_menu_save_job(GtkMenuItem * b,gpointer d)
 {
-	gtk_widget_hide(fra_info);
-	gtk_widget_hide(fra_mode_auto);
-	gtk_widget_hide(fra_mode_manual);
-	gtk_widget_hide(fra_job_load);
-	gtk_widget_show(fra_job_save);
+	select_frame(SAVE_JOB_FRAME);
 	g_message("%s",STR_JOB_SAVE);
 }
 static char STR_JOB[] = "Работа";
@@ -553,7 +609,7 @@ GtkWidget * create_menu_main(void)
 	gtk_widget_show(menite_temp);
 
 	menite_temp = gtk_menu_item_new_with_label(STR_CREATE_JOB);
-	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_create_job),NULL);
+	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_save_job),NULL);
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
 	                          ,'C',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_work),menite_temp);
@@ -691,7 +747,7 @@ GtkWidget * create_info(void)
 	gtk_widget_show(lab_pressure);
 	gtk_widget_show(lab_info_name_job);
 	gtk_widget_show(GTK_WIDGET(gri_info));
-	gtk_widget_show(fra_info);
+	gtk_widget_hide(fra_info);
 	return fra_info;
 }
 /*************************************/
@@ -742,11 +798,6 @@ int set_current_value_auto_mode(void)
 	gtk_label_set_text(GTK_LABEL(label_auto_mode.lowering),"34");
 	return SUCCESS;
 }
-
-/*g_timeout_add(милисекунды,fun,userdata);*/
-/* int fun (userdata)*/
-/* return TRUE продолжать*/
-/* return FALSE закончить*/
 
 int set_preset_value_auto_mode(void)
 {
@@ -1000,6 +1051,54 @@ void clicked_button_manual_open(GtkButton * b,gpointer d)
 {
 	g_message("Открыть задвижку ручная работа");
 }
+
+int amount_manual_mode = 0;
+int check_registers_manual_mode(gpointer ud)
+{
+	uint16_t angle;
+	uint16_t pressure;
+	uint16_t sensors;
+	uint16_t input;
+	uint16_t console;
+
+	if(current_frame != MANUAL_MODE_FRAME){
+		return FALSE;
+	}
+	amount_manual_mode ++;
+	angle = get_angle();
+	pressure = get_pressure();
+	sensors = get_sensors();
+	input = get_input();
+	console = get_console();
+	g_printf("\n%04d\n",amount_manual_mode);
+	g_printf("angle    :> %#x\n",angle);
+	g_printf("pressure :> %#x\n",pressure);
+	g_printf("sensors  :> %#x\n",sensors);
+	g_printf("input    :> %#x\n",input);
+	g_printf("console  :> %#x\n",console);
+	return TRUE;
+}
+
+/*g_timeout_add(милисекунды,fun,userdata);*/
+/* int fun (userdata)*/
+/* return TRUE продолжать*/
+/* return FALSE закончить*/
+int timeout_manual_mode = 1000;
+
+void show_frame_manual_mode(GtkWidget * w,gpointer ud)
+{
+	amount_manual_mode = 0;
+	set_manual_mode();
+	g_timeout_add(timeout_manual_mode,check_registers_manual_mode,NULL);
+}
+
+void hide_frame_manual_mode(GtkWidget * w,gpointer ud)
+{
+	set_null_mode();
+	set_uprise_angle(0x00);
+	set_lowering_angle(0x00);
+}
+
 char STR_BUTTON_MANUAL_UP[] =    "ВВЕРХ";
 char STR_BUTTON_MANUAL_DOWN[] =  "ВНИЗ";
 char STR_BUTTON_MANUAL_LEFT[] =  "ВЛЕВО";
@@ -1019,6 +1118,8 @@ GtkWidget * create_mode_manual(void)
 
 	fra_mode_manual = gtk_frame_new(STR_MODE_MANUAL);
 	gtk_frame_set_label_align(GTK_FRAME(fra_mode_manual),0.5,0.5);
+	g_signal_connect(fra_mode_manual,"show",G_CALLBACK(show_frame_manual_mode),NULL);
+	g_signal_connect(fra_mode_manual,"hide",G_CALLBACK(hide_frame_manual_mode),NULL);
 
 	gri_mode = gtk_grid_new();
 	gtk_container_set_border_width(GTK_CONTAINER(gri_mode),5);
@@ -1113,13 +1214,12 @@ int select_current_job(GtkTreeView * tre_job)
 	current_job = (job_s *)pt;
 	set_current_value_info();
 
-	gtk_widget_hide(fra_job_load);
 	if(first_auto_mode == OK){
 		first_auto_mode = NOT_OK;
-		gtk_widget_show(fra_mode_auto);
+		select_frame(AUTO_MODE_FRAME);
 	}
 	else{
-		gtk_widget_show(fra_info);
+		select_frame(INFO_FRAME);
 	}
 	return SUCCESS;
 }
@@ -1165,8 +1265,7 @@ void clicked_button_del_job(GtkButton * but,GtkTreeView * tre_job)
 	current_job = NULL;
 
 	set_current_value_info();
-	gtk_widget_hide(fra_job_load);
-	gtk_widget_show(fra_info);
+	select_frame(INFO_FRAME);
 	return ;
 }
 
@@ -1466,8 +1565,7 @@ void clicked_button_save_job(GtkButton * b,gpointer d)
 	}
 
 	set_current_value_info();
-	gtk_widget_hide(fra_job_save);
-	gtk_widget_show(fra_info);
+	select_frame(INFO_FRAME);
 	return ;
 }
 
@@ -1636,6 +1734,7 @@ GtkWidget * create_control_panel(void)
 	gtk_grid_attach(GTK_GRID(gri_control),fra_mode_manual,0,0,1,1);
 	gtk_grid_attach(GTK_GRID(gri_control),fra_job_load   ,0,0,1,1);
 	gtk_grid_attach(GTK_GRID(gri_control),fra_job_save   ,0,0,1,1);
+	select_frame(INFO_FRAME);
 
 	gtk_widget_show(gri_control);
 	return gri_control;

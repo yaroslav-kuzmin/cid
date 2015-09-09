@@ -69,5 +69,6 @@ uint16_t get_pressure(void);
 uint16_t get_sensors(void);
 uint16_t get_input(void);
 uint16_t get_console(void);
+int set_null_mode(void);
 #endif
 
