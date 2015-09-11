@@ -238,7 +238,7 @@ GString * query_row_job = NULL;
 
 /*проверка введеных значений лежит на вышестояшей функции*/
 static int insert_job_db(const char * name,const char *pressure,const char * time
-              ,const char * str_uprise,const char * str_lowering )
+              ,long int uprise,long int lowering )
 {
 	job_s * pj;
 	char * sql_error;
@@ -259,8 +259,8 @@ static int insert_job_db(const char * name,const char *pressure,const char * tim
 	pj->name = g_string_new(name);
 	pj->pressure = g_ascii_strtoll(pressure,NULL,10);
 	pj->time = str_time_to_datetime(time);
-	pj->uprise = g_ascii_strtoll(str_uprise,NULL,10);
-	pj->lowering = g_ascii_strtoll(str_lowering,NULL,10);
+	pj->uprise = uprise;
+	pj->lowering = lowering;
 
 	g_hash_table_add(list_job,pj);
 
@@ -640,6 +640,8 @@ GtkWidget * create_menu_main(void)
 /*****************************************************************************/
 /* Панель управления и информации                                            */
 /*****************************************************************************/
+#define ANGLE_BASE        16
+#define ANGLE_FORMAT      "%#x"
 /*************************************/
 /* окно информации о работе          */
 /*************************************/
@@ -679,9 +681,9 @@ int set_current_value_info(void)
 		               ,g_date_time_get_minute(current_job->time)
 		               ,g_date_time_get_second(current_job->time));
 		gtk_label_set_text(GTK_LABEL(lab_info_time),temp_string->str);
-		g_string_printf(temp_string,"%d",current_job->uprise);
+		g_string_printf(temp_string,ANGLE_FORMAT,current_job->uprise);
 		gtk_label_set_text(GTK_LABEL(lab_info_uprise),temp_string->str);
-		g_string_printf(temp_string,"%d",current_job->lowering);
+		g_string_printf(temp_string,ANGLE_FORMAT,current_job->lowering);
 		gtk_label_set_text(GTK_LABEL(lab_info_lowering),temp_string->str);
 	}
 	return SUCCESS;
@@ -760,17 +762,58 @@ static char STR_BUTTON_AUTO_PAUSE[] = "ПАУЗА";
 static char STR_SET_VALUE[] = "Установленое значение";
 static char STR_CURRENT_VALUE[] = "Текущее значение";
 
+int amount_auto_mode = 0;
+int check_registers_auto_mode(gpointer ud)
+{
+	uint16_t angle;
+	uint16_t pressure;
+	uint16_t sensors;
+	uint16_t input;
+	uint16_t console;
+
+	if(auto_mode_start != OK){
+		return FALSE;
+	}
+	amount_auto_mode ++;
+	angle = get_angle();
+	pressure = get_pressure();
+	sensors = get_sensors();
+	input = get_input();
+	console = get_console();
+	g_printf("\n%04d\n",amount_auto_mode);
+	g_printf("angle    :> %#x\n",angle);
+	g_printf("pressure :> %#x\n",pressure);
+	g_printf("sensors  :> %#x\n",sensors);
+	g_printf("input    :> %#x\n",input);
+	g_printf("console  :> %#x\n",console);
+	return TRUE;
+}
+
+int timeout_auto_mode = 1000; /* раз в секунду*/
+
 void clicked_button_auto_start(GtkButton * b,gpointer d)
 {
-	g_debug("start");
+	auto_mode_start = OK;
+	amount_auto_mode = 0;
+	set_auto_start();
+	g_timeout_add(timeout_auto_mode,check_registers_auto_mode,NULL);
 }
 void clicked_button_auto_stop(GtkButton * b,gpointer d)
 {
-	g_debug("stop");
+	auto_mode_start = NOT_OK;
+	set_auto_stop();
 }
 void clicked_button_auto_pause(GtkButton * b,gpointer d)
 {
-	g_debug("pause");
+	if(auto_mode_start == OK){
+		set_auto_pause();
+		auto_mode_start = NOT_OK;
+	}
+	else{
+		auto_mode_start = OK;
+		set_auto_start();
+		g_timeout_add(timeout_auto_mode,check_registers_auto_mode,NULL);
+	}
 }
 
 struct _label_auto_mode_s
@@ -813,9 +856,9 @@ int set_preset_value_auto_mode(void)
 	               ,g_date_time_get_minute(current_job->time)
 	               ,g_date_time_get_second(current_job->time));
 	gtk_label_set_text(GTK_LABEL(lab_auto_mode_time),temp_string->str);
-	g_string_printf(temp_string,"%d",current_job->uprise);
+	g_string_printf(temp_string,ANGLE_FORMAT,current_job->uprise);
 	gtk_label_set_text(GTK_LABEL(lab_auto_mode_uprise),temp_string->str);
-	g_string_printf(temp_string,"%d",current_job->lowering);
+	g_string_printf(temp_string,ANGLE_FORMAT,current_job->lowering);
 	gtk_label_set_text(GTK_LABEL(lab_auto_mode_lowering),temp_string->str);
 	return SUCCESS;
 }
@@ -892,8 +935,19 @@ GtkWidget * create_label_mode_auto(void)
 
 void show_frame_auto_mode(GtkWidget * w,gpointer ud)
 {
+	auto_mode_start = NOT_OK;
 	set_preset_value_auto_mode();
 	set_current_value_auto_mode();
+	set_auto_mode();
+	set_uprise_angle(current_job->uprise);
+	set_lowering_angle(current_job->lowering);
+}
+
+void hide_frame_auto_mode(GtkWidget * w,gpointer ud)
+{
+	set_null_mode();
+	set_uprise_angle(0x00);
+	set_lowering_angle(0x00);
 }
 
 GtkWidget * create_mode_auto(void)
@@ -908,6 +962,7 @@ GtkWidget * create_mode_auto(void)
 	fra_mode_auto = gtk_frame_new(STR_MODE_AUTO);
 	gtk_frame_set_label_align(GTK_FRAME(fra_mode_auto),0.5,0.5);
 	g_signal_connect(fra_mode_auto,"show",G_CALLBACK(show_frame_auto_mode),NULL);
+	g_signal_connect(fra_mode_auto,"hide",G_CALLBACK(hide_frame_auto_mode),NULL);
 
 	box_hor_main = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
 	gtk_widget_set_halign(box_hor_main,GTK_ALIGN_FILL);
@@ -962,7 +1017,6 @@ void press_button_manual_up(GtkWidget * b,GdkEvent * e,gpointer ud)
 	color.alpha = 1;
 	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
 	set_manual_up();
-	g_debug("Вверх");
 }
 void release_button_manual_up(GtkWidget * b,GdkEvent * e,gpointer ud)
 {
@@ -972,7 +1026,6 @@ void release_button_manual_up(GtkWidget * b,GdkEvent * e,gpointer ud)
 	color.blue = 0;
 	color.alpha = 1;
 	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
-	g_debug("Стоп Вверх");
 	set_manual_null();
 }
 void press_button_manual_down(GtkWidget * b,GdkEvent * e,gpointer ud)
@@ -983,7 +1036,6 @@ void press_button_manual_down(GtkWidget * b,GdkEvent * e,gpointer ud)
 	color.blue = 0;
 	color.alpha = 1;
 	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
-	g_debug("Вниз");
 	set_manual_down();
 }
 void release_button_manual_down(GtkWidget * b,GdkEvent * e,gpointer ud)
@@ -994,7 +1046,7 @@ void release_button_manual_down(GtkWidget * b,GdkEvent * e,gpointer ud)
 	color.blue = 0;
 	color.alpha = 1;
 	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
-	g_debug("Стоп Вниз");
+
 	set_manual_null();
 }
 void press_button_manual_left(GtkWidget * b,GdkEvent * e,gpointer ud)
@@ -1005,7 +1057,6 @@ void press_button_manual_left(GtkWidget * b,GdkEvent * e,gpointer ud)
 	color.blue = 0;
 	color.alpha = 1;
 	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
-	g_debug("Влево");
 	set_manual_left();
 }
 void release_button_manual_left(GtkWidget * b,GdkEvent * e,gpointer ud)
@@ -1016,7 +1067,6 @@ void release_button_manual_left(GtkWidget * b,GdkEvent * e,gpointer ud)
 	color.blue = 0;
 	color.alpha = 1;
 	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
-	g_debug("Стоп Влево");
 	set_manual_null();
 }
 void press_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
@@ -1027,7 +1077,6 @@ void press_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
 	color.blue = 0;
 	color.alpha = 1;
 	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
-	g_debug("Вправо");
 	set_manual_right();
 }
 void release_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
@@ -1038,18 +1087,17 @@ void release_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
 	color.blue = 0;
 	color.alpha = 1;
 	gtk_widget_override_background_color(b,GTK_STATE_FLAG_NORMAL,&color);
-	g_debug("Стоп Вправо");
 	set_manual_null();
 }
 
 void clicked_button_manual_close(GtkButton * b,gpointer d)
 {
-	g_message("Закрыть задвижку ручная работа");
+	g_debug("Закрыть задвижку ручная работа");
 }
 
 void clicked_button_manual_open(GtkButton * b,gpointer d)
 {
-	g_message("Открыть задвижку ручная работа");
+	g_debug("Открыть задвижку ручная работа");
 }
 
 int amount_manual_mode = 0;
@@ -1079,10 +1127,6 @@ int check_registers_manual_mode(gpointer ud)
 	return TRUE;
 }
 
-/*g_timeout_add(милисекунды,fun,userdata);*/
-/* int fun (userdata)*/
-/* return TRUE продолжать*/
-/* return FALSE закончить*/
 int timeout_manual_mode = 1000;
 
 void show_frame_manual_mode(GtkWidget * w,gpointer ud)
@@ -1466,26 +1510,42 @@ int check_entry_time(const char * str)
 	return SUCCESS;
 }
 
-int check_entry_angle(const char * str_uprise,const char * str_lowering)
+#define ANGLE_NULL        -1
+
+static long int value_uprise = ANGLE_NULL;
+static long int value_lowering = ANGLE_NULL;
+
+#define ANGLE_NOT_FIX             -1
+#define ANGLE_INTERSECT           -2
+
+int check_entry_angle(void)
 {
-	gint64 t_uprise  = g_ascii_strtoll(str_uprise,NULL,10);
-	gint64 t_lowering = g_ascii_strtoll(str_lowering,NULL,10);
-
-	if(t_uprise <= t_lowering){
-		return FAILURE;
+	if(value_uprise == ANGLE_NULL){
+		return ANGLE_NOT_FIX;
 	}
-
+	if(value_lowering == ANGLE_NULL){
+		return ANGLE_NOT_FIX;
+	}
+/*TODO тесттирование
+	if(t_uprise <= t_lowering){
+		return ANGLE_INTERSECT;
+	}
+*/
 	return SUCCESS;
 }
 
 void clicked_button_fix_uprise(GtkButton * b,gpointer d)
 {
-	g_debug("fix angle uprise");
+	const char * uprise = gtk_entry_buffer_get_text(entbuff_uprise);
+	value_uprise  = g_ascii_strtoll(uprise,NULL,16);
+	g_debug("fix angle uprise : %#lx",value_uprise);
 }
 
 void clicked_button_fix_lowering(GtkButton * b,gpointer d)
 {
-	g_debug("fix angle lowering");
+	const char * lowering = gtk_entry_buffer_get_text(entbuff_lowering);
+	value_lowering = g_ascii_strtoll(lowering,NULL,16);
+	g_debug("fix angle lowering : %#lx",value_lowering);
 }
 
 void clicked_button_save_job(GtkButton * b,gpointer d)
@@ -1497,8 +1557,6 @@ void clicked_button_save_job(GtkButton * b,gpointer d)
 	const char * name = gtk_entry_buffer_get_text(entbuff_name_job);
 	const char * pressure = gtk_entry_buffer_get_text(entbuff_pressure);
 	const char * time = gtk_entry_buffer_get_text(entbuff_time);
-	const char * uprise = gtk_entry_buffer_get_text(entbuff_uprise);
-	const char * lowering = gtk_entry_buffer_get_text(entbuff_lowering);
 
 	rc = check_entry_pressure(pressure);
 	if(rc != SUCCESS){
@@ -1517,15 +1575,22 @@ void clicked_button_save_job(GtkButton * b,gpointer d)
 		gtk_widget_destroy(error);
 		return;
 	}
-	rc = check_entry_angle(uprise,lowering);
+	rc = check_entry_angle();
 	if(rc != SUCCESS){
+		char * str_error = "Непонял !";
+		if(rc == ANGLE_NOT_FIX){
+			str_error = "Углы не зафиксированы!";
+		}
+		if(rc == ANGLE_INTERSECT){
+			str_error = "Углы пересекаются!";
+		}
 		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
-		                              ,GTK_BUTTONS_CLOSE,"Введеное значение углов не корректно!");
+		                              ,GTK_BUTTONS_CLOSE,str_error);
 		gtk_dialog_run(GTK_DIALOG(error));
 		gtk_widget_destroy(error);
 		return;
 	}
-	rc = insert_job_db(name,pressure,time,uprise,lowering);
+	rc = insert_job_db(name,pressure,time,value_uprise,value_lowering);
 	if(rc == MATCH_NAME){
 		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
 		                              ,GTK_BUTTONS_CLOSE,"Введеное имя работы есть в базе данных!");
@@ -1604,10 +1669,10 @@ GtkWidget * create_entry_job_save(void)
 	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_time),8);
 	ent_time = gtk_entry_new_with_buffer(entbuff_time);
 	entbuff_uprise = gtk_entry_buffer_new(STR_ANGLE_DEFAULT,-1);
-	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_uprise),2);
+	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_uprise),4);
 	ent_uprise = gtk_entry_new_with_buffer(entbuff_uprise);
 	entbuff_lowering = gtk_entry_buffer_new(STR_ANGLE_DEFAULT,-1);
-	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_lowering),2);
+	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_lowering),4);
 	ent_lowering = gtk_entry_new_with_buffer(entbuff_lowering);
 	but_fix_uprise = gtk_button_new_with_label(STR_FIX_ANGLE);
 	g_signal_connect(but_fix_uprise,"clicked",G_CALLBACK(clicked_button_fix_uprise),NULL);
@@ -1686,6 +1751,12 @@ GtkWidget * create_button_job_save(void)
 	return gri_button;
 }
 
+void show_frame_save_job(GtkWidget * w,gpointer ud)
+{
+	value_uprise = ANGLE_NULL;
+	value_lowering = ANGLE_NULL;
+}
+
 GtkWidget * create_job_save(void)
 {
 	GtkWidget * box_horizontal;
@@ -1696,6 +1767,7 @@ GtkWidget * create_job_save(void)
 	fra_job_save = gtk_frame_new(STR_JOB_SAVE);
 	gtk_frame_set_label_align(GTK_FRAME(fra_job_save),0.5,0.5);
 	gtk_container_set_border_width(GTK_CONTAINER(fra_job_save),5);
+	g_signal_connect(fra_job_save,"show",G_CALLBACK(show_frame_save_job),NULL);
 
 	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
 
