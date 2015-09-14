@@ -632,6 +632,9 @@ GtkWidget * create_menu_main(void)
 	menite_temp = create_menu_video();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menbar_main),menite_temp);
 
+	menite_temp = create_menu_device();
+	gtk_menu_shell_append(GTK_MENU_SHELL(menbar_main),menite_temp);
+
 	gtk_widget_show(men_work);
 	gtk_widget_show(menbar_main);
 

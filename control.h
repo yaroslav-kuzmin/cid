@@ -44,8 +44,7 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
-int init_control_device(char ** port);
-int deinit_control_device(void);
+GtkWidget * create_menu_device(void);
 
 int set_wait_mode(void);
 int set_config_mode(void);

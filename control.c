@@ -42,11 +42,12 @@
 /*****************************************************************************/
 
 /*****************************************************************************/
-#include <glib.h>
+#include <gtk/gtk.h>
 
 #include <modbus.h>
 
 #include "total.h"
+#include "cid.h"
 
 
 /*****************************************************************************/
@@ -440,13 +441,12 @@ int set_null_mode(void)
 	return SUCCESS;
 }
 
-int init_control_device(char ** name)
+int init_control_device(void)
 {
 	int rc;
 	read_config();
 	dest = g_malloc0(amoun_dest * sizeof(uint16_t));
 
-	*name = device_name;
 	rc = connect_device();
 	if(rc == DISCONNECT){
 		return rc;
@@ -457,10 +457,77 @@ int init_control_device(char ** name)
 
 int deinit_control_device(void)
 {
-	g_free(dest);
-	set_wait_mode();
+	set_null_mode();
 	disconnect_device();
+	g_free(dest);
 	return SUCCESS;
+}
+
+/*****************************************************************************/
+
+static char STR_DEVICE[] = "Порт";
+static char STR_ON_DEVICE[]  = "Включить ";
+static char STR_OFF_DEVICE[] = "Выключить";
+/*static char STR_SETTING_DEVICE[] = "Настройка";*/
+
+static void activate_menu_device(GtkMenuItem * mi,gpointer ud)
+{
+	int rc;
+	if(status_connect != CONNECT){
+		rc = init_control_device();
+		if(rc != CONNECT){
+			GtkWidget * md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_OK
+			                                           ,"Несмог подключится к порту %s",device_name);
+			gtk_dialog_run(GTK_DIALOG(md_err));
+			gtk_widget_destroy (md_err);
+			return;
+		}
+		gtk_menu_item_set_label(mi,STR_OFF_DEVICE);
+	}
+	else{
+		gtk_menu_item_set_label(mi,STR_ON_DEVICE);
+		deinit_control_device();
+	}
+}
+/*
+static void activate_menu_setting(GtkMenuItem * mi,gpointer ud)
+{
+	g_message("Установил настройки видео потока");
+}
+*/
+GtkWidget * create_menu_device(void)
+{
+	GtkWidget * menite_device;
+	GtkWidget * men_device;
+	GtkWidget * menite_temp;
+
+	menite_device = gtk_menu_item_new_with_label(STR_DEVICE);
+
+	men_device = gtk_menu_new();
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menite_device),men_device);
+
+	menite_temp = gtk_menu_item_new_with_label(STR_ON_DEVICE);
+	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_device),NULL);
+	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
+	                          ,'P',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	gtk_menu_shell_append(GTK_MENU_SHELL(men_device),menite_temp);
+	gtk_widget_show(menite_temp);
+
+	/*TODO добавить настройки*/
+/*
+	menite_temp = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(men_device),menite_temp);
+	gtk_widget_show(menite_temp);
+	menite_temp = gtk_menu_item_new_with_label(STR_SETTING_DEVICE);
+	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_setting),NULL);
+	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
+	                          ,'S',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	gtk_menu_shell_append(GTK_MENU_SHELL(men_device),menite_temp);
+*/
+	gtk_widget_show(menite_temp);
+
+	gtk_widget_show(menite_device);
+	return menite_device;
 }
 
 /*****************************************************************************/
