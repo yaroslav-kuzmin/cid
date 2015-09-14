@@ -239,7 +239,7 @@ int connect_device(void)
 	}
 
 	status_connect = CONNECT;
-	gtk_menu_item_set_label(menite_control_device,STR_OFF_DEVICE);
+	/*gtk_menu_item_set_label(menite_control_device,STR_OFF_DEVICE);*/
 	g_message("Подсоединился к порту : %s",device_name);
 	return CONNECT;
 }
@@ -251,7 +251,7 @@ int disconnect_device(void)
 		modbus_free(ctx);
 		status_connect = DISCONNECT;
 		ctx = NULL;
-		gtk_menu_item_set_label(menite_control_device,STR_ON_DEVICE);
+		/*gtk_menu_item_set_label(menite_control_device,STR_ON_DEVICE);*/
 		g_message("Отсоединился от порта : %s",device_name);
 	}
 	return DISCONNECT;
@@ -480,6 +480,18 @@ int deinit_control_device(void)
 }
 
 /*****************************************************************************/
+/* панель состоянея подключения порта                                        */
+/*****************************************************************************/
+
+GtkWidget * 
+GtkWidget * create_status_device(void)
+{
+	return 
+}
+
+/*****************************************************************************/
+/*  подменю включение порта                                                  */
+/*****************************************************************************/
 
 /*static char STR_SETTING_DEVICE[] = "Настройка";*/
 
@@ -511,7 +523,7 @@ GtkWidget * create_menu_device(void)
 {
 	GtkWidget * menite_device;
 	GtkWidget * men_device;
-	GtkWidget * menite_temp;
+	/*GtkWidget * menite_temp;*/
 
 	menite_device = gtk_menu_item_new_with_label(STR_DEVICE);
 

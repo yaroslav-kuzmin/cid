@@ -958,6 +958,8 @@ GtkWidget * create_label_mode_auto(void)
 	GtkWidget * lab_lowering;
 
 	fra_auto = gtk_frame_new(STR_INFO);
+	gtk_widget_set_halign(fra_auto,GTK_ALIGN_FILL);
+	gtk_widget_set_valign(fra_auto,GTK_ALIGN_FILL);
 	gtk_container_set_border_width(GTK_CONTAINER(fra_auto),5);
 
 	gri_auto = gtk_grid_new();
@@ -1043,6 +1045,8 @@ GtkWidget * create_mode_auto(void)
 	GtkWidget * gri_auto;
 
 	fra_mode_auto = gtk_frame_new(STR_MODE_AUTO);
+	gtk_widget_set_halign(fra_mode_auto,GTK_ALIGN_FILL);
+	gtk_widget_set_valign(fra_mode_auto,GTK_ALIGN_FILL);
 	gtk_frame_set_label_align(GTK_FRAME(fra_mode_auto),0.5,0.5);
 	g_signal_connect(fra_mode_auto,"show",G_CALLBACK(show_frame_auto_mode),NULL);
 	g_signal_connect(fra_mode_auto,"hide",G_CALLBACK(hide_frame_auto_mode),NULL);
@@ -1896,11 +1900,18 @@ GtkWidget * create_job_save(void)
 GtkWidget * create_control_panel(void)
 {
 	GtkWidget * gri_control;
+	GtkSizeGroup * sizgro_control;
+
+	sizgro_control = gtk_size_group_new();
+	gtk_size_group_set_mode(sizgro_control,GTK_SIZE_GROUP_BOTH);
 
 	gri_control = gtk_grid_new();
-	gtk_container_set_border_width(GTK_CONTAINER(gri_control),5);
+	gtk_container_set_border_width(GTK_CONTAINER(gri_control),10);
+	gtk_widget_set_halign(gri_control,GTK_ALIGN_FILL);
+	gtk_widget_set_valign(gri_control,GTK_ALIGN_FILL);
 	/*TODO установить нужный размер*/
 	gtk_widget_set_size_request(gri_control,-1,300);
+	gtk_size_group_add_widget(sizgro_control,gri_control);
 
 	fra_info = create_info();
 	fra_mode_auto = create_mode_auto();
