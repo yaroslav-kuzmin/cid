@@ -332,12 +332,12 @@ GtkWidget * create_menu_video(void)
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
 	gtk_widget_show(menite_temp);
 
-	menite_temp = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
-	gtk_widget_show(menite_temp);
 
 	/*TODO добавить настройки*/
 /*
+	menite_temp = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
+	gtk_widget_show(menite_temp);
 	menite_temp = gtk_menu_item_new_with_label(STR_SETTING_VIDEO);
 	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_setting),NULL);
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main

@@ -756,6 +756,17 @@ GtkWidget * create_info(void)
 /*окно работа в автоматическом режиме*/
 /*************************************/
 
+struct _label_auto_mode_s
+{
+	GtkWidget * pressure;
+	GtkWidget * time;
+	GtkWidget * uprise;
+	GtkWidget * lowering;
+};
+typedef struct _label_auto_mode_s  label_auto_mode_s;
+
+label_auto_mode_s label_auto_mode;
+
 static char STR_BUTTON_AUTO_START[] = "СТАРТ";
 static char STR_BUTTON_AUTO_STOP[]  = "СТОП";
 static char STR_BUTTON_AUTO_PAUSE[] = "ПАУЗА";
@@ -763,6 +774,7 @@ static char STR_SET_VALUE[] = "Установленое значение";
 static char STR_CURRENT_VALUE[] = "Текущее значение";
 
 int amount_auto_mode = 0;
+
 int check_registers_auto_mode(gpointer ud)
 {
 	uint16_t angle;
@@ -770,6 +782,10 @@ int check_registers_auto_mode(gpointer ud)
 	uint16_t sensors;
 	uint16_t input;
 	uint16_t console;
+	int hour;
+	int minut;
+	int second;
+	label_auto_mode_s * label = (label_auto_mode_s *)ud;
 
 	if(auto_mode_start != OK){
 		return FALSE;
@@ -780,12 +796,28 @@ int check_registers_auto_mode(gpointer ud)
 	sensors = get_sensors();
 	input = get_input();
 	console = get_console();
-	g_printf("\n%04d\n",amount_auto_mode);
+
+	hour = amount_auto_mode / (60*60);
+	minut = amount_auto_mode/60 - (hour * 60);
+	second = amount_auto_mode - (minut * 60);
+
+	/*TODO давление считывать с регистров*/
+	g_string_printf(temp_string,"2");
+	gtk_label_set_text(GTK_LABEL(label->pressure),temp_string->str);
+
+	g_string_printf(temp_string,"%02d:%02d:%02d",hour,minut,second);
+	gtk_label_set_text(GTK_LABEL(label->time),temp_string->str);
+
+	g_string_printf(temp_string,"23");
+	gtk_label_set_text(GTK_LABEL(label->uprise),temp_string->str);
+	gtk_label_set_text(GTK_LABEL(label->lowering),temp_string->str);
+
 	g_printf("angle    :> %#x\n",angle);
 	g_printf("pressure :> %#x\n",pressure);
 	g_printf("sensors  :> %#x\n",sensors);
 	g_printf("input    :> %#x\n",input);
 	g_printf("console  :> %#x\n",console);
+
 	return TRUE;
 }
 
@@ -796,7 +828,7 @@ void clicked_button_auto_start(GtkButton * b,gpointer d)
 	auto_mode_start = OK;
 	amount_auto_mode = 0;
 	set_auto_start();
-	g_timeout_add(timeout_auto_mode,check_registers_auto_mode,NULL);
+	g_timeout_add(timeout_auto_mode,check_registers_auto_mode,&label_auto_mode);
 }
 void clicked_button_auto_stop(GtkButton * b,gpointer d)
 {
@@ -812,20 +844,10 @@ void clicked_button_auto_pause(GtkButton * b,gpointer d)
 	else{
 		auto_mode_start = OK;
 		set_auto_start();
-		g_timeout_add(timeout_auto_mode,check_registers_auto_mode,NULL);
+		g_timeout_add(timeout_auto_mode,check_registers_auto_mode,&label_auto_mode);
 	}
 }
 
-struct _label_auto_mode_s
-{
-	GtkWidget * pressure;
-	GtkWidget * time;
-	GtkWidget * uprise;
-	GtkWidget * lowering;
-};
-typedef struct _label_auto_mode_s  label_auto_mode_s;
-
-label_auto_mode_s label_auto_mode;
 GtkWidget * lab_auto_mode_name_job;
 GtkWidget * lab_auto_mode_pressure;
 GtkWidget * lab_auto_mode_time;
@@ -1118,6 +1140,7 @@ int check_registers_manual_mode(gpointer ud)
 	sensors = get_sensors();
 	input = get_input();
 	console = get_console();
+
 	g_printf("\n%04d\n",amount_manual_mode);
 	g_printf("angle    :> %#x\n",angle);
 	g_printf("pressure :> %#x\n",pressure);
@@ -1717,9 +1740,10 @@ GtkWidget * create_button_job_save(void)
 	GtkWidget * gri_button;
 	GtkWidget * but_up;
 	GtkWidget * but_down;
+/*
 	GtkWidget * but_left;
 	GtkWidget * but_right;
-
+*/
 	gri_button = gtk_grid_new();
 
 	but_up = gtk_button_new_with_label(STR_BUTTON_MANUAL_UP);
@@ -1729,7 +1753,7 @@ GtkWidget * create_button_job_save(void)
 	but_down = gtk_button_new_with_label(STR_BUTTON_MANUAL_DOWN);
 	g_signal_connect(but_down,"button-press-event",G_CALLBACK(press_button_manual_down),NULL);
 	g_signal_connect(but_down,"button-release-event",G_CALLBACK(release_button_manual_down),NULL);
-
+/*
 	but_left = gtk_button_new_with_label(STR_BUTTON_MANUAL_LEFT);
 	g_signal_connect(but_left,"button-press-event",G_CALLBACK(press_button_manual_left),NULL);
 	g_signal_connect(but_left,"button-release-event",G_CALLBACK(release_button_manual_left),NULL);
@@ -1737,14 +1761,18 @@ GtkWidget * create_button_job_save(void)
 	but_right = gtk_button_new_with_label(STR_BUTTON_MANUAL_RIGHT);
 	g_signal_connect(but_right,"button-press-event",G_CALLBACK(press_button_manual_right),NULL);
 	g_signal_connect(but_right,"button-release-event",G_CALLBACK(release_button_manual_right),NULL);
+*/
 
 	gtk_grid_attach(GTK_GRID(gri_button),but_up   ,1,0,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),but_down ,1,2,1,1);
+/*
 	gtk_grid_attach(GTK_GRID(gri_button),but_left ,0,1,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),but_right,2,1,1,1);
-
+*/
+/*
 	gtk_widget_show(but_right);
 	gtk_widget_show(but_left);
+*/
 	gtk_widget_show(but_down);
 	gtk_widget_show(but_up);
 	gtk_widget_show(gri_button);
@@ -1755,6 +1783,12 @@ void show_frame_save_job(GtkWidget * w,gpointer ud)
 {
 	value_uprise = ANGLE_NULL;
 	value_lowering = ANGLE_NULL;
+	set_config_mode();
+}
+
+void hide_frame_save_job(GtkWidget * w,gpointer ud)
+{
+	set_null_mode();
 }
 
 GtkWidget * create_job_save(void)
@@ -1766,8 +1800,9 @@ GtkWidget * create_job_save(void)
 
 	fra_job_save = gtk_frame_new(STR_JOB_SAVE);
 	gtk_frame_set_label_align(GTK_FRAME(fra_job_save),0.5,0.5);
-	gtk_container_set_border_width(GTK_CONTAINER(fra_job_save),5);
+	gtk_container_set_border_width(GTK_CONTAINER(fra_job_save),10);
 	g_signal_connect(fra_job_save,"show",G_CALLBACK(show_frame_save_job),NULL);
+	g_signal_connect(fra_job_save,"hide",G_CALLBACK(hide_frame_save_job),NULL);
 
 	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
 
