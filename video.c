@@ -333,7 +333,6 @@ GtkWidget * create_menu_video(void)
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
 	gtk_widget_show(menite_temp);
 
-
 	/*TODO добавить настройки*/
 /*
 	menite_temp = gtk_separator_menu_item_new();
@@ -344,8 +343,8 @@ GtkWidget * create_menu_video(void)
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
 	                          ,'S',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
-*/
 	gtk_widget_show(menite_temp);
+*/
 
 	gtk_widget_show(menite_video);
 	return menite_video;

@@ -445,9 +445,20 @@ static char STR_JOB_SAVE[] = "Новая работа";
 int current_frame = INFO_FRAME;
 int first_auto_mode = NOT_OK;
 int auto_mode_start = NOT_OK;
+int manual_mode_start = NOT_OK;
+
+int not_connect_device(void)
+{
+	GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+	                                          ,GTK_BUTTONS_CLOSE,"Нет подключения к устройству!");
+	gtk_dialog_run(GTK_DIALOG(error));
+	gtk_widget_destroy(error);
+	return SUCCESS;
+}
 
 int select_frame(int frame)
 {
+	int rc;
 	if(current_frame == AUTO_MODE_FRAME){
 		if(auto_mode_start == OK){
 			GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
@@ -478,6 +489,11 @@ int select_frame(int frame)
 			break;
 		}
 		case SAVE_JOB_FRAME:{
+			rc = check_connect_device();
+			if(rc != SUCCESS){
+				not_connect_device();
+				return FAILURE;
+			}
 			gtk_widget_hide(fra_info);
 			gtk_widget_hide(fra_mode_auto);
 			gtk_widget_hide(fra_mode_manual);
@@ -487,6 +503,11 @@ int select_frame(int frame)
 			break;
 		}
 		case AUTO_MODE_FRAME:{
+			rc = check_connect_device();
+			if(rc != SUCCESS){
+				not_connect_device();
+				return FAILURE;
+			}
 			gtk_widget_hide(fra_info);
 			gtk_widget_hide(fra_mode_manual);
 			gtk_widget_hide(fra_job_save);
@@ -494,16 +515,21 @@ int select_frame(int frame)
 				gtk_widget_hide(fra_mode_auto);
 				gtk_widget_show(fra_job_load);
 				first_auto_mode = OK;
-				current_frame = LOAD_JOB_FRAME;
+			 	current_frame = LOAD_JOB_FRAME;
 			}
 			else{
-				gtk_widget_hide(fra_job_load);
+			 	gtk_widget_hide(fra_job_load);
 				gtk_widget_show(fra_mode_auto);
 				current_frame = AUTO_MODE_FRAME;
 			}
-			break;
+			 break;
 		}
-		case MANUAL_MODE_FRAME:{
+		case  MANUAL_MODE_FRAME:{
+			rc = check_connect_device();
+			if(rc != SUCCESS){
+				not_connect_device();
+				return FAILURE;
+			}
 			gtk_widget_hide(fra_info);
 			gtk_widget_hide(fra_mode_auto);
 			gtk_widget_hide(fra_job_load);
@@ -801,6 +827,7 @@ int amount_auto_mode = 0;
 
 int check_registers_auto_mode(gpointer ud)
 {
+	int rc;
 	uint16_t angle;
 	uint16_t pressure;
 	uint16_t sensors;
@@ -850,11 +877,14 @@ int timeout_auto_mode = 1000; /* раз в секунду*/
 
 void clicked_button_auto_start(GtkButton * b,gpointer d)
 {
-	auto_mode_start = OK;
-	amount_auto_mode = 0;
-	set_auto_start();
-	g_timeout_add(timeout_auto_mode,check_registers_auto_mode,&label_auto_mode);
-	set_active_color(GTK_WIDGET(b));
+	int rc;
+	rc = set_auto_start();
+	if(rc == SUCCESS){
+		auto_mode_start = OK;
+		amount_auto_mode = 0;
+		g_timeout_add(timeout_auto_mode,check_registers_auto_mode,&label_auto_mode);
+		set_active_color(GTK_WIDGET(b));
+	}
 }
 
 void clicked_button_auto_stop(GtkButton * b,gpointer d)
@@ -863,6 +893,7 @@ void clicked_button_auto_stop(GtkButton * b,gpointer d)
 	set_auto_stop();
 	set_notactive_color(GTK_WIDGET(d));
 }
+
 void clicked_button_auto_pause(GtkButton * b,gpointer d)
 {
 	if(auto_mode_start == OK){
@@ -1128,7 +1159,7 @@ int check_registers_manual_mode(gpointer ud)
 	int minut;
 	int second;
 
-	if(current_frame != MANUAL_MODE_FRAME){
+	if(manual_mode_start != OK){
 		return FALSE;
 	}
 	amount_manual_mode ++;
@@ -1156,13 +1187,18 @@ int timeout_manual_mode = 1000;
 
 void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 {
-	amount_manual_mode = 0;
-	set_manual_mode();
-	g_timeout_add(timeout_manual_mode,check_registers_manual_mode,NULL);
+	int rc;
+	rc = set_manual_mode();
+	if(rc == SUCCESS){
+		amount_manual_mode = 0;
+		manual_mode_start = OK;
+		g_timeout_add(timeout_manual_mode,check_registers_manual_mode,NULL);
+	}
 }
 
 void hide_frame_manual_mode(GtkWidget * w,gpointer ud)
 {
+	manual_mode_start = NOT_OK;
 	set_null_mode();
 	set_uprise_angle(0x00);
 	set_lowering_angle(0x00);

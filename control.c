@@ -67,6 +67,11 @@ int stop_bit = 1;
 int slave_id = 1;
 int modbus_debug = FALSE;
 int protocol = PROTOCOL_RTU;
+
+GtkWidget * menite_control_device;
+static char STR_DEVICE[] = "Порт";
+static char STR_ON_DEVICE[]  = "Включить ";
+static char STR_OFF_DEVICE[] = "Выключить";
 /*****************************************************************************/
 
 static char STR_MODBUS_GROUP[] = "modbus";
@@ -193,6 +198,7 @@ static int read_config(void)
 }
 
 static modbus_t *ctx = NULL;
+
 int connect_device(void)
 {
 	int rc;
@@ -233,6 +239,7 @@ int connect_device(void)
 	}
 
 	status_connect = CONNECT;
+	gtk_menu_item_set_label(menite_control_device,STR_OFF_DEVICE);
 	g_message("Подсоединился к порту : %s",device_name);
 	return CONNECT;
 }
@@ -244,9 +251,18 @@ int disconnect_device(void)
 		modbus_free(ctx);
 		status_connect = DISCONNECT;
 		ctx = NULL;
+		gtk_menu_item_set_label(menite_control_device,STR_ON_DEVICE);
 		g_message("Отсоединился от порта : %s",device_name);
 	}
 	return DISCONNECT;
+}
+
+int check_connect_device(void)
+{
+	if(ctx != NULL){
+		return SUCCESS;
+	}
+	return FAILURE;
 }
 
 int write_register(int reg,int value)
@@ -278,12 +294,12 @@ uint16_t * read_register(int reg,int amount)
 	memset(dest,0,(amoun_dest*sizeof(uint16_t)));
 	if(ctx == NULL){
 		g_critical("Нет соединения с портом : %s",device_name);
-		return dest;
+		return NULL;
 	}
 	rc = modbus_read_registers(ctx,reg,amount,dest);
 	if(rc == -1){
 		g_critical("Несмог считать данные из порта");
-		return dest;
+		return NULL;
 	}
 	return dest;
 }
@@ -465,9 +481,6 @@ int deinit_control_device(void)
 
 /*****************************************************************************/
 
-static char STR_DEVICE[] = "Порт";
-static char STR_ON_DEVICE[]  = "Включить ";
-static char STR_OFF_DEVICE[] = "Выключить";
 /*static char STR_SETTING_DEVICE[] = "Настройка";*/
 
 static void activate_menu_device(GtkMenuItem * mi,gpointer ud)
@@ -482,10 +495,8 @@ static void activate_menu_device(GtkMenuItem * mi,gpointer ud)
 			gtk_widget_destroy (md_err);
 			return;
 		}
-		gtk_menu_item_set_label(mi,STR_OFF_DEVICE);
 	}
 	else{
-		gtk_menu_item_set_label(mi,STR_ON_DEVICE);
 		deinit_control_device();
 	}
 }
@@ -495,6 +506,7 @@ static void activate_menu_setting(GtkMenuItem * mi,gpointer ud)
 	g_message("Установил настройки видео потока");
 }
 */
+
 GtkWidget * create_menu_device(void)
 {
 	GtkWidget * menite_device;
@@ -506,12 +518,12 @@ GtkWidget * create_menu_device(void)
 	men_device = gtk_menu_new();
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menite_device),men_device);
 
-	menite_temp = gtk_menu_item_new_with_label(STR_ON_DEVICE);
-	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_device),NULL);
-	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
+	menite_control_device = gtk_menu_item_new_with_label(STR_ON_DEVICE);
+	g_signal_connect(menite_control_device,"activate",G_CALLBACK(activate_menu_device),NULL);
+	gtk_widget_add_accelerator(menite_control_device,"activate",accgro_main
 	                          ,'P',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
-	gtk_menu_shell_append(GTK_MENU_SHELL(men_device),menite_temp);
-	gtk_widget_show(menite_temp);
+	gtk_menu_shell_append(GTK_MENU_SHELL(men_device),menite_control_device);
+	gtk_widget_show(menite_control_device);
 
 	/*TODO добавить настройки*/
 /*
@@ -523,10 +535,11 @@ GtkWidget * create_menu_device(void)
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
 	                          ,'S',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_device),menite_temp);
-*/
 	gtk_widget_show(menite_temp);
+*/
 
 	gtk_widget_show(menite_device);
+
 	return menite_device;
 }
 

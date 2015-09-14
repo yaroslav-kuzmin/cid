@@ -46,6 +46,8 @@
 
 GtkWidget * create_menu_device(void);
 
+int check_connect_device(void);
+
 int set_wait_mode(void);
 int set_config_mode(void);
 int set_auto_mode(void);
