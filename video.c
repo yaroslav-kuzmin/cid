@@ -183,6 +183,7 @@ gboolean play_image(gpointer ud)
 	if(open_stream == OK){
 		return TRUE;
 	}
+	gtk_image_set_from_pixbuf(GTK_IMAGE(video_stream),image_default);
 	return 	FALSE;
 }
 
