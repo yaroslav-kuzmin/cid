@@ -67,11 +67,11 @@ int set_manual_on_drive(void);
 int set_manual_off_drive(void);
 int set_uprise_angle(int value);
 int set_lowering_angle(int value);
-uint16_t get_angle(void);
-uint16_t get_pressure(void);
-uint16_t get_sensors(void);
-uint16_t get_input(void);
-uint16_t get_console(void);
+int get_angle(uint16_t * val);
+int get_pressure(uint16_t * val);
+int get_sensors(uint16_t * val);
+int get_input(uint16_t * val);
+int get_console(uint16_t * val);
 int set_null_mode(void);
 #endif
 

@@ -48,5 +48,8 @@ int init_db(void);
 int deinit_db(void);
 GtkWidget * create_menu_main(void);
 GtkWidget * create_control_panel(void);
+int check_auto_mode(void);
+int not_connect_device(void);
+
 #endif
 

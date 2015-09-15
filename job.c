@@ -442,10 +442,16 @@ static char STR_JOB_SAVE[] = "Новая работа";
 #define AUTO_MODE_FRAME    3
 #define MANUAL_MODE_FRAME  4
 
-int current_frame = INFO_FRAME;
-int first_auto_mode = NOT_OK;
-int auto_mode_start = NOT_OK;
-int manual_mode_start = NOT_OK;
+static int current_frame = INFO_FRAME;
+static int first_auto_mode = NOT_OK;
+static int auto_mode_start = NOT_OK;
+static int manual_mode_start = NOT_OK;
+
+int check_auto_mode(void)
+{
+	return auto_mode_start;
+}
+
 
 int not_connect_device(void)
 {
@@ -541,6 +547,7 @@ int select_frame(int frame)
 	}
 	return SUCCESS;
 }
+
 /*************************************/
 /*  подменю управление               */
 /*************************************/
@@ -827,7 +834,6 @@ int amount_auto_mode = 0;
 
 int check_registers_auto_mode(gpointer ud)
 {
-	int rc;
 	uint16_t angle;
 	uint16_t pressure;
 	uint16_t sensors;
@@ -842,11 +848,11 @@ int check_registers_auto_mode(gpointer ud)
 		return FALSE;
 	}
 	amount_auto_mode ++;
-	angle = get_angle();
-	pressure = get_pressure();
-	sensors = get_sensors();
-	input = get_input();
-	console = get_console();
+	get_angle(&angle);
+	get_pressure(&pressure);
+	get_sensors(&sensors);
+	get_input(&input);
+	get_console(&console);
 
 	hour = amount_auto_mode / (60*60);
 	minut = amount_auto_mode/60 - (hour * 60);
@@ -1167,11 +1173,11 @@ int check_registers_manual_mode(gpointer ud)
 		return FALSE;
 	}
 	amount_manual_mode ++;
-	angle = get_angle();
-	pressure = get_pressure();
-	sensors = get_sensors();
-	input = get_input();
-	console = get_console();
+	get_angle(&angle);
+	get_pressure(&pressure);
+	get_sensors(&sensors);
+	get_input(&input);
+	get_console(&console);
 
 	hour = amount_manual_mode / (60*60);
 	minut = amount_manual_mode/60 - (hour * 60);
@@ -1899,10 +1905,11 @@ GtkWidget * create_job_save(void)
 /*************************************/
 GtkWidget * create_control_panel(void)
 {
+	GtkWidget * fra_control;
 	GtkWidget * gri_control;
-	GtkSizeGroup * sizgro_control;
 
-	sizgro_control = gtk_size_group_new(GTK_SIZE_GROUP_BOTH);
+	fra_control = gtk_frame_new(NULL);
+	gtk_container_set_border_width(GTK_CONTAINER(fra_control),5);
 
 	gri_control = gtk_grid_new();
 	gtk_container_set_border_width(GTK_CONTAINER(gri_control),10);
@@ -1910,13 +1917,14 @@ GtkWidget * create_control_panel(void)
 	gtk_widget_set_valign(gri_control,GTK_ALIGN_FILL);
 	/*TODO установить нужный размер*/
 	gtk_widget_set_size_request(gri_control,-1,300);
-	gtk_size_group_add_widget(sizgro_control,gri_control);
 
 	fra_info = create_info();
 	fra_mode_auto = create_mode_auto();
 	fra_mode_manual = create_mode_manual();
 	fra_job_load = create_job_load();
 	fra_job_save = create_job_save();
+
+	gtk_container_add(GTK_CONTAINER(fra_control),gri_control);
 	gtk_grid_attach(GTK_GRID(gri_control),fra_info       ,0,0,1,1);
 	gtk_grid_attach(GTK_GRID(gri_control),fra_mode_auto  ,0,0,1,1);
 	gtk_grid_attach(GTK_GRID(gri_control),fra_mode_manual,0,0,1,1);
@@ -1925,6 +1933,7 @@ GtkWidget * create_control_panel(void)
 	select_frame(INFO_FRAME);
 
 	gtk_widget_show(gri_control);
-	return gri_control;
+	gtk_widget_show(fra_control);
+	return fra_control;
 }
 /*****************************************************************************/

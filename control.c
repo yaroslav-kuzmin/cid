@@ -48,6 +48,7 @@
 
 #include "total.h"
 #include "cid.h"
+#include "job.h"
 
 
 /*****************************************************************************/
@@ -57,7 +58,6 @@
 #define PROTOCOL_RTU     1
 #define PROTOCOL_ASCII   0
 
-int status_connect = DISCONNECT;
 static char DEFAULT_DEVICE_NAME[] = "\\\\.\\COM7";
 char * device_name = NULL;
 int baud = 9600;
@@ -68,10 +68,6 @@ int slave_id = 1;
 int modbus_debug = FALSE;
 int protocol = PROTOCOL_RTU;
 
-GtkWidget * menite_control_device;
-static char STR_DEVICE[] = "Порт";
-static char STR_ON_DEVICE[]  = "Включить ";
-static char STR_OFF_DEVICE[] = "Выключить";
 /*****************************************************************************/
 
 static char STR_MODBUS_GROUP[] = "modbus";
@@ -197,13 +193,16 @@ int read_config_device(void)
 	return SUCCESS;
 }
 
+int set_status_connect(void);
+int set_status_disconnect(void);
+
 static modbus_t *ctx = NULL;
 
 int connect_device(void)
 {
 	int rc;
 
-	if(status_connect == CONNECT){
+	if(ctx != NULL){
 		g_critical("Устройство уже подключено");
 		return CONNECT;
 	}
@@ -234,35 +233,27 @@ int connect_device(void)
 
 	rc = modbus_connect(ctx);
 	if(rc == -1){
+		modbus_free(ctx);
+		ctx = NULL;
 		g_critical("Несмог подсоединится к порту : %s",device_name);
 		return DISCONNECT;
 	}
 
-	status_connect = CONNECT;
-	/*gtk_menu_item_set_label(menite_control_device,STR_OFF_DEVICE);*/
+	set_status_connect();
 	g_message("Подсоединился к порту : %s",device_name);
 	return CONNECT;
 }
 
 int disconnect_device(void)
 {
-	if(status_connect != CONNECT){
+	if(ctx != NULL){
 		modbus_close(ctx);
 		modbus_free(ctx);
-		status_connect = DISCONNECT;
 		ctx = NULL;
-		/*gtk_menu_item_set_label(menite_control_device,STR_ON_DEVICE);*/
+		set_status_disconnect();
 		g_message("Отсоединился от порта : %s",device_name);
 	}
 	return DISCONNECT;
-}
-
-int check_connect_device(void)
-{
-	if(ctx != NULL){
-		return SUCCESS;
-	}
-	return FAILURE;
 }
 
 int write_register(int reg,int value)
@@ -275,6 +266,7 @@ int write_register(int reg,int value)
 	rc = modbus_write_register(ctx,reg,value);
 	if(rc == -1){
 		g_critical("Несмог записать данные в порт");
+		disconnect_device();
 		return FAILURE;
 	}
 	return SUCCESS;
@@ -299,6 +291,7 @@ uint16_t * read_register(int reg,int amount)
 	rc = modbus_read_registers(ctx,reg,amount,dest);
 	if(rc == -1){
 		g_critical("Несмог считать данные из порта");
+		disconnect_device();
 		return NULL;
 	}
 	return dest;
@@ -410,43 +403,63 @@ int set_lowering_angle(int value)
 }
 
 int reg_D110 = 0x106E;
-uint16_t get_angle(void)
+int get_angle(uint16_t * val)
 {
 	uint16_t * rc;
 	rc = read_register(reg_D110,1);
-	return rc[0];
+	if(rc != NULL){
+		*val = rc[0];
+		return SUCCESS;
+	}
+	return FAILURE;
 }
 
 int reg_D111 = 0x106F;
-uint16_t get_pressure(void)
+int get_pressure(uint16_t * val)
 {
 	uint16_t * rc;
 	rc = read_register(reg_D111,1);
-	return rc[0];
+	if(rc != NULL){
+		*val = rc[0];
+		return SUCCESS;
+	}
+	return FAILURE;
 }
 
 int reg_D112 = 0x1070;
-uint16_t get_sensors(void)
+int get_sensors(uint16_t * val)
 {
 	uint16_t * rc;
 	rc = read_register(reg_D112,1);
-	return rc[0];
+	if(rc != NULL){
+		*val = rc[0];
+		return SUCCESS;
+	}
+	return FAILURE;
 }
 
 int reg_D113 = 0x1071;
-uint16_t get_input(void)
+int get_input(uint16_t * val)
 {
 	uint16_t * rc;
 	rc = read_register(reg_D113,1);
-	return rc[0];
+	if(rc != NULL){
+		*val = rc[0];
+		return SUCCESS;
+	}
+	return FAILURE;
 }
 
 int reg_D114 = 0x1072;
-uint16_t get_console(void)
+int get_console(uint16_t * val)
 {
 	uint16_t * rc;
 	rc = read_register(reg_D114,1);
-	return rc[0];
+	if(rc != NULL){
+		*val = rc[0];
+		return SUCCESS;
+	}
+	return FAILURE;
 }
 
 int set_null_mode(void)
@@ -454,6 +467,20 @@ int set_null_mode(void)
 	set_wait_mode();
 	set_auto_null();
 	set_manual_null();
+	return SUCCESS;
+}
+
+int check_connect_device(void)
+{
+	int rc;
+	uint16_t input;
+	if(ctx == NULL){
+		return FAILURE;
+	}
+	rc = get_input(&input);
+	if(rc != SUCCESS){
+		return FAILURE;
+	}
 	return SUCCESS;
 }
 
@@ -466,13 +493,16 @@ int init_control_device(void)
 	if(rc == DISCONNECT){
 		return rc;
 	}
-	set_null_mode();
+	rc = check_auto_mode();
+	if(rc != OK){
+		/*set_null_mode();*/
+	}
 	return CONNECT;
 }
 
 int deinit_control_device(void)
 {
-	set_null_mode();
+	/*set_null_mode();*/
 	disconnect_device();
 	g_free(dest);
 	return SUCCESS;
@@ -485,14 +515,62 @@ int deinit_control_device(void)
 static GtkWidget * fra_status_connect;
 static GtkWidget * lab_status;
 static char STR_CONNECT[] = "Устройство подключено";
-static char STR_DISCONNETC[] = "Устройство не подключено";
+static char STR_DISCONNECT[] = "Устройство не подключено";
+
+GtkWidget * menite_control_device;
+static char STR_DEVICE[] = "Порт";
+static char STR_ON_DEVICE[]  = "Включить ";
+static char STR_OFF_DEVICE[] = "Выключить";
+
+/*g_timeout_add(милисекунды,fun,userdata);*/
+/* int fun (userdata)*/
+/* return TRUE продолжать*/
+/* return FALSE закончить*/
+
+int check_connect_timeout(gpointer ud)
+{
+	check_connect_device();
+	if(ctx == NULL){
+		return FALSE;
+	}
+	return TRUE;
+}
+
+int set_status_connect(void)
+{
+	GdkRGBA color;
+	color.red = 0;
+	color.green = 1;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_background_color(fra_status_connect,GTK_STATE_FLAG_NORMAL,&color);
+	gtk_label_set_text(GTK_LABEL(lab_status),STR_CONNECT);
+	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color);
+	gtk_menu_item_set_label(GTK_MENU_ITEM(menite_control_device),STR_OFF_DEVICE);
+	g_timeout_add(5000,check_connect_timeout,NULL);
+	return SUCCESS;
+}
+
+int set_status_disconnect(void)
+{
+	GdkRGBA color;
+	color.red = 1;
+	color.green = 0;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_background_color(fra_status_connect,GTK_STATE_FLAG_NORMAL,&color);
+	gtk_label_set_text(GTK_LABEL(lab_status),STR_DISCONNECT);
+	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color);
+	gtk_menu_item_set_label(GTK_MENU_ITEM(menite_control_device),STR_ON_DEVICE);
+	return SUCCESS;
+}
 
 GtkWidget * create_status_device(void)
 {
 	fra_status_connect = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(fra_status_connect),5);
-	lab_status = gtk_label_new(STR_DISCONNETC);
-
+	lab_status = gtk_label_new(STR_DISCONNECT);
+	set_status_disconnect();
 	gtk_container_add(GTK_CONTAINER(fra_status_connect),lab_status);
 
 	gtk_widget_show(lab_status);
@@ -509,7 +587,7 @@ GtkWidget * create_status_device(void)
 static void activate_menu_device(GtkMenuItem * mi,gpointer ud)
 {
 	int rc;
-	if(status_connect != CONNECT){
+	if(ctx == NULL){
 		rc = init_control_device();
 		if(rc != CONNECT){
 			GtkWidget * md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_OK
