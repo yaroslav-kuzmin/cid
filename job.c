@@ -1902,8 +1902,7 @@ GtkWidget * create_control_panel(void)
 	GtkWidget * gri_control;
 	GtkSizeGroup * sizgro_control;
 
-	sizgro_control = gtk_size_group_new();
-	gtk_size_group_set_mode(sizgro_control,GTK_SIZE_GROUP_BOTH);
+	sizgro_control = gtk_size_group_new(GTK_SIZE_GROUP_BOTH);
 
 	gri_control = gtk_grid_new();
 	gtk_container_set_border_width(GTK_CONTAINER(gri_control),10);

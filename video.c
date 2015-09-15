@@ -362,7 +362,6 @@ GtkWidget * create_video_stream(void)
 {
 	GError * err = NULL;
 
-
 	video_stream = gtk_image_new();
 	gtk_widget_set_size_request(video_stream,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
 

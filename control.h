@@ -44,6 +44,8 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
+int read_config_device(void);
+GtkWidget * create_status_device(void);
 GtkWidget * create_menu_device(void);
 
 int check_connect_device(void);

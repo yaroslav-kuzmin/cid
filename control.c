@@ -75,7 +75,7 @@ static char STR_OFF_DEVICE[] = "Выключить";
 /*****************************************************************************/
 
 static char STR_MODBUS_GROUP[] = "modbus";
-static int read_config(void)
+int read_config_device(void)
 {
 	GError * err = NULL;
 	char *str = NULL;
@@ -460,7 +460,6 @@ int set_null_mode(void)
 int init_control_device(void)
 {
 	int rc;
-	read_config();
 	dest = g_malloc0(amoun_dest * sizeof(uint16_t));
 
 	rc = connect_device();
@@ -483,10 +482,22 @@ int deinit_control_device(void)
 /* панель состоянея подключения порта                                        */
 /*****************************************************************************/
 
-GtkWidget * 
+static GtkWidget * fra_status_connect;
+static GtkWidget * lab_status;
+static char STR_CONNECT[] = "Устройство подключено";
+static char STR_DISCONNETC[] = "Устройство не подключено";
+
 GtkWidget * create_status_device(void)
 {
-	return 
+	fra_status_connect = gtk_frame_new(NULL);
+	gtk_container_set_border_width(GTK_CONTAINER(fra_status_connect),5);
+	lab_status = gtk_label_new(STR_DISCONNETC);
+
+	gtk_container_add(GTK_CONTAINER(fra_status_connect),lab_status);
+
+	gtk_widget_show(lab_status);
+	gtk_widget_show(fra_status_connect);
+	return fra_status_connect;
 }
 
 /*****************************************************************************/

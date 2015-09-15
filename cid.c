@@ -266,6 +266,8 @@ int create_window_main(void)
 
 	wtemp = create_menu_main();
 	gtk_box_pack_start(GTK_BOX(vbox),wtemp,FALSE,TRUE,MAIN_SPACING);
+	wtemp = create_status_device();
+	gtk_box_pack_start(GTK_BOX(vbox),wtemp,FALSE,TRUE,MAIN_SPACING);
 	wtemp = create_video_stream();
 	gtk_box_pack_start(GTK_BOX(vbox),wtemp,TRUE,TRUE,MAIN_SPACING);
 	wtemp = create_control_panel();
@@ -286,6 +288,7 @@ int main(int argc,char * argv[])
 	init_config();
 	init_logging();
 	g_message("Запуск системы : %s",STR_NAME_PROGRAMM);
+	read_config_device();
 	init_db();
 
 	create_window_main();
