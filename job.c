@@ -1155,12 +1155,12 @@ void release_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
 
 void clicked_button_manual_close(GtkButton * b,gpointer d)
 {
-	g_debug("Закрыть задвижку ручная работа");
+	set_manual_off_drive();
 }
 
 void clicked_button_manual_open(GtkButton * b,gpointer d)
 {
-	g_debug("Открыть задвижку ручная работа");
+	set_manual_on_drive();
 }
 
 int amount_manual_mode = 0;
