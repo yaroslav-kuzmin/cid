@@ -570,6 +570,8 @@ GtkWidget * create_status_device(void)
 	fra_status_connect = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(fra_status_connect),5);
 	lab_status = gtk_label_new(STR_DISCONNECT);
+	gtk_widget_set_hexpand(lab_status,FALSE);
+	gtk_widget_set_vexpand(lab_status,FALSE);
 	set_status_disconnect();
 	gtk_container_add(GTK_CONTAINER(fra_status_connect),lab_status);
 

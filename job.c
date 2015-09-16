@@ -859,17 +859,17 @@ int check_registers_auto_mode(gpointer ud)
 	second = amount_auto_mode - (minut * 60);
 
 	/*TODO давление считывать с регистров*/
-	g_string_printf(temp_string,"2");
+	g_string_printf(temp_string,"%#x",pressure);
 	gtk_label_set_text(GTK_LABEL(label->pressure),temp_string->str);
 
 	g_string_printf(temp_string,"%02d:%02d:%02d",hour,minut,second);
 	gtk_label_set_text(GTK_LABEL(label->time),temp_string->str);
 
-	g_string_printf(temp_string,"23");
+	g_string_printf(temp_string,"%#x",angle);
 	gtk_label_set_text(GTK_LABEL(label->uprise),temp_string->str);
 	gtk_label_set_text(GTK_LABEL(label->lowering),temp_string->str);
 
-	g_printf("\n");
+	g_printf("%02d:%02d:%02d\n",hour,minut,second);
 	g_printf("angle    :> %#x\n",angle);
 	g_printf("pressure :> %#x\n",pressure);
 	g_printf("sensors  :> %#x\n",sensors);
@@ -884,6 +884,9 @@ int timeout_auto_mode = 1000; /* раз в секунду*/
 void clicked_button_auto_start(GtkButton * b,gpointer d)
 {
 	int rc;
+	if(auto_mode_start == OK){
+		return;
+	}
 	rc = set_auto_start();
 	if(rc == SUCCESS){
 		auto_mode_start = OK;
@@ -895,6 +898,9 @@ void clicked_button_auto_start(GtkButton * b,gpointer d)
 
 void clicked_button_auto_stop(GtkButton * b,gpointer d)
 {
+	if(auto_mode_start != OK){
+		return;
+	}
 	auto_mode_start = NOT_OK;
 	set_auto_stop();
 	set_notactive_color(GTK_WIDGET(d));
@@ -1233,6 +1239,7 @@ GtkWidget * create_mode_manual(void)
 
 	fra_mode_manual = gtk_frame_new(STR_MODE_MANUAL);
 	gtk_frame_set_label_align(GTK_FRAME(fra_mode_manual),0.5,0.5);
+	gtk_widget_set_hexpand(fra_mode_manual,TRUE);
 	g_signal_connect(fra_mode_manual,"show",G_CALLBACK(show_frame_manual_mode),NULL);
 	g_signal_connect(fra_mode_manual,"hide",G_CALLBACK(hide_frame_manual_mode),NULL);
 
