@@ -775,7 +775,7 @@ GtkWidget * create_info(void)
 	/*gtk_widget_set_vexpand (tre_job,TRUE);*/
 	pancon_info = gtk_widget_get_pango_context(lab_info_name_job);
 	panfondes_info = pango_context_get_font_description(pancon_info);
-	pango_font_description_set_size(panfondes_info,30000);
+	pango_font_description_set_size(panfondes_info,40000);
 	gtk_widget_override_font(lab_info_name_job,panfondes_info);
 	color_info.red = 0;
 	color_info.green = 0;
@@ -816,6 +816,8 @@ GtkWidget * create_info(void)
 	gtk_widget_hide(fra_info);
 	return fra_info;
 }
+
+
 /*************************************/
 /*окно работа в автоматическом режиме*/
 /*************************************/
@@ -850,6 +852,7 @@ int check_registers_auto_mode(gpointer ud)
 	int hour;
 	int minut;
 	int second;
+
 	label_auto_mode_s * label = (label_auto_mode_s *)ud;
 
 	if(auto_mode_start != OK){
@@ -875,6 +878,8 @@ int check_registers_auto_mode(gpointer ud)
 	if(rc != SUCCESS){
 		return FALSE;
 	}
+
+	amount_auto_mode ++;
 
 	hour = amount_auto_mode / (60*60);
 	minut = amount_auto_mode/60 - (hour * 60);
@@ -1129,6 +1134,8 @@ GtkWidget * create_mode_auto(void)
 
 	return fra_mode_auto;
 }
+
+
 /*************************************/
 /* окно работа в ручном режиме       */
 /*************************************/
@@ -1202,7 +1209,6 @@ int check_registers_manual_mode(gpointer ud)
 		return FALSE;
 	}
 
-	amount_manual_mode ++;
 	rc = get_angle(&angle);
 	if(rc != SUCCESS){
 		return FALSE;
@@ -1223,6 +1229,8 @@ int check_registers_manual_mode(gpointer ud)
 	if(rc != SUCCESS){
 		return FALSE;
 	}
+
+	amount_manual_mode ++;
 
 	hour = amount_manual_mode / (60*60);
 	minut = amount_manual_mode/60 - (hour * 60);
@@ -1333,9 +1341,12 @@ GtkWidget * create_mode_manual(void)
 
 	return fra_mode_manual;
 }
+
+
 /*************************************/
 /* окно загрузить работу             */
 /*************************************/
+
 enum {
 	COLUMMN_NAME = 0,
 	NUM_COLUMN
@@ -1575,9 +1586,12 @@ GtkWidget * create_job_load(void)
 	gtk_widget_hide(fra_job_load);
 	return fra_job_load;
 }
+
+
 /*************************************/
 /* окно создать работу               */
 /*************************************/
+
 static char STR_NAME_JOB[] = "Наименование работ";
 static char STR_NAME_JOB_DEFAULT[] = "Изделие 000";
 static char STR_DEFAULT_PRESSURE[] = "2";
@@ -1945,9 +1959,11 @@ GtkWidget * create_job_save(void)
 	return fra_job_save;
 }
 
+
 /*************************************/
 /* основное окно                     */
 /*************************************/
+
 GtkWidget * create_control_panel(void)
 {
 	GtkWidget * fra_control;

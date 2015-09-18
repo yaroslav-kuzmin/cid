@@ -519,8 +519,8 @@ int deinit_control_device(void)
 
 static GtkWidget * fra_status_connect;
 static GtkWidget * lab_status;
-static char STR_CONNECT[] = "Устройство подключено";
-static char STR_DISCONNECT[] = "Устройство не подключено";
+static char STR_CONNECT[] = "Установка подключена";
+static char STR_DISCONNECT[] = "Установка не подключена";
 
 GtkWidget * menite_control_device;
 static char STR_DEVICE[] = "Порт";
@@ -544,14 +544,24 @@ int check_connect_timeout(gpointer ud)
 int set_status_connect(void)
 {
 	GdkRGBA color;
+
+	gtk_widget_override_background_color(fra_status_connect,GTK_STATE_FLAG_NORMAL,&color);
+
+	gtk_label_set_text(GTK_LABEL(lab_status),STR_CONNECT);
 	color.red = 0;
 	color.green = 1;
 	color.blue = 0;
 	color.alpha = 1;
-	gtk_widget_override_background_color(fra_status_connect,GTK_STATE_FLAG_NORMAL,&color);
-	gtk_label_set_text(GTK_LABEL(lab_status),STR_CONNECT);
 	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color);
+	color.red = 0;
+	color.green = 0;
+	color.blue = 0;
+	color.alpha = 1;
+	gtk_widget_override_color(lab_status,GTK_STATE_FLAG_NORMAL,&color);
+
+
 	gtk_menu_item_set_label(GTK_MENU_ITEM(menite_control_device),STR_OFF_DEVICE);
+
 	g_timeout_add(5000,check_connect_timeout,NULL);
 	return SUCCESS;
 }
@@ -559,24 +569,39 @@ int set_status_connect(void)
 int set_status_disconnect(void)
 {
 	GdkRGBA color;
+
+	gtk_widget_override_background_color(fra_status_connect,GTK_STATE_FLAG_NORMAL,&color);
+	gtk_label_set_text(GTK_LABEL(lab_status),STR_DISCONNECT);
 	color.red = 1;
 	color.green = 0;
 	color.blue = 0;
 	color.alpha = 1;
-	gtk_widget_override_background_color(fra_status_connect,GTK_STATE_FLAG_NORMAL,&color);
-	gtk_label_set_text(GTK_LABEL(lab_status),STR_DISCONNECT);
 	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color);
+	color.red = 1;
+	color.green = 1;
+	color.blue = 1;
+	color.alpha = 1;
+	gtk_widget_override_color(lab_status,GTK_STATE_FLAG_NORMAL,&color);
+
 	gtk_menu_item_set_label(GTK_MENU_ITEM(menite_control_device),STR_ON_DEVICE);
 	return SUCCESS;
 }
 
 GtkWidget * create_status_device(void)
 {
+	PangoContext * pancon_info;
+	PangoFontDescription * panfondes_info;
+
 	fra_status_connect = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(fra_status_connect),5);
 	lab_status = gtk_label_new(STR_DISCONNECT);
 	gtk_widget_set_hexpand(lab_status,FALSE);
 	gtk_widget_set_vexpand(lab_status,FALSE);
+
+	pancon_info = gtk_widget_get_pango_context(lab_status);
+	panfondes_info = pango_context_get_font_description(pancon_info);
+	pango_font_description_set_size(panfondes_info,20000);
+	gtk_widget_override_font(lab_status,panfondes_info);
 	set_status_disconnect();
 	gtk_container_add(GTK_CONTAINER(fra_status_connect),lab_status);
 
