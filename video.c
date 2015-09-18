@@ -130,11 +130,10 @@ static gpointer play_background(gpointer args)
 	for(;;){
 		rc = av_read_frame(pFormatCtx, &packet);
 		if(rc != 0){
-			g_message("Ошибка потока ");
+			g_critical("Видео потока завершен!");
 			break;
 		}
 		if(packet.stream_index == videoStream) {
-
 			rc = avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,&packet);
 	    if (frameFinished) {
 				sws_scale(sws_ctx,(uint8_t const * const *) pFrame->data, pFrame->linesize,0,height
@@ -147,21 +146,20 @@ static gpointer play_background(gpointer args)
 																					,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT
 																					,picture_RGB->linesize[0]
 																					,NULL,NULL);/*,pixmap_destroy_notify,NULL);*/
-
 					draw_image = NOT_OK;
+				}
+				if(exit_video_stream == OK){
+					av_free_packet(&packet);
+					draw_image = OK;
+					g_mutex_unlock(&mutex);
+					g_thread_exit(0);
 				}
 				g_mutex_unlock(&mutex);
 			}
 		}
 		av_free_packet(&packet);
 		g_thread_yield();
-		if(exit_video_stream == OK){
-			av_free_packet(&packet);
-			g_thread_exit(0);
-		}
 	}
-
-	gtk_image_set_from_pixbuf((GtkImage*) video_stream,image_default);
 	open_stream = NOT_OK;
 	/*TODO высвободить память*/
 	av_free_packet(&packet);
@@ -172,14 +170,14 @@ static gpointer play_background(gpointer args)
 
 gboolean play_image(gpointer ud)
 {
-	g_mutex_lock(&mutex);
-	if( draw_image != OK){
+	if(draw_image != OK){
+		g_mutex_lock(&mutex);
 		draw_image = OK;
 		gtk_image_set_from_pixbuf((GtkImage*) video_stream,image);
 		/*TODO проверка на высвобождение памяти*/
 		g_object_unref(image);
+		g_mutex_unlock(&mutex);
 	}
-	g_mutex_unlock(&mutex);
 	if(open_stream == OK){
 		return TRUE;
 	}
@@ -192,6 +190,11 @@ int init_rtsp(void)
 	int i;
 	int rc;
 	AVDictionary *optionsDict = NULL;
+
+	if(open_stream == OK){
+		g_critical("Видео поток уже открыт!");
+		return FAILURE;
+	}
 	rc = read_name_stream();
 	if(rc == FAILURE){
 		return rc;
@@ -223,7 +226,7 @@ int init_rtsp(void)
 	    break;
 		}
 	}
-	if(videoStream== -1){
+	if(videoStream == -1){
 		g_message("Не нашел видео поток");
 		return FAILURE; // Didn't find a video stream
 	}
