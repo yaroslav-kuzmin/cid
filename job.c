@@ -756,6 +756,7 @@ int set_current_value_info(void)
 GtkWidget * create_info(void)
 {
 	GtkGrid * gri_info;
+	GtkWidget * lab_fra_info;
 	GtkWidget * lab_pressure;
 	GtkWidget * lab_time;
 	GtkWidget * lab_uprise;
@@ -765,8 +766,15 @@ GtkWidget * create_info(void)
 	PangoFontDescription * panfondes_info;
 	GdkRGBA color_info;
 
-	fra_info = gtk_frame_new(STR_INFO);
+	lab_fra_info = gtk_label_new(STR_INFO);
+	pancon_info = gtk_widget_get_pango_context(lab_fra_info);
+	panfondes_info = pango_context_get_font_description(pancon_info);
+	pango_font_description_set_size(panfondes_info,15000);
+	gtk_widget_override_font(lab_fra_info,panfondes_info);
+
+	fra_info = gtk_frame_new(NULL);
 	gtk_frame_set_label_align(GTK_FRAME(fra_info),0.5,0.5);
+	gtk_frame_set_label_widget(GTK_FRAME(fra_info),lab_fra_info);
 
 	gri_info = GTK_GRID(gtk_grid_new());
 
@@ -814,6 +822,7 @@ GtkWidget * create_info(void)
 	gtk_widget_show(lab_info_name_job);
 	gtk_widget_show(GTK_WIDGET(gri_info));
 	gtk_widget_hide(fra_info);
+	gtk_widget_show(lab_fra_info);
 	return fra_info;
 }
 
