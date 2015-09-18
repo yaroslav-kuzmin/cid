@@ -42,6 +42,8 @@
 /*****************************************************************************/
 
 /*****************************************************************************/
+
+#include <string.h>
 #include <gtk/gtk.h>
 
 #include <modbus.h>
@@ -200,7 +202,7 @@ static modbus_t *ctx = NULL;
 
 int connect_device(void)
 {
-	int rc;
+	int rc = 0;
 
 	if(ctx != NULL){
 		g_critical("Устройство уже подключено");
@@ -230,8 +232,8 @@ int connect_device(void)
 	modbus_set_error_recovery(ctx,MODBUS_ERROR_RECOVERY_NONE);
 
 	modbus_set_slave(ctx, slave_id);
-
-	rc = modbus_connect(ctx);
+	/*TODO*/
+	/*rc = modbus_connect(ctx);*/
 	if(rc == -1){
 		modbus_free(ctx);
 		ctx = NULL;
@@ -247,7 +249,8 @@ int connect_device(void)
 int disconnect_device(void)
 {
 	if(ctx != NULL){
-		modbus_close(ctx);
+		/*TODO*/
+		/*modbus_close(ctx);*/
 		modbus_free(ctx);
 		ctx = NULL;
 		set_status_disconnect();
@@ -263,7 +266,8 @@ int write_register(int reg,int value)
 		g_critical("Нет соединения с портом : %s",device_name);
 		return FAILURE;
 	}
-	rc = modbus_write_register(ctx,reg,value);
+	/*TODO*/
+	/*rc = modbus_write_register(ctx,reg,value);*/
 	if(rc == -1){
 		g_critical("Несмог записать данные в порт");
 		disconnect_device();
@@ -288,7 +292,8 @@ uint16_t * read_register(int reg,int amount)
 		g_critical("Нет соединения с портом : %s",device_name);
 		return NULL;
 	}
-	rc = modbus_read_registers(ctx,reg,amount,dest);
+	/*TODO*/
+	/*rc = modbus_read_registers(ctx,reg,amount,dest);*/
 	if(rc == -1){
 		g_critical("Несмог считать данные из порта");
 		disconnect_device();

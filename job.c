@@ -678,25 +678,32 @@ GtkWidget * create_menu_main(void)
 /*****************************************************************************/
 #define ANGLE_BASE        16
 #define ANGLE_FORMAT      "%#x"
-int set_active_color(GtkWidget * w)
+int set_active_color(GtkButton * w)
 {
+	GtkWidget * c = gtk_bin_get_child(GTK_BIN(w));
 	GdkRGBA color;
+
 	color.red = 1;
 	color.green = 0;
 	color.blue = 0;
 	color.alpha = 1;
-	gtk_widget_override_background_color(w,GTK_STATE_FLAG_NORMAL,&color);
+
+	g_debug("color active");
+	gtk_widget_override_background_color(c,GTK_STATE_FLAG_NORMAL,&color);
+	gtk_widget_override_background_color(GTK_WIDGET(w),GTK_STATE_FLAG_NORMAL,&color);
 	return SUCCESS;
 }
 
-int set_notactive_color(GtkWidget * w)
+int set_notactive_color(GtkButton * w)
 {
+	GtkWidget * c = gtk_bin_get_child (GTK_BIN(w));
 	GdkRGBA color;
 	color.red = 0;
 	color.green = 1;
 	color.blue = 0;
 	color.alpha = 1;
-	gtk_widget_override_background_color(w,GTK_STATE_FLAG_NORMAL,&color);
+	gtk_widget_override_background_color(c,GTK_STATE_FLAG_NORMAL,&color);
+	gtk_widget_override_background_color(GTK_WIDGET(w),GTK_STATE_FLAG_NORMAL,&color);
 	return SUCCESS;
 }
 /*************************************/
@@ -834,6 +841,7 @@ int amount_auto_mode = 0;
 
 int check_registers_auto_mode(gpointer ud)
 {
+	int rc;
 	uint16_t angle;
 	uint16_t pressure;
 	uint16_t sensors;
@@ -847,12 +855,26 @@ int check_registers_auto_mode(gpointer ud)
 	if(auto_mode_start != OK){
 		return FALSE;
 	}
-	amount_auto_mode ++;
-	get_angle(&angle);
-	get_pressure(&pressure);
-	get_sensors(&sensors);
-	get_input(&input);
-	get_console(&console);
+	rc = get_angle(&angle);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
+	rc = get_pressure(&pressure);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
+	rc = get_sensors(&sensors);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
+	rc = get_input(&input);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
+	rc = get_console(&console);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
 
 	hour = amount_auto_mode / (60*60);
 	minut = amount_auto_mode/60 - (hour * 60);
@@ -892,7 +914,7 @@ void clicked_button_auto_start(GtkButton * b,gpointer d)
 		auto_mode_start = OK;
 		amount_auto_mode = 0;
 		g_timeout_add(timeout_auto_mode,check_registers_auto_mode,&label_auto_mode);
-		set_active_color(GTK_WIDGET(b));
+		set_active_color(b);
 	}
 }
 
@@ -903,7 +925,7 @@ void clicked_button_auto_stop(GtkButton * b,gpointer d)
 	}
 	auto_mode_start = NOT_OK;
 	set_auto_stop();
-	set_notactive_color(GTK_WIDGET(d));
+	set_notactive_color(d);
 }
 
 void clicked_button_auto_pause(GtkButton * b,gpointer d)
@@ -911,13 +933,13 @@ void clicked_button_auto_pause(GtkButton * b,gpointer d)
 	if(auto_mode_start == OK){
 		set_auto_pause();
 		auto_mode_start = NOT_OK;
-		set_active_color(GTK_WIDGET(b));
+		set_active_color(b);
 	}
 	else{
 		auto_mode_start = OK;
 		set_auto_start();
 		g_timeout_add(timeout_auto_mode,check_registers_auto_mode,&label_auto_mode);
-		set_notactive_color(GTK_WIDGET(b));
+		set_notactive_color(b);
 	}
 }
 
@@ -1074,19 +1096,19 @@ GtkWidget * create_mode_auto(void)
 	but_start = gtk_button_new_with_label(STR_BUTTON_AUTO_START);
 	gtk_widget_set_halign(but_start,GTK_ALIGN_FILL);
 	gtk_widget_set_valign(but_start,GTK_ALIGN_CENTER);
-	set_notactive_color(but_start);
+	set_notactive_color(GTK_BUTTON(but_start));
 	g_signal_connect(but_start,"clicked",G_CALLBACK(clicked_button_auto_start),NULL);
 
 	but_stop = gtk_button_new_with_label(STR_BUTTON_AUTO_STOP);
 	gtk_widget_set_halign(but_stop,GTK_ALIGN_FILL);
 	gtk_widget_set_valign(but_stop,GTK_ALIGN_CENTER);
-	set_notactive_color(but_stop);
+	set_notactive_color(GTK_BUTTON(but_stop));
 	g_signal_connect(but_stop,"clicked",G_CALLBACK(clicked_button_auto_stop),but_start);
 
 	but_pause = gtk_button_new_with_label(STR_BUTTON_AUTO_PAUSE);
 	gtk_widget_set_halign(but_pause,GTK_ALIGN_FILL);
 	gtk_widget_set_valign(but_pause,GTK_ALIGN_CENTER);
-	set_notactive_color(but_pause);
+	set_notactive_color(GTK_BUTTON(but_pause));
 	g_signal_connect(but_pause,"clicked",G_CALLBACK(clicked_button_auto_pause),but_start);
 
 	gri_auto = create_label_mode_auto();
@@ -1111,43 +1133,43 @@ GtkWidget * create_mode_auto(void)
 /* окно работа в ручном режиме       */
 /*************************************/
 
-void press_button_manual_up(GtkWidget * b,GdkEvent * e,gpointer ud)
+void press_button_manual_up(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_active_color(b);
 	set_manual_up();
 }
-void release_button_manual_up(GtkWidget * b,GdkEvent * e,gpointer ud)
+void release_button_manual_up(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_notactive_color(b);
 	set_manual_null();
 }
-void press_button_manual_down(GtkWidget * b,GdkEvent * e,gpointer ud)
+void press_button_manual_down(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_active_color(b);
 	set_manual_down();
 }
-void release_button_manual_down(GtkWidget * b,GdkEvent * e,gpointer ud)
+void release_button_manual_down(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_notactive_color(b);
 	set_manual_null();
 }
-void press_button_manual_left(GtkWidget * b,GdkEvent * e,gpointer ud)
+void press_button_manual_left(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_active_color(b);
 	set_manual_left();
 }
 
-void release_button_manual_left(GtkWidget * b,GdkEvent * e,gpointer ud)
+void release_button_manual_left(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_notactive_color(b);
 	set_manual_null();
 }
-void press_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
+void press_button_manual_right(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_active_color(b);
 	set_manual_right();
 }
-void release_button_manual_right(GtkWidget * b,GdkEvent * e,gpointer ud)
+void release_button_manual_right(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_notactive_color(b);
 	set_manual_null();
@@ -1166,6 +1188,7 @@ void clicked_button_manual_open(GtkButton * b,gpointer d)
 int amount_manual_mode = 0;
 int check_registers_manual_mode(gpointer ud)
 {
+	int rc;
 	uint16_t angle;
 	uint16_t pressure;
 	uint16_t sensors;
@@ -1178,12 +1201,28 @@ int check_registers_manual_mode(gpointer ud)
 	if(manual_mode_start != OK){
 		return FALSE;
 	}
+
 	amount_manual_mode ++;
-	get_angle(&angle);
-	get_pressure(&pressure);
-	get_sensors(&sensors);
-	get_input(&input);
-	get_console(&console);
+	rc = get_angle(&angle);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
+	rc = get_pressure(&pressure);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
+	rc = get_sensors(&sensors);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
+	rc = get_input(&input);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
+	rc = get_console(&console);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
 
 	hour = amount_manual_mode / (60*60);
 	minut = amount_manual_mode/60 - (hour * 60);
@@ -1247,31 +1286,31 @@ GtkWidget * create_mode_manual(void)
 	gtk_container_set_border_width(GTK_CONTAINER(gri_mode),5);
 
 	but_up = gtk_button_new_with_label(STR_BUTTON_MANUAL_UP);
-	set_notactive_color(but_up);
+	set_notactive_color(GTK_BUTTON(but_up));
 	g_signal_connect(but_up,"button-press-event",G_CALLBACK(press_button_manual_up),NULL);
 	g_signal_connect(but_up,"button-release-event",G_CALLBACK(release_button_manual_up),NULL);
 
 	but_down = gtk_button_new_with_label(STR_BUTTON_MANUAL_DOWN);
-	set_notactive_color(but_down);
+	set_notactive_color(GTK_BUTTON(but_down));
 	g_signal_connect(but_down,"button-press-event",G_CALLBACK(press_button_manual_down),NULL);
 	g_signal_connect(but_down,"button-release-event",G_CALLBACK(release_button_manual_down),NULL);
 
 	but_left = gtk_button_new_with_label(STR_BUTTON_MANUAL_LEFT);
-	set_notactive_color(but_left);
+	set_notactive_color(GTK_BUTTON(but_left));
 	g_signal_connect(but_left,"button-press-event",G_CALLBACK(press_button_manual_left),NULL);
 	g_signal_connect(but_left,"button-release-event",G_CALLBACK(release_button_manual_left),NULL);
 
 	but_right = gtk_button_new_with_label(STR_BUTTON_MANUAL_RIGHT);
-	set_notactive_color(but_right);
+	set_notactive_color(GTK_BUTTON(but_right));
 	g_signal_connect(but_right,"button-press-event",G_CALLBACK(press_button_manual_right),NULL);
 	g_signal_connect(but_right,"button-release-event",G_CALLBACK(release_button_manual_right),NULL);
 
 	but_close = gtk_button_new_with_label(STR_BUTTON_MANUAL_CLOSE);
-	set_notactive_color(but_close);
+	set_notactive_color(GTK_BUTTON(but_close));
 	g_signal_connect(but_close,"clicked",G_CALLBACK(clicked_button_manual_close),NULL);
 
 	but_open = gtk_button_new_with_label(STR_BUTTON_MANUAL_OPEN);
-	set_notactive_color(but_open);
+	set_notactive_color(GTK_BUTTON(but_open));
 	g_signal_connect(but_open,"clicked",G_CALLBACK(clicked_button_manual_open),NULL);
 
 	gtk_container_add(GTK_CONTAINER(fra_mode_manual),gri_mode);
@@ -1632,7 +1671,7 @@ void clicked_button_fix_uprise(GtkButton * b,gpointer d)
 {
 	const char * uprise = gtk_entry_buffer_get_text(entbuff_uprise);
 	value_uprise  = g_ascii_strtoll(uprise,NULL,16);
-	set_active_color(GTK_WIDGET(b));
+	set_active_color(b);
 	g_debug("fix angle uprise : %#lx",value_uprise);
 }
 
@@ -1640,14 +1679,14 @@ void clicked_button_fix_lowering(GtkButton * b,gpointer d)
 {
 	const char * lowering = gtk_entry_buffer_get_text(entbuff_lowering);
 	value_lowering = g_ascii_strtoll(lowering,NULL,16);
-	set_active_color(GTK_WIDGET(b));
+	set_active_color(b);
 	g_debug("fix angle lowering : %#lx",value_lowering);
 }
 
 int set_notactive_fix_button(void)
 {
-	set_notactive_color(GTK_WIDGET(button_job_save.fix_uprise));
-	set_notactive_color(GTK_WIDGET(button_job_save.fix_lowering));
+	set_notactive_color(GTK_BUTTON(button_job_save.fix_uprise));
+	set_notactive_color(GTK_BUTTON(button_job_save.fix_lowering));
 	return SUCCESS;
 }
 
@@ -1689,8 +1728,7 @@ void clicked_button_save_job(GtkButton * b,gpointer d)
 		if(rc == ANGLE_INTERSECT){
 			str_error = "Углы пересекаются!";
 		}
-		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
-		                              ,GTK_BUTTONS_CLOSE,str_error);
+		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE,"%s",str_error);
 		gtk_dialog_run(GTK_DIALOG(error));
 		gtk_widget_destroy(error);
 		set_notactive_fix_button();
@@ -1782,10 +1820,10 @@ GtkWidget * create_entry_job_save(void)
 	ent_lowering = gtk_entry_new_with_buffer(entbuff_lowering);
 
 	button_job_save.fix_uprise = gtk_button_new_with_label(STR_FIX_ANGLE);
-	set_notactive_color(button_job_save.fix_uprise);
+	set_notactive_color(GTK_BUTTON(button_job_save.fix_uprise));
 	g_signal_connect(button_job_save.fix_uprise,"clicked",G_CALLBACK(clicked_button_fix_uprise),NULL);
 	button_job_save.fix_lowering = gtk_button_new_with_label(STR_FIX_ANGLE);
-	set_notactive_color(button_job_save.fix_lowering);
+	set_notactive_color(GTK_BUTTON(button_job_save.fix_lowering));
 	g_signal_connect(button_job_save.fix_lowering,"clicked",G_CALLBACK(clicked_button_fix_lowering),NULL);
 	but_save = gtk_button_new_with_label(STR_SAVE_JOB);
 	g_signal_connect(but_save,"clicked",G_CALLBACK(clicked_button_save_job),NULL);
@@ -1833,12 +1871,12 @@ GtkWidget * create_button_job_save(void)
 	gri_button = gtk_grid_new();
 
 	but_up = gtk_button_new_with_label(STR_BUTTON_MANUAL_UP);
-	set_notactive_color(but_up);
+	set_notactive_color(GTK_BUTTON(but_up));
 	g_signal_connect(but_up,"button-press-event",G_CALLBACK(press_button_manual_up),NULL);
 	g_signal_connect(but_up,"button-release-event",G_CALLBACK(release_button_manual_up),NULL);
 
 	but_down = gtk_button_new_with_label(STR_BUTTON_MANUAL_DOWN);
-	set_notactive_color(but_down);
+	set_notactive_color(GTK_BUTTON(but_down));
 	g_signal_connect(but_down,"button-press-event",G_CALLBACK(press_button_manual_down),NULL);
 	g_signal_connect(but_down,"button-release-event",G_CALLBACK(release_button_manual_down),NULL);
 /*
