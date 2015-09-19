@@ -308,22 +308,22 @@ int value_config_mode = 0x01;
 int value_auto_mode = 0x02;
 int value_manual_mode = 0x03;
 
-int set_wait_mode(void)
+int command_wait_mode(void)
 {
 	return write_register(reg_D100,value_wait_mode);
 }
 
-int set_config_mode(void)
+int command_config_mode(void)
 {
 	return write_register(reg_D100,value_config_mode);
 }
 
-int set_auto_mode(void)
+int command_auto_mode(void)
 {
 	return write_register(reg_D100,value_auto_mode);
 }
 
-int set_manual_mode(void)
+int command_manual_mode(void)
 {
 	return write_register(reg_D100,value_manual_mode);
 }
@@ -334,22 +334,22 @@ int value_auto_start = 0x01;
 int value_auto_pause = 0x02;
 int value_auto_stop = 0x03;
 
-int set_auto_null(void)
+int command_auto_null(void)
 {
 	return write_register(reg_D101,value_auto_null);
 }
 
-int set_auto_start(void)
+int command_auto_start(void)
 {
 	return write_register(reg_D101,value_auto_start);
 }
 
-int set_auto_pause(void)
+int command_auto_pause(void)
 {
 	return write_register(reg_D101,value_auto_pause);
 }
 
-int set_auto_stop(void)
+int command_auto_stop(void)
 {
 	return write_register(reg_D101,value_auto_stop);
 }
@@ -363,52 +363,52 @@ int value_manual_right = 0x08;
 int value_manual_on_drive = 0x10;
 int value_manual_off_drive = 0x20;
 
-int set_manual_null(void)
+int command_manual_null(void)
 {
 	return write_register(reg_D102,value_manual_null);
 }
 
-int set_manual_up(void)
+int command_manual_up(void)
 {
 	return write_register(reg_D102,value_manual_up);
 }
-int set_manual_down(void)
+int command_manual_down(void)
 {
 	return write_register(reg_D102,value_manual_down);
 }
-int set_manual_left(void)
+int command_manual_left(void)
 {
 	return write_register(reg_D102,value_manual_left);
 }
-int set_manual_right(void)
+int command_manual_right(void)
 {
 	return write_register(reg_D102,value_manual_right);
 }
-int set_manual_on_drive(void)
+int command_manual_on_drive(void)
 {
 	return write_register(reg_D102,value_manual_on_drive);
 }
-int set_manual_off_drive(void)
+int command_manual_off_drive(void)
 {
 	return write_register(reg_D102,value_manual_off_drive);
 }
 
 int reg_D103 = 0x1067;
 
-int set_uprise_angle(int value)
+int command_uprise_angle(int value)
 {
 	return write_register(reg_D103,value);
 }
 
 int reg_D104 = 0x1068;
 
-int set_lowering_angle(int value)
+int command_lowering_angle(int value)
 {
 	return write_register(reg_D104,value);
 }
 
 int reg_D110 = 0x106E;
-int get_angle(uint16_t * val)
+int command_angle(uint16_t * val)
 {
 	uint16_t * rc;
 	rc = read_register(reg_D110,1);
@@ -420,7 +420,7 @@ int get_angle(uint16_t * val)
 }
 
 int reg_D111 = 0x106F;
-int get_pressure(uint16_t * val)
+int command_pressure(uint16_t * val)
 {
 	uint16_t * rc;
 	rc = read_register(reg_D111,1);
@@ -432,7 +432,7 @@ int get_pressure(uint16_t * val)
 }
 
 int reg_D112 = 0x1070;
-int get_sensors(uint16_t * val)
+int command_sensors(uint16_t * val)
 {
 	uint16_t * rc;
 	rc = read_register(reg_D112,1);
@@ -444,7 +444,7 @@ int get_sensors(uint16_t * val)
 }
 
 int reg_D113 = 0x1071;
-int get_input(uint16_t * val)
+int command_input(uint16_t * val)
 {
 	uint16_t * rc;
 	rc = read_register(reg_D113,1);
@@ -456,7 +456,7 @@ int get_input(uint16_t * val)
 }
 
 int reg_D114 = 0x1072;
-int get_console(uint16_t * val)
+int command_console(uint16_t * val)
 {
 	uint16_t * rc;
 	rc = read_register(reg_D114,1);
@@ -467,11 +467,11 @@ int get_console(uint16_t * val)
 	return FAILURE;
 }
 
-int set_null_mode(void)
+int command_null_mode(void)
 {
-	set_wait_mode();
-	set_auto_null();
-	set_manual_null();
+	command_wait_mode();
+	command_auto_null();
+	command_manual_null();
 	return SUCCESS;
 }
 
@@ -482,7 +482,7 @@ int check_connect_device(void)
 	if(ctx == NULL){
 		return FAILURE;
 	}
-	rc = get_input(&input);
+	rc = command_input(&input);
 	if(rc != SUCCESS){
 		return FAILURE;
 	}
@@ -500,14 +500,14 @@ int init_control_device(void)
 	}
 	rc = check_auto_mode();
 	if(rc != OK){
-		/*set_null_mode();*/
+		/*command_null_mode();*/
 	}
 	return CONNECT;
 }
 
 int deinit_control_device(void)
 {
-	/*set_null_mode();*/
+	/*command_null_mode();*/
 	disconnect_device();
 	g_free(dest);
 	return SUCCESS;

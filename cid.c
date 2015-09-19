@@ -81,6 +81,7 @@ char * buffer =g_key_file_to_data (ini_file,&size,&err);/*записывает I
 #endif
 	return SUCCESS;
 }
+
 int init_config(void)
 {
 	int rc;
@@ -99,12 +100,14 @@ int init_config(void)
 	}
 	return SUCCESS;
 }
+
 int deinit_config(void)
 {
 	g_key_file_free(ini_file);
 	ini_file = NULL;
 	return SUCCESS;
 }
+
 /*****************************************************************************/
 /*     система логирования                                                   */
 /*****************************************************************************/
@@ -231,7 +234,7 @@ void destroy_window_main(GtkWidget * w,gpointer ud)
 	gtk_main_quit();
 }
 
-#define MAIN_SPACING       3
+#define MAIN_SPACING       5
 
 int create_window_main(void)
 {
@@ -254,7 +257,6 @@ int create_window_main(void)
 	win_main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width(GTK_CONTAINER(win_main),MAIN_SPACING);
 	gtk_window_set_title(GTK_WINDOW(win_main),STR_NAME_PROGRAMM);
-	/*gtk_window_set_default_size(GTK_WINDOW(win_main),850,-1);*/
 	gtk_window_set_resizable(GTK_WINDOW(win_main),FALSE);
 	gtk_window_set_position (GTK_WINDOW(win_main),GTK_WIN_POS_CENTER);
 	g_signal_connect(win_main,"destroy",G_CALLBACK(destroy_window_main), NULL);
@@ -284,6 +286,8 @@ int create_window_main(void)
 int main(int argc,char * argv[])
 {
 	gtk_init(&argc,&argv);
+
+	temp_string = g_string_new(NULL);
 
 	init_config();
 	init_logging();
