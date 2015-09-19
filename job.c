@@ -91,7 +91,7 @@ struct _job_s
 {
 	GString * name;
 	int pressure;
-	GDateTime * time;
+	GDateTime * time; /**TODO преобразовать в секунды*/
 	int uprise;
 	int lowering;
 };
@@ -758,7 +758,6 @@ int set_current_value_info(void)
 		gtk_label_set_text(GTK_LABEL(lab_info_lowering),STR_ANGLE_DEFAULT);
 	}
 	else{
-		/*TODO  проверка на длину строки для вывода на экран*/
 		gtk_label_set_text(GTK_LABEL(lab_info_name_job),current_job->name->str);
 		g_string_printf(temp_string,"%d",current_job->pressure);
 		gtk_label_set_text(GTK_LABEL(lab_info_pressure),temp_string->str);
@@ -2271,7 +2270,6 @@ GtkWidget * create_control_panel(void)
 	gtk_container_set_border_width(GTK_CONTAINER(gri_control),10);
 	gtk_widget_set_halign(gri_control,GTK_ALIGN_FILL);
 	gtk_widget_set_valign(gri_control,GTK_ALIGN_FILL);
-	/*TODO установить нужный размер*/
 	gtk_widget_set_size_request(gri_control,-1,300);
 
 	fra_info = create_info();

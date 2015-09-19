@@ -232,8 +232,8 @@ int connect_device(void)
 	modbus_set_error_recovery(ctx,MODBUS_ERROR_RECOVERY_NONE);
 
 	modbus_set_slave(ctx, slave_id);
-	/*TODO*/
-	/*rc = modbus_connect(ctx);*/
+	/*TODO testing*/
+	rc = modbus_connect(ctx);
 	if(rc == -1){
 		modbus_free(ctx);
 		ctx = NULL;
@@ -249,8 +249,8 @@ int connect_device(void)
 int disconnect_device(void)
 {
 	if(ctx != NULL){
-		/*TODO*/
-		/*modbus_close(ctx);*/
+		/*TODO testing*/
+		modbus_close(ctx);
 		modbus_free(ctx);
 		ctx = NULL;
 		set_status_disconnect();
@@ -266,8 +266,8 @@ int write_register(int reg,int value)
 		g_critical("Нет соединения с портом : %s",device_name);
 		return FAILURE;
 	}
-	/*TODO*/
-	/*rc = modbus_write_register(ctx,reg,value);*/
+	/*TODO testing*/
+	rc = modbus_write_register(ctx,reg,value);
 	if(rc == -1){
 		g_critical("Несмог записать данные в порт");
 		disconnect_device();
@@ -292,8 +292,8 @@ uint16_t * read_register(int reg,int amount)
 		g_critical("Нет соединения с портом : %s",device_name);
 		return NULL;
 	}
-	/*TODO*/
-	/*rc = modbus_read_registers(ctx,reg,amount,dest);*/
+	/*TODO testing*/
+	rc = modbus_read_registers(ctx,reg,amount,dest);
 	if(rc == -1){
 		g_critical("Несмог считать данные из порта");
 		disconnect_device();

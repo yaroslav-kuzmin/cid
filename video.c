@@ -309,7 +309,6 @@ int FPS = 40;/*40 милесекунд == 25 кадров/с */
 int init_video_stream(void)
 {
 	int rc;
-	/*TODO  первичная проверка правильности адресса камеры*/
 
 	rc = read_name_stream();
 	if(rc == FAILURE){
