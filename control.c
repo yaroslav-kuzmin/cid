@@ -543,22 +543,9 @@ int check_connect_timeout(gpointer ud)
 
 int set_status_connect(void)
 {
-	GdkRGBA color;
-
-	gtk_widget_override_background_color(fra_status_connect,GTK_STATE_FLAG_NORMAL,&color);
-
 	gtk_label_set_text(GTK_LABEL(lab_status),STR_CONNECT);
-	color.red = 0;
-	color.green = 1;
-	color.blue = 0;
-	color.alpha = 1;
-	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color);
-	color.red = 0;
-	color.green = 0;
-	color.blue = 0;
-	color.alpha = 1;
-	gtk_widget_override_color(lab_status,GTK_STATE_FLAG_NORMAL,&color);
-
+	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color_green);
+	gtk_widget_override_color(lab_status,GTK_STATE_FLAG_NORMAL,&color_black);
 
 	gtk_menu_item_set_label(GTK_MENU_ITEM(menite_control_device),STR_OFF_DEVICE);
 
@@ -568,20 +555,9 @@ int set_status_connect(void)
 
 int set_status_disconnect(void)
 {
-	GdkRGBA color;
-
-	gtk_widget_override_background_color(fra_status_connect,GTK_STATE_FLAG_NORMAL,&color);
 	gtk_label_set_text(GTK_LABEL(lab_status),STR_DISCONNECT);
-	color.red = 1;
-	color.green = 0;
-	color.blue = 0;
-	color.alpha = 1;
-	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color);
-	color.red = 1;
-	color.green = 1;
-	color.blue = 1;
-	color.alpha = 1;
-	gtk_widget_override_color(lab_status,GTK_STATE_FLAG_NORMAL,&color);
+	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color_red);
+	gtk_widget_override_color(lab_status,GTK_STATE_FLAG_NORMAL,&color_white);
 
 	gtk_menu_item_set_label(GTK_MENU_ITEM(menite_control_device),STR_ON_DEVICE);
 	return SUCCESS;
@@ -589,19 +565,12 @@ int set_status_disconnect(void)
 
 GtkWidget * create_status_device(void)
 {
-	PangoContext * pancon_info;
-	PangoFontDescription * panfondes_info;
-
 	fra_status_connect = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(fra_status_connect),5);
 	lab_status = gtk_label_new(STR_DISCONNECT);
 	gtk_widget_set_hexpand(lab_status,FALSE);
 	gtk_widget_set_vexpand(lab_status,FALSE);
-
-	pancon_info = gtk_widget_get_pango_context(lab_status);
-	panfondes_info = pango_context_get_font_description(pancon_info);
-	pango_font_description_set_size(panfondes_info,20000);
-	gtk_widget_override_font(lab_status,panfondes_info);
+	set_size_font(lab_status,SIZE_FONT_EXTRA_MEDIUM);
 	set_status_disconnect();
 	gtk_container_add(GTK_CONTAINER(fra_status_connect),lab_status);
 

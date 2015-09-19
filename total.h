@@ -65,5 +65,19 @@ extern const char STR_NAME_DEFAULT_VIDEO[];
 
 extern const char STR_NAME_DB[];
 
+extern GdkRGBA color_black;
+extern GdkRGBA color_green;
+extern GdkRGBA color_red;
+extern GdkRGBA color_white;
+extern GdkRGBA color_lite_blue;
+extern GdkRGBA color_lite_red;
+extern GdkRGBA color_lite_green;
+
+#define SIZE_FONT_EXTRA_LARGE      40000
+#define SIZE_FONT_LARGE            30000
+#define SIZE_FONT_EXTRA_MEDIUM     20000
+#define SIZE_FONT_MEDIUM           15000
+#define SIZE_FONT_SMALL            12000
+
 #endif
 

@@ -43,9 +43,11 @@
 
 /*****************************************************************************/
 #include <gtk/gtk.h>
+
 /*****************************************************************************/
 /*    Общие переменые                                                        */
 /*****************************************************************************/
+
 const char STR_NAME_PROGRAMM[] = "Управление Промышленым Оборудованием";
 const char STR_KEY_FILE_NAME[] = "cid.ini";
 GKeyFile * ini_file = NULL;
@@ -54,5 +56,13 @@ const char STR_LOGGING[] = "cid.log";
 const char STR_NAME_ICON[] = "cid.png";
 const char STR_NAME_DEFAULT_VIDEO[] = "video_720x576.png";
 const char STR_NAME_DB[] = "cid.db";
+
+GdkRGBA color_black =     {0  ,0  ,0  ,1};
+GdkRGBA color_green =     {0  ,1  ,0  ,1};
+GdkRGBA color_red =       {1  ,0  ,0  ,1};
+GdkRGBA color_white =     {1  ,1  ,1  ,1};
+GdkRGBA color_lite_blue = {0.2,0.1,1  ,1};
+GdkRGBA color_lite_red  = {1  ,0.2,0.1,1};
+GdkRGBA color_lite_green= {0.2,1  ,0.1,1};
 
 /*****************************************************************************/
