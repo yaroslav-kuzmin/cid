@@ -56,8 +56,48 @@
 char VIDEO_GROUP[] = "video";
 
 char *name_stream;
+
+static char STR_RTSP[] = "rtsp://";
+#define SIZE_STR_RTSP     7
+#define DEFAULT_PORT_VIDEO_STREAM   554
+
+int check_access(char * name)
+{
+	GSocketConnection	* stream_connect;
+	GSocketClient * stream;
+	GError * err = NULL;
+	char * str = g_strstr_len(name,-1,STR_RTSP);
+
+	if(str == NULL){
+		return FAILURE;
+	}
+	str += SIZE_STR_RTSP;
+
+	g_string_printf(temp_string,"%s",str);
+
+	str = g_strstr_len(temp_string->str,-1,"/");
+	if(str == NULL){
+		return FAILURE;
+	}
+	*str = 0;
+
+	stream = g_socket_client_new();
+
+	stream_connect = g_socket_client_connect_to_host(stream,temp_string->str
+	                                                ,DEFAULT_PORT_VIDEO_STREAM,NULL,&err);
+	if(stream_connect == NULL){
+		g_critical("Доступ по адресу %s : %s",temp_string->str,err->message);
+		g_error_free(err);
+		return FAILURE;
+	}
+
+	g_object_unref(stream);
+	return SUCCESS;
+}
+
 int read_name_stream(void)
 {
+	int rc;
 	GError * err = NULL;
 
 	name_stream = g_key_file_get_string (ini_file,VIDEO_GROUP,"stream",&err);
@@ -68,7 +108,14 @@ int read_name_stream(void)
 	}
 	g_message("Камера : %s",name_stream);
 
-
+	rc = check_access(name_stream);
+	if(rc != SUCCESS){
+		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+	                                          ,GTK_BUTTONS_CLOSE,"Нет доступа к видео потоку : %s",name_stream);
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy(error);
+		return FAILURE;
+	}
 	return SUCCESS;
 }
 
@@ -195,10 +242,6 @@ int init_rtsp(void)
 		g_critical("Видео поток уже открыт!");
 		return FAILURE;
 	}
-	rc = read_name_stream();
-	if(rc == FAILURE){
-		return rc;
-	}
 
   av_register_all();
 	avformat_network_init();
@@ -267,6 +310,12 @@ int init_video_stream(void)
 {
 	int rc;
 	/*TODO  первичная проверка правильности адресса камеры*/
+
+	rc = read_name_stream();
+	if(rc == FAILURE){
+		return rc;
+	}
+
 	rc = init_rtsp();
 	if(rc == SUCCESS){
 		open_stream = OK;
