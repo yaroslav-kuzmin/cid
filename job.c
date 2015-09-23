@@ -236,6 +236,7 @@ static GDateTime * str_time_to_datetime(const char * str)
 	return g_date_time_new_local(2015,9,6,hour,minut,(gdouble)second);
 }
 #define MATCH_NAME      -1
+#define INVALID_NAME    -2
 
 job_s temp_job = {0};
 GString * query_row_job = NULL;
@@ -247,7 +248,12 @@ static int insert_job_db(const char * name,const char *pressure,const char * tim
 	job_s * pj;
 	char * sql_error;
 	int rc;
+	char * str = NULL;
 
+	str = g_strstr_len(name,-1," , ");
+	if(str != NULL){
+		return INVALID_NAME;
+	}
 	g_string_truncate(temp_job.name,0);
 	g_string_append(temp_job.name,name);
 
@@ -1586,6 +1592,8 @@ int select_current_job(GtkTreeView * tre_job)
 
 	g_string_truncate(temp_job.name,0);
 	g_string_append(temp_job.name,name);
+	name = g_strstr_len(temp_job.name->str,-1," , ");
+	*name = 0;
 
 	g_hash_table_lookup_extended(list_job,&temp_job,&pt,NULL);
 	if(pt == NULL){
@@ -1688,7 +1696,16 @@ static GtkTreeModel * create_model_list_job(void)
 			break;
 		}
 		gtk_list_store_append(model,&iter);
-		gtk_list_store_set(model,&iter,COLUMN_NAME,pj_temp->name->str,-1);
+		/*gtk_list_store_set(model,&iter,COLUMN_NAME,pj_temp->name->str,-1);*/
+		g_string_printf(temp_string,"%s ",pj_temp->name->str);
+		g_string_append_printf(temp_string,", %d ",pj_temp->pressure);
+		g_string_append_printf(temp_string,", %02d:%02d:%02d "
+		               ,g_date_time_get_hour(pj_temp->time)
+		               ,g_date_time_get_minute(pj_temp->time)
+		               ,g_date_time_get_second(pj_temp->time));
+		g_string_append_printf(temp_string,", %d ",pj_temp->uprise);
+		g_string_append_printf(temp_string,", %d",pj_temp->lowering);
+		gtk_list_store_set(model,&iter,COLUMN_NAME,temp_string->str,-1);
 	}
 	sortable = GTK_TREE_SORTABLE(model);
 	gtk_tree_sortable_set_sort_func(sortable,0,sort_model_list_job,NULL,NULL);
@@ -1948,6 +1965,15 @@ void clicked_button_save_job(GtkButton * b,gpointer d)
 		gtk_widget_destroy(error);
 		return;
 	}
+	if(rc == INVALID_NAME){
+		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+		                              ,GTK_BUTTONS_CLOSE,"Введеное имя работы содержит \" , \"!");
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy(error);
+		return;
+	}
+
+
 	if(rc == FAILURE){
 		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
 		                              ,GTK_BUTTONS_CLOSE,"Нет возможности записать в базу данных!");
