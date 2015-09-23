@@ -248,9 +248,6 @@ static int insert_job_db(const char * name,const char *pressure,const char * tim
 	char * sql_error;
 	int rc;
 
-	if(temp_job.name == NULL){
-	 	temp_job.name = g_string_new(name);
-	}
 	g_string_truncate(temp_job.name,0);
 	g_string_append(temp_job.name,name);
 
@@ -294,9 +291,6 @@ int delete_job_db(const char * name)
 	int rc;
 	char * sql_error;
 
-	if(temp_job.name == NULL){
-		temp_job.name = g_string_new(name);
-	}
 	g_string_truncate(temp_job.name,0);
 	g_string_append(temp_job.name,name);
 
@@ -366,6 +360,8 @@ int init_db(void)
 
 	char * error_message = NULL;
 	const char * name_database = STR_NAME_DB;
+
+	temp_job.name = g_string_new(NULL);
 
 	rc = sqlite3_open(name_database,&database); // откравает базу данных
 	if(rc != SQLITE_OK){
@@ -1588,9 +1584,6 @@ int select_current_job(GtkTreeView * tre_job)
 		return FAILURE;
 	}
 
-	if(temp_job.name == NULL){
-	 	temp_job.name = g_string_new(name);
-	}
 	g_string_truncate(temp_job.name,0);
 	g_string_append(temp_job.name,name);
 
@@ -1630,9 +1623,6 @@ void clicked_button_del_job(GtkButton * but,GtkTreeView * tre_job)
 		return ;
 	}
 
-	if(temp_job.name == NULL){
-	 	temp_job.name = g_string_new(name);
-	}
 	g_string_truncate(temp_job.name,0);
 	g_string_append(temp_job.name,name);
 
@@ -1731,8 +1721,11 @@ static int add_column_tree_job(GtkTreeView * tv)
 	gtk_tree_view_column_set_sort_indicator(GTK_TREE_VIEW_COLUMN(column),TRUE);
 	gtk_tree_view_append_column (tv, column);
 
+	/*gtk_tree_view_set_tooltip_column(tv,COLUMN_NAME); подсказка */
+
 	return 0;
 }
+
 static char STR_DEL_JOB[] = "Удалить";
 
 GtkWidget * tree_view_job;
@@ -1967,9 +1960,6 @@ void clicked_button_save_job(GtkButton * b,gpointer d)
 	gtk_list_store_append(model,&iter);
 	gtk_list_store_set(model,&iter,COLUMN_NAME,name,-1);
 
-	if(temp_job.name == NULL){
-	 	temp_job.name = g_string_new(name);
-	}
 	g_string_truncate(temp_job.name,0);
 	g_string_append(temp_job.name,name);
 
