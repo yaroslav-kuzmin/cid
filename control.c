@@ -467,11 +467,24 @@ int command_console(uint16_t * val)
 	return FAILURE;
 }
 
+int reg_D115 = 0x1073;
+int command_speed_vertical(uint16_t speed)
+{
+	if(speed > 4000){
+		return FAILURE;
+	}
+	return write_register(reg_D115,speed);
+}
+
+
 int command_null_mode(void)
 {
 	command_wait_mode();
 	command_auto_null();
 	command_manual_null();
+	command_uprise_angle(0);
+	command_lowering_angle(0);
+	command_speed_vertical(0);
 	return SUCCESS;
 }
 

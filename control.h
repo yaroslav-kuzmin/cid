@@ -72,6 +72,7 @@ int command_pressure(uint16_t * val);
 int command_sensors(uint16_t * val);
 int command_input(uint16_t * val);
 int command_console(uint16_t * val);
+int command_speed_vertical(uint16_t speed);
 int command_null_mode(void);
 #endif
 
