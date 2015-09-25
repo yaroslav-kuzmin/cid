@@ -189,6 +189,33 @@ set_str_level:
 		}
 	}
 }
+
+int flush_logging(gpointer ud)
+{
+	GIOStatus rc;
+	GError * err;
+	if(logging_channel == NULL){
+		return FALSE;
+	}
+	err = NULL;
+	rc = g_io_channel_flush(logging_channel,&err);
+	if(rc != G_IO_STATUS_NORMAL){
+		GtkWidget * md_err;
+		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
+			                               ,"Ошибка ведения лога : %s\nЛог закрыт",err->message);
+		gtk_dialog_run(GTK_DIALOG(md_err));
+		gtk_widget_destroy(md_err);
+		g_error_free(err);
+		g_io_channel_shutdown(logging_channel,TRUE,NULL);
+		g_io_channel_unref(logging_channel);
+		logging_channel = NULL;
+	}
+	return TRUE;
+}
+#define MILLISECOND      1000
+
+int time_flush_logging = 60 * MILLISECOND;
+
 int init_logging(void)
 {
 	GtkWidget * md_err;
@@ -205,10 +232,14 @@ int init_logging(void)
 		g_critical(" %s : %s",STR_LOGGING,err->message);
 		exit(FAILURE);
 	}
+	g_timeout_add(time_flush_logging,flush_logging,NULL);
+
 	g_log_set_default_handler(save_logging,NULL);
 	logging = g_string_new(" ");
+
 	return SUCCESS;
 }
+
 int deinit_logging(void)
 {
 	g_io_channel_shutdown(logging_channel,TRUE,NULL);

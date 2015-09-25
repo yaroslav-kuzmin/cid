@@ -503,7 +503,7 @@ int select_frame(int frame)
 			break;
 		}
 		case SAVE_JOB_FRAME:{
-			rc = check_connect_device();
+			rc = check_connect_device(NULL);
 			if(rc != SUCCESS){
 				not_connect_device();
 				return FAILURE;
@@ -517,7 +517,7 @@ int select_frame(int frame)
 			break;
 		}
 		case AUTO_MODE_FRAME:{
-			rc = check_connect_device();
+			rc = check_connect_device(NULL);
 			if(rc != SUCCESS){
 				not_connect_device();
 				return FAILURE;
@@ -539,7 +539,7 @@ int select_frame(int frame)
 			 break;
 		}
 		case  MANUAL_MODE_FRAME:{
-			rc = check_connect_device();
+			rc = check_connect_device(NULL);
 			if(rc != SUCCESS){
 				not_connect_device();
 				return FAILURE;
@@ -1428,6 +1428,94 @@ void hide_frame_manual_mode(GtkWidget * w,gpointer ud)
 	command_null_mode();
 }
 
+GtkWidget * create_button_mode_manual(void)
+{
+	GtkWidget * gri_mode;
+
+	GtkWidget * but_up;
+	GtkWidget * but_down;
+	GtkWidget * but_left;
+	GtkWidget * but_right;
+	GtkWidget * but_pump;
+	GtkWidget * box_speed;
+	GtkWidget * fra_speed;
+	GtkWidget * lab_speed;
+	GtkWidget * sca_speed;
+
+	gri_mode = gtk_grid_new();
+	gtk_widget_set_hexpand(gri_mode,TRUE);
+	gtk_widget_set_vexpand(gri_mode,TRUE);
+	gtk_grid_set_row_spacing(GTK_GRID(gri_mode),5);
+	gtk_grid_set_row_homogeneous(GTK_GRID(gri_mode),TRUE);
+	gtk_grid_set_column_spacing(GTK_GRID(gri_mode),5);
+	gtk_grid_set_column_homogeneous(GTK_GRID(gri_mode),TRUE);
+
+	but_up = gtk_button_new_with_label(STR_BUTTON_MANUAL_UP);
+	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_up)),SIZE_FONT_SMALL);*/
+	set_notactive_color(GTK_BUTTON(but_up));
+	g_signal_connect(but_up,"button-press-event",G_CALLBACK(press_button_manual_up),NULL);
+	g_signal_connect(but_up,"button-release-event",G_CALLBACK(release_button_manual_up),NULL);
+
+	but_down = gtk_button_new_with_label(STR_BUTTON_MANUAL_DOWN);
+	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_down)),SIZE_FONT_SMALL);*/
+	set_notactive_color(GTK_BUTTON(but_down));
+	g_signal_connect(but_down,"button-press-event",G_CALLBACK(press_button_manual_down),NULL);
+	g_signal_connect(but_down,"button-release-event",G_CALLBACK(release_button_manual_down),NULL);
+
+	but_left = gtk_button_new_with_label(STR_BUTTON_MANUAL_LEFT);
+	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_left)),SIZE_FONT_SMALL);*/
+	set_notactive_color(GTK_BUTTON(but_left));
+	g_signal_connect(but_left,"button-press-event",G_CALLBACK(press_button_manual_left),NULL);
+	g_signal_connect(but_left,"button-release-event",G_CALLBACK(release_button_manual_left),NULL);
+
+	but_right = gtk_button_new_with_label(STR_BUTTON_MANUAL_RIGHT);
+	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_right)),SIZE_FONT_SMALL);*/
+	set_notactive_color(GTK_BUTTON(but_right));
+	g_signal_connect(but_right,"button-press-event",G_CALLBACK(press_button_manual_right),NULL);
+	g_signal_connect(but_right,"button-release-event",G_CALLBACK(release_button_manual_right),NULL);
+
+	but_pump = gtk_button_new_with_label(STR_BUTTON_MANUAL_OPEN);
+	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_pump)),SIZE_FONT_SMALL);*/
+	set_notactive_color(GTK_BUTTON(but_pump));
+	gtk_widget_set_size_request(but_pump,150,-1);
+	g_signal_connect(but_pump,"clicked",G_CALLBACK(clicked_button_manual_pump),NULL);
+
+	fra_speed = gtk_frame_new(NULL);
+
+	box_speed = gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
+	gtk_container_set_border_width(GTK_CONTAINER(box_speed),5);
+
+	lab_speed = gtk_label_new(STR_SPEED_VERTICAL);
+ 	sca_speed = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL
+	                                    ,SPEED_VERTICAL_MIN,SPEED_VERTICAL_MAX,SPEED_VERTICAL_STEP);
+	gtk_scale_set_digits(GTK_SCALE(sca_speed),2); /*колличество знаков после запятой*/
+	gtk_scale_set_value_pos(GTK_SCALE(sca_speed),GTK_POS_TOP);
+	g_signal_connect(sca_speed,"change-value",G_CALLBACK(change_value_scale_speed),NULL);
+
+	gtk_grid_attach(GTK_GRID(gri_mode),but_up   ,1,0,1,1);
+	gtk_grid_attach(GTK_GRID(gri_mode),but_down ,1,2,1,1);
+	gtk_grid_attach(GTK_GRID(gri_mode),but_left ,0,1,1,1);
+	gtk_grid_attach(GTK_GRID(gri_mode),but_right,2,1,1,1);
+	gtk_grid_attach(GTK_GRID(gri_mode),but_pump ,3,1,1,1);
+	gtk_grid_attach(GTK_GRID(gri_mode),fra_speed,2,2,2,1);
+	gtk_container_add(GTK_CONTAINER(fra_speed),box_speed);
+	gtk_box_pack_start(GTK_BOX(box_speed),lab_speed,TRUE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(box_speed),sca_speed,TRUE,TRUE,0);
+
+	gtk_widget_show(sca_speed);
+	gtk_widget_show(lab_speed);
+	gtk_widget_show(box_speed);
+	gtk_widget_show(fra_speed);
+	gtk_widget_show(but_pump);
+	gtk_widget_show(but_right);
+	gtk_widget_show(but_left);
+	gtk_widget_show(but_down);
+	gtk_widget_show(but_up);
+	gtk_widget_show(gri_mode);
+
+	return gri_mode;
+}
+
 GtkWidget * create_label_mode_manual(void)
 {
 	GtkWidget * fra_label;
@@ -1493,16 +1581,7 @@ GtkWidget * create_mode_manual(void)
 {
 	GtkWidget * lab_fra_mode_manual;
 	GtkWidget * box_horizontal;
-	GtkWidget * gri_mode;
-	GtkWidget * but_up;
-	GtkWidget * but_down;
-	GtkWidget * but_left;
-	GtkWidget * but_right;
-	GtkWidget * but_pump;
-	GtkWidget * box_speed;
-	GtkWidget * fra_speed;
-	GtkWidget * lab_speed;
-	GtkWidget * sca_speed;
+	GtkWidget * gri_button;
 	GtkWidget * gri_label;
 
 	fra_mode_manual = gtk_frame_new(NULL);
@@ -1517,85 +1596,14 @@ GtkWidget * create_mode_manual(void)
 
 	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
 
-	gri_mode = gtk_grid_new();
-	gtk_widget_set_hexpand(gri_mode,TRUE);
-	gtk_widget_set_vexpand(gri_mode,TRUE);
-	gtk_grid_set_row_spacing(GTK_GRID(gri_mode),5);
-	gtk_grid_set_row_homogeneous(GTK_GRID(gri_mode),TRUE);
-	gtk_grid_set_column_spacing(GTK_GRID(gri_mode),5);
-	gtk_grid_set_column_homogeneous(GTK_GRID(gri_mode),TRUE);
-
-	but_up = gtk_button_new_with_label(STR_BUTTON_MANUAL_UP);
-	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_up)),SIZE_FONT_SMALL);*/
-	set_notactive_color(GTK_BUTTON(but_up));
-	g_signal_connect(but_up,"button-press-event",G_CALLBACK(press_button_manual_up),NULL);
-	g_signal_connect(but_up,"button-release-event",G_CALLBACK(release_button_manual_up),NULL);
-
-	but_down = gtk_button_new_with_label(STR_BUTTON_MANUAL_DOWN);
-	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_down)),SIZE_FONT_SMALL);*/
-	set_notactive_color(GTK_BUTTON(but_down));
-	g_signal_connect(but_down,"button-press-event",G_CALLBACK(press_button_manual_down),NULL);
-	g_signal_connect(but_down,"button-release-event",G_CALLBACK(release_button_manual_down),NULL);
-
-	but_left = gtk_button_new_with_label(STR_BUTTON_MANUAL_LEFT);
-	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_left)),SIZE_FONT_SMALL);*/
-	set_notactive_color(GTK_BUTTON(but_left));
-	g_signal_connect(but_left,"button-press-event",G_CALLBACK(press_button_manual_left),NULL);
-	g_signal_connect(but_left,"button-release-event",G_CALLBACK(release_button_manual_left),NULL);
-
-	but_right = gtk_button_new_with_label(STR_BUTTON_MANUAL_RIGHT);
-	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_right)),SIZE_FONT_SMALL);*/
-	set_notactive_color(GTK_BUTTON(but_right));
-	g_signal_connect(but_right,"button-press-event",G_CALLBACK(press_button_manual_right),NULL);
-	g_signal_connect(but_right,"button-release-event",G_CALLBACK(release_button_manual_right),NULL);
-
-	but_pump = gtk_button_new_with_label(STR_BUTTON_MANUAL_OPEN);
-	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_pump)),SIZE_FONT_SMALL);*/
-	set_notactive_color(GTK_BUTTON(but_pump));
-	gtk_widget_set_size_request(but_pump,150,-1);
-	g_signal_connect(but_pump,"clicked",G_CALLBACK(clicked_button_manual_pump),NULL);
-
-	fra_speed = gtk_frame_new(NULL);
-
-	box_speed = gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
-	gtk_container_set_border_width(GTK_CONTAINER(box_speed),5);
-
-	lab_speed = gtk_label_new(STR_SPEED_VERTICAL);
- 	sca_speed = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL
-	                                    ,SPEED_VERTICAL_MIN,SPEED_VERTICAL_MAX,SPEED_VERTICAL_STEP);
-	gtk_scale_set_digits(GTK_SCALE(sca_speed),2); /*колличество знаков после запятой*/
-	gtk_scale_set_value_pos(GTK_SCALE(sca_speed),GTK_POS_TOP);
-	g_signal_connect(sca_speed,"change-value",G_CALLBACK(change_value_scale_speed),NULL);
-
+	gri_button = create_button_mode_manual();
 	gri_label = create_label_mode_manual();
 
 	gtk_frame_set_label_widget(GTK_FRAME(fra_mode_manual),lab_fra_mode_manual);
 	gtk_container_add(GTK_CONTAINER(fra_mode_manual),box_horizontal);
-
-	gtk_box_pack_start(GTK_BOX(box_horizontal),gri_mode,TRUE,TRUE,5);
-	gtk_grid_attach(GTK_GRID(gri_mode),but_up   ,1,0,1,1);
-	gtk_grid_attach(GTK_GRID(gri_mode),but_down ,1,2,1,1);
-	gtk_grid_attach(GTK_GRID(gri_mode),but_left ,0,1,1,1);
-	gtk_grid_attach(GTK_GRID(gri_mode),but_right,2,1,1,1);
-	gtk_grid_attach(GTK_GRID(gri_mode),but_pump ,3,1,1,1);
-
-	gtk_grid_attach(GTK_GRID(gri_mode),fra_speed,2,2,2,1);
-	gtk_container_add(GTK_CONTAINER(fra_speed),box_speed);
-	gtk_box_pack_start(GTK_BOX(box_speed),lab_speed,TRUE,TRUE,0);
-	gtk_box_pack_start(GTK_BOX(box_speed),sca_speed,TRUE,TRUE,0);
-
+	gtk_box_pack_start(GTK_BOX(box_horizontal),gri_button,TRUE,TRUE,5);
 	gtk_box_pack_start(GTK_BOX(box_horizontal),gri_label,TRUE,TRUE,5);
 
-	gtk_widget_show(sca_speed);
-	gtk_widget_show(lab_speed);
-	gtk_widget_show(box_speed);
-	gtk_widget_show(fra_speed);
-	gtk_widget_show(but_pump);
-	gtk_widget_show(but_right);
-	gtk_widget_show(but_left);
-	gtk_widget_show(but_down);
-	gtk_widget_show(but_up);
-	gtk_widget_show(gri_mode);
 	gtk_widget_show(box_horizontal);
 	gtk_widget_show(lab_fra_mode_manual);
 	gtk_widget_hide(fra_mode_manual);
@@ -2271,6 +2279,7 @@ void show_frame_save_job(GtkWidget * w,gpointer ud)
 	value_uprise = ANGLE_NULL;
 	value_lowering = ANGLE_NULL;
 	config_mode = OK;
+	/*TODO проверка конекта */
 	command_config_mode();
 	command_speed_vertical(speed_vertical_config_mode);
 	g_timeout_add(timeout_config_mode,check_registers_config_mode,NULL);
