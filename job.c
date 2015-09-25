@@ -1020,14 +1020,6 @@ double SPEED_VERTICAL_MAX = 6;
 double SPEED_VERTICAL_STEP = 0.75;
 double SPEED_VERTICAL_RATE = 666.66667;
 
-gboolean static_value_scale_speed(GtkRange * r,GtkScrollType s,gdouble v,gpointer ud)
-{
-	uint16_t speed = *((uint16_t *)ud);
-	gtk_range_set_value(r,(speed/SPEED_VERTICAL_RATE));
-	command_speed_vertical(speed);
-	return TRUE;
-}
-
 GtkWidget * lab_auto_mode_name_job;
 GtkWidget * lab_auto_mode_pressure;
 GtkWidget * lab_auto_mode_time;
@@ -1182,12 +1174,7 @@ GtkWidget * create_mode_auto(void)
 {
 	GtkWidget * lab_fra_mode_auto;
 	GtkWidget * box_hor_main;
-	GtkWidget * box_ver_but;
 	GtkWidget * box_hor_but;
-	GtkWidget * box_speed;
-	GtkWidget * fra_speed;
-	GtkWidget * lab_speed;
-	GtkWidget * sca_speed;
 	GtkWidget * but_start;
 	GtkWidget * but_stop;
 	GtkWidget * gri_auto;
@@ -1205,9 +1192,6 @@ GtkWidget * create_mode_auto(void)
 	box_hor_main = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
 	gtk_widget_set_hexpand(box_hor_main,TRUE);
 	gtk_widget_set_vexpand(box_hor_main,TRUE);
-
-	box_ver_but = gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
-	gtk_widget_set_vexpand(box_ver_but,FALSE);
 
 	box_hor_but = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
 	gtk_widget_set_vexpand(box_hor_but,TRUE);
@@ -1236,47 +1220,20 @@ GtkWidget * create_mode_auto(void)
 	set_notactive_color(GTK_BUTTON(but_auto_mode_pause));
 	g_signal_connect(but_auto_mode_pause,"clicked",G_CALLBACK(clicked_button_auto_pause),but_start);
 
-	fra_speed = gtk_frame_new(NULL);
-	gtk_widget_set_vexpand(fra_speed,FALSE);
-
-	box_speed = gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
-	gtk_widget_set_vexpand(box_speed,FALSE);
-
-	lab_speed = gtk_label_new(STR_SPEED_VERTICAL);
-	gtk_widget_set_vexpand(lab_speed,FALSE);
-
- 	sca_speed = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL
-	                                    ,SPEED_VERTICAL_MIN,SPEED_VERTICAL_MAX,SPEED_VERTICAL_STEP);
-	gtk_widget_set_vexpand(sca_speed,FALSE);
-	gtk_scale_set_digits(GTK_SCALE(sca_speed),2); /*колличество знаков после запятой*/
-	gtk_scale_set_value_pos(GTK_SCALE(sca_speed),GTK_POS_TOP);
-	gtk_range_set_value(GTK_RANGE(sca_speed),(speed_vertical_auto_mode/SPEED_VERTICAL_RATE));
-	g_signal_connect(sca_speed,"change-value",G_CALLBACK(static_value_scale_speed),&speed_vertical_auto_mode);
-
 	gri_auto = create_label_mode_auto();
 
 	gtk_frame_set_label_widget(GTK_FRAME(fra_mode_auto),lab_fra_mode_auto);
 	gtk_container_add(GTK_CONTAINER(fra_mode_auto),box_hor_main);
-	gtk_box_pack_start(GTK_BOX(box_hor_main),box_ver_but,TRUE,TRUE,5);
-	gtk_box_pack_start(GTK_BOX(box_hor_main),gri_auto,TRUE,TRUE,5);
-	gtk_box_pack_start(GTK_BOX(box_ver_but),box_hor_but,TRUE,TRUE,50);
-	gtk_box_pack_start(GTK_BOX(box_ver_but),fra_speed,TRUE,TRUE,5);
+	gtk_box_pack_start(GTK_BOX(box_hor_main),box_hor_but,TRUE,TRUE,5);
 	gtk_box_pack_start(GTK_BOX(box_hor_but),but_start,TRUE,TRUE,10);
 	gtk_box_pack_start(GTK_BOX(box_hor_but),but_stop,TRUE,TRUE,10);
 	gtk_box_pack_start(GTK_BOX(box_hor_but),but_auto_mode_pause,TRUE,TRUE,10);
-	gtk_container_add(GTK_CONTAINER(fra_speed),box_speed);
-	gtk_box_pack_start(GTK_BOX(box_speed),lab_speed,FALSE,TRUE,5);
-	gtk_box_pack_start(GTK_BOX(box_speed),sca_speed,FALSE,TRUE,5);
+	gtk_box_pack_start(GTK_BOX(box_hor_main),gri_auto,TRUE,TRUE,5);
 
-	gtk_widget_show(sca_speed);
-	gtk_widget_show(lab_speed);
-	gtk_widget_show(box_speed);
-	gtk_widget_show(fra_speed);
 	gtk_widget_show(but_auto_mode_pause);
 	gtk_widget_show(but_stop);
 	gtk_widget_show(but_start);
 	gtk_widget_show(box_hor_but);
-	gtk_widget_show(box_ver_but);
 	gtk_widget_show(box_hor_main);
 	gtk_widget_show(lab_fra_mode_auto);
 	gtk_widget_hide(fra_mode_auto);
@@ -2232,10 +2189,6 @@ GtkWidget * create_button_job_save(void)
 	GtkWidget * but_up;
 	GtkWidget * but_down;
 	GtkWidget * lab_angle;
-	GtkWidget * fra_speed;
-	GtkWidget * box_speed;
-	GtkWidget * lab_speed;
-	GtkWidget * sca_speed;
 
 	fra_button = gtk_frame_new(NULL);
 	gtk_widget_set_hexpand(fra_button,TRUE);
@@ -2275,32 +2228,12 @@ GtkWidget * create_button_job_save(void)
 	lab_angle_save_job = gtk_label_new(STR_ANGLE_DEFAULT);
 	set_size_font(lab_angle_save_job,SIZE_FONT_SMALL);
 
-	fra_speed = gtk_frame_new(NULL);
-	gtk_container_set_border_width(GTK_CONTAINER(fra_speed),5);
-	box_speed = gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
-	lab_speed = gtk_label_new(STR_SPEED_VERTICAL);
- 	sca_speed = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL
-	                                    ,SPEED_VERTICAL_MIN,SPEED_VERTICAL_MAX,SPEED_VERTICAL_STEP);
-	gtk_widget_set_vexpand(sca_speed,FALSE);
-	gtk_scale_set_digits(GTK_SCALE(sca_speed),2); /*колличество знаков после запятой*/
-	gtk_scale_set_value_pos(GTK_SCALE(sca_speed),GTK_POS_TOP);
-	gtk_range_set_value(GTK_RANGE(sca_speed),(speed_vertical_config_mode/SPEED_VERTICAL_RATE));
-	g_signal_connect(sca_speed,"change-value",G_CALLBACK(static_value_scale_speed),&speed_vertical_config_mode);
-
 	gtk_container_add(GTK_CONTAINER(fra_button),gri_button);
 	gtk_grid_attach(GTK_GRID(gri_button),but_up            ,1,0,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),but_down          ,1,1,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),lab_angle         ,0,2,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),lab_angle_save_job,1,2,1,1);
-	gtk_grid_attach(GTK_GRID(gri_button),fra_speed         ,0,3,2,1);
-	gtk_container_add(GTK_CONTAINER(fra_speed),box_speed);
-	gtk_box_pack_start(GTK_BOX(box_speed),lab_speed,FALSE,TRUE,5);
-	gtk_box_pack_start(GTK_BOX(box_speed),sca_speed,FALSE,TRUE,5);
 
-	gtk_widget_show(sca_speed);
-	gtk_widget_show(lab_speed);
-	gtk_widget_show(box_speed);
-	gtk_widget_show(fra_speed);
 	gtk_widget_show(lab_angle_save_job);
 	gtk_widget_show(lab_angle);
 	gtk_widget_show(but_down);
