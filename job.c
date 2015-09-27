@@ -1940,19 +1940,38 @@ static GtkWidget * lab_tree_pressure = NULL;
 static GtkWidget * lab_tree_time = NULL;
 static GtkWidget * lab_tree_uprise = NULL;
 static GtkWidget * lab_tree_lowering = NULL;
-/*
+
 int set_current_value_tree(void)
 {
-
+	if(current_job == NULL){
+		gtk_label_set_text(GTK_LABEL(lab_tree_pressure),STR_PRESSURE_DEFAULT);
+		gtk_label_set_text(GTK_LABEL(lab_tree_time),STR_TIME_JOB_DEFAULT);
+		gtk_label_set_text(GTK_LABEL(lab_tree_uprise),STR_ANGLE_DEFAULT);
+		gtk_label_set_text(GTK_LABEL(lab_tree_lowering),STR_ANGLE_DEFAULT);
+	}
+	else{
+		g_string_printf(temp_string,"%d",current_job->pressure);
+		gtk_label_set_text(GTK_LABEL(lab_tree_pressure),temp_string->str);
+		g_string_printf(temp_string,"%02d:%02d:%02d"
+		               ,g_date_time_get_hour(current_job->time)
+		               ,g_date_time_get_minute(current_job->time)
+		               ,g_date_time_get_second(current_job->time));
+		gtk_label_set_text(GTK_LABEL(lab_tree_time),temp_string->str);
+		g_string_printf(temp_string,ANGLE_FORMAT,current_job->uprise);
+		gtk_label_set_text(GTK_LABEL(lab_tree_uprise),temp_string->str);
+		g_string_printf(temp_string,ANGLE_FORMAT,current_job->lowering);
+		gtk_label_set_text(GTK_LABEL(lab_tree_lowering),temp_string->str);
+	}
+	return SUCCESS;
 }
-*/
+
 void cursor_changed_tree_job(GtkTreeView *tree_view,gpointer ud)
 {
 	select_current_job(tree_view);
 	if(current_job == NULL){
 		return;
 	}
-	g_debug("::> %s",current_job->name->str);
+	set_current_value_tree();
 }
 
 
@@ -1989,13 +2008,13 @@ GtkWidget * create_info_load_tree(void)
 
 	fra_tree = gtk_frame_new(NULL);
 	gtk_widget_set_valign(fra_tree,GTK_ALIGN_FILL);
-	gtk_widget_set_halign(fra_tree,GTK_ALIGN_FILL);
+	gtk_widget_set_halign(fra_tree,GTK_ALIGN_END);
 	gtk_widget_set_vexpand(fra_tree,TRUE);
 	gtk_widget_set_hexpand(fra_tree,TRUE);
 
 	gri_info = gtk_grid_new();
 	gtk_widget_set_valign(gri_info,GTK_ALIGN_FILL);
-	gtk_widget_set_halign(gri_info,GTK_ALIGN_FILL);
+	gtk_widget_set_halign(gri_info,GTK_ALIGN_END);
 	gtk_widget_set_vexpand(gri_info,TRUE);
 	gtk_widget_set_hexpand(gri_info,TRUE);
 	gtk_grid_set_row_spacing(GTK_GRID(gri_info),10);
@@ -2050,8 +2069,9 @@ GtkWidget * create_job_load(void)
  	GtkWidget * box_vertical;
 	GtkWidget * box_tree;
 	GtkWidget * scrwin_job;
+	GtkWidget * scrwin_job_temp;
 	GtkTreeModel * tremod_job;
-	GtkWidget * gri_tree;
+	GtkWidget * gri_info;
 	GtkWidget * box_horizontal;
 	GtkWidget * but_load;
 	GtkWidget * but_del;
@@ -2086,6 +2106,18 @@ GtkWidget * create_job_load(void)
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (scrwin_job),GTK_SHADOW_ETCHED_IN);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scrwin_job),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
 
+	scrwin_job_temp = gtk_scrolled_window_get_hscrollbar(GTK_SCROLLED_WINDOW(scrwin_job));
+	gtk_widget_set_halign(scrwin_job_temp,GTK_ALIGN_FILL);
+	gtk_widget_set_valign(scrwin_job_temp,GTK_ALIGN_FILL);
+	gtk_widget_set_hexpand(scrwin_job_temp,TRUE);
+	gtk_widget_set_vexpand(scrwin_job_temp,TRUE);
+	scrwin_job_temp = gtk_scrolled_window_get_vscrollbar(GTK_SCROLLED_WINDOW(scrwin_job));
+	gtk_widget_set_halign(scrwin_job_temp,GTK_ALIGN_FILL);
+	gtk_widget_set_valign(scrwin_job_temp,GTK_ALIGN_FILL);
+	gtk_widget_set_hexpand(scrwin_job_temp,TRUE);
+	gtk_widget_set_vexpand(scrwin_job_temp,TRUE);
+
+
 	tremod_job = create_model_list_job();
 
 	tree_view_job = gtk_tree_view_new_with_model(tremod_job);
@@ -2101,27 +2133,33 @@ GtkWidget * create_job_load(void)
 
 	add_column_tree_job(GTK_TREE_VIEW(tree_view_job));
 
-	gri_tree = create_info_load_tree();
+	gri_info = create_info_load_tree();
 
 	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
+	gtk_widget_set_hexpand(box_horizontal,TRUE);
+	gtk_widget_set_vexpand(box_horizontal,TRUE);
+	gtk_widget_set_halign(box_horizontal,GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box_horizontal,GTK_ALIGN_FILL);
 	/*gtk_box_set_homogeneous(GTK_BOX(box_horizontal),TRUE);*/
 	but_load = gtk_button_new_with_label(STR_LOAD_JOB);
 	gtk_widget_set_halign(but_load,GTK_ALIGN_CENTER);
+	gtk_widget_set_valign(but_load,GTK_ALIGN_CENTER);
 	g_signal_connect(but_load,"clicked",G_CALLBACK(clicked_button_load_job),tree_view_job);
 	but_del = gtk_button_new_with_label(STR_DEL_JOB);
-	gtk_widget_set_halign(but_load,GTK_ALIGN_CENTER);
+	gtk_widget_set_halign(but_del,GTK_ALIGN_CENTER);
+	gtk_widget_set_valign(but_del,GTK_ALIGN_CENTER);
 	g_signal_connect(but_del,"clicked",G_CALLBACK(clicked_button_del_job),tree_view_job);
 
 	gtk_frame_set_label_widget(GTK_FRAME(fra_job_load),lab_fra_job_load);
 	gtk_container_add(GTK_CONTAINER(fra_job_load),box_vertical);
 
-	gtk_box_pack_start(GTK_BOX(box_vertical),box_tree,TRUE,TRUE,5);
+	gtk_box_pack_start(GTK_BOX(box_vertical),box_tree,FALSE,TRUE,5);
 
-	gtk_box_pack_start(GTK_BOX(box_tree),scrwin_job,TRUE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(box_tree),scrwin_job,FALSE,TRUE,5);
 	gtk_container_add(GTK_CONTAINER(scrwin_job),tree_view_job);
-	gtk_box_pack_start(GTK_BOX(box_tree),gri_tree,TRUE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(box_tree),gri_info,FALSE,TRUE,5);
 
-	gtk_box_pack_start(GTK_BOX(box_vertical),box_horizontal,TRUE,TRUE,5);
+	gtk_box_pack_start(GTK_BOX(box_vertical),box_horizontal,FALSE,TRUE,5);
 	gtk_box_pack_start(GTK_BOX(box_horizontal),but_load,FALSE,TRUE,5);
 	gtk_box_pack_start(GTK_BOX(box_horizontal),but_del,FALSE,TRUE,5);
 
