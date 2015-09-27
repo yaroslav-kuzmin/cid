@@ -212,7 +212,6 @@ int flush_logging(gpointer ud)
 	}
 	return TRUE;
 }
-#define MILLISECOND      1000
 
 int time_flush_logging = 60 * MILLISECOND;
 

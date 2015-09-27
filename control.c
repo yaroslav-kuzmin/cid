@@ -484,6 +484,14 @@ int command_speed_vertical(uint16_t speed)
 	return write_register(reg_D115,speed);
 }
 
+int reg_D116 = 0x1074;
+int command_valve(uint16_t value)
+{
+	if(value > 4000){
+		return FAILURE;
+	}
+	return write_register(reg_D116,value);
+}
 
 int command_null_mode(void)
 {
@@ -683,7 +691,7 @@ int check_connect_timeout(gpointer ud)
 	return TRUE;
 }
 
-int time_check_connect_device = 5000;
+int time_check_connect_device = 3 * MILLISECOND;
 
 int set_status_connect(void)
 {

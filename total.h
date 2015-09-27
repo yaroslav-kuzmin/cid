@@ -80,5 +80,9 @@ extern GdkRGBA color_lite_green;
 #define SIZE_FONT_SMALL            12000
 
 extern GString * temp_string;
+
+#define MILLISECOND      1000
+
+
 #endif
 
