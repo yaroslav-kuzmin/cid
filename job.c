@@ -861,8 +861,7 @@ GtkWidget * create_info(void)
 /* Панель работа в автоматическом режиме                                     */
 /*****************************************************************************/
 
-#define MAX_TIME_SECOND      360000
-
+#define MAX_TIME_SECOND      359999
 struct _label_auto_mode_s
 {
 	GtkWidget * pressure;
@@ -928,9 +927,9 @@ int check_registers_auto_mode(gpointer ud)
 		amount_auto_mode = 0;
 	}
 
-	hour = amount_auto_mode / (60*60);
-	minut = amount_auto_mode / (60 - (hour * 60));
-	second = amount_auto_mode - (minut * 60);
+	hour = (amount_auto_mode / (60*60));
+	minut = (amount_auto_mode - (hour*60*60))/60;
+	second = (amount_auto_mode - (hour*60*60) - (minut*60));
 
 	g_string_printf(temp_string,"%d",pressure);
 	gtk_label_set_text(GTK_LABEL(label_auto_mode.pressure),temp_string->str);
@@ -942,6 +941,8 @@ int check_registers_auto_mode(gpointer ud)
 	gtk_label_set_text(GTK_LABEL(label_auto_mode.uprise),temp_string->str);
 	gtk_label_set_text(GTK_LABEL(label_auto_mode.lowering),temp_string->str);
 
+	/*TODO testing*/
+	g_printf("\n");
 	g_printf("%02d:%02d:%02d\n",hour,minut,second);
 	g_printf("angle    :> %#x\n",angle);
 	g_printf("pressure :> %#x\n",pressure);
@@ -1399,9 +1400,10 @@ int check_registers_manual_mode(gpointer ud)
 	if(amount_manual_mode == MAX_TIME_SECOND){
 		amount_manual_mode = 0;
 	}
-	hour = amount_manual_mode / (60*60);
-	minut = amount_manual_mode / (60 - (hour * 60));
-	second = amount_manual_mode - (minut * 60);
+
+	hour = (amount_manual_mode / (60*60));
+	minut = (amount_manual_mode - (hour*60*60))/60;
+	second = (amount_manual_mode - (hour*60*60) - (minut*60));
 
 	g_string_printf(temp_string,"%d",pressure);
 	gtk_label_set_text(GTK_LABEL(label_manual_mode.pressure),temp_string->str);
@@ -1411,7 +1413,7 @@ int check_registers_manual_mode(gpointer ud)
 
 	g_string_printf(temp_string,ANGLE_FORMAT,angle);
 	gtk_label_set_text(GTK_LABEL(label_manual_mode.angle),temp_string->str);
-
+	/*TODO testing*/
 	g_printf("\n");
 	g_printf("%02d:%02d:%02d\n",hour,minut,second);
 	g_printf("angle    :> %#x\n",angle);
