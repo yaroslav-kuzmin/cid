@@ -493,6 +493,15 @@ int command_valve(uint16_t value)
 	return write_register(reg_D116,value);
 }
 
+int reg_D117 = 0x1075;
+int command_horizontal(uint16_t value)
+{
+	if(value > 60){
+		return FAILURE;
+	}
+	return write_register(reg_D117,value);
+}
+
 int command_null_mode(void)
 {
 	command_wait_mode();

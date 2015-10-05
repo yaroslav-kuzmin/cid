@@ -1151,6 +1151,9 @@ GtkWidget * create_label_mode_auto(void)
 
 	return fra_auto;
 }
+#define DEFAULT_HORIZONTAL_OFFSET     0
+
+uint16_t horizontal_offset = DEFAULT_HORIZONTAL_OFFSET;
 
 void show_frame_auto_mode(GtkWidget * w,gpointer ud)
 {
@@ -1159,6 +1162,7 @@ void show_frame_auto_mode(GtkWidget * w,gpointer ud)
 	command_uprise_angle(current_job->uprise);
 	command_lowering_angle(current_job->lowering);
 	command_speed_vertical(speed_vertical_auto_mode);
+	command_horizontal(horizontal_offset);
 	auto_mode_start = NOT_OK;
 	auto_mode_pause = NOT_OK;
 	set_preset_value_auto_mode();
@@ -2592,7 +2596,7 @@ void hide_frame_save_job(GtkWidget * w,gpointer ud)
 	command_null_mode();
 }
 
-GtkWidget * create_job_save(void)
+static GtkWidget * create_job_save(void)
 {
 	GtkWidget * lab_fra_job_save;
 	GtkWidget * box_horizontal;
@@ -2631,10 +2635,37 @@ GtkWidget * create_job_save(void)
 /* основное окно                                                             */
 /*****************************************************************************/
 
+static char STR_GLOBAL_KEY[] = "global";
+static char STR_HORIZONTAL_OFFSET[] = "horizontal";
+
+static int load_config(void)
+{
+	int rc;
+	GError * err = NULL;
+
+
+	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,&err);
+	if(err != NULL){
+		g_message("В секции %s нет ключа %s : %s",STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,err->message);
+		g_error_free(err);
+		return FAILURE;
+	}
+
+	if( ((rc < 0) || (rc > 60)) ){
+		rc = DEFAULT_HORIZONTAL_OFFSET;
+	}
+
+	horizontal_offset = rc;
+
+	return SUCCESS;
+}
+
 GtkWidget * create_control_panel(void)
 {
 	GtkWidget * fra_control;
 	GtkWidget * gri_control;
+
+	load_config();
 
 	fra_control = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(fra_control),5);

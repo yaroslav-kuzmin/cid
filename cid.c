@@ -184,8 +184,6 @@ set_str_level:
 			g_io_channel_unref(logging_channel);
 			logging_channel = NULL;
 		}
-		/*TODO testting*/
-		g_io_channel_flush(logging_channel,NULL);
 		if(log_level == G_LOG_LEVEL_ERROR){
 			g_io_channel_shutdown(logging_channel,TRUE,NULL);
 		}

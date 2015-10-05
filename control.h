@@ -74,6 +74,7 @@ int command_input(uint16_t * val);
 int command_console(uint16_t * val);
 int command_speed_vertical(uint16_t speed);
 int command_valve(uint16_t value);
+int command_horizontal(uint16_t value);
 int command_null_mode(void);
 #endif
 
