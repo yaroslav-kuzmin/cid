@@ -536,7 +536,7 @@ int check_connect_device(uint16_t * status)
 int init_control_device(void)
 {
 	int rc;
-	if(dest != NULL){
+	if(dest == NULL){
 		dest = g_malloc0(amoun_dest * sizeof(uint16_t));
 	}
 	rc = connect_device();
