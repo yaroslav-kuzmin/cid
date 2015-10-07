@@ -536,7 +536,6 @@ int check_connect_device(uint16_t * status)
 int init_control_device(void)
 {
 	int rc;
-
 	if(dest != NULL){
 		dest = g_malloc0(amoun_dest * sizeof(uint16_t));
 	}
@@ -553,6 +552,7 @@ int init_control_device(void)
 
 int deinit_control_device(void)
 {
+	int rc;
 	rc = check_auto_mode();
 	if(rc != OK){
 		command_null_mode();
