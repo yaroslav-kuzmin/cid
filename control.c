@@ -72,14 +72,13 @@ int protocol = PROTOCOL_RTU;
 
 /*****************************************************************************/
 
-static char STR_MODBUS_GROUP[] = "modbus";
 int read_config_device(void)
 {
 	GError * err = NULL;
 	char *str = NULL;
 	int value;
 	/*TODO проверка вводимых данных*/
-	str = g_key_file_get_string (ini_file,STR_MODBUS_GROUP,"device",&err);
+	str = g_key_file_get_string (ini_file,STR_MODBUS_KEY,"device",&err);
 	if(str == NULL){
 		g_critical("Нет имени порта : %s",err->message);
 		g_error_free(err);
@@ -91,7 +90,7 @@ int read_config_device(void)
 	g_message("Порт : %s",device_name);
 
 	err = NULL;
-	value = g_key_file_get_integer(ini_file,STR_MODBUS_GROUP,"baud",&err);
+	value = g_key_file_get_integer(ini_file,STR_MODBUS_KEY,"baud",&err);
 	if(value == 0){
 		g_critical("Нет скорости на порту : %s",err->message);
 		g_error_free(err);
@@ -102,7 +101,7 @@ int read_config_device(void)
 	g_message("Скорость на порту : %d",baud);
 
 	err = NULL;
-	str = g_key_file_get_string(ini_file,STR_MODBUS_GROUP,"parity",&err);
+	str = g_key_file_get_string(ini_file,STR_MODBUS_KEY,"parity",&err);
 	if(str == NULL){
 		g_critical("Нет четности : %s",err->message);
 		g_error_free(err);
@@ -120,7 +119,7 @@ int read_config_device(void)
 	g_message("Установлена четность на потру : %c",parity);
 
 	err = NULL;
-	value = g_key_file_get_integer(ini_file,STR_MODBUS_GROUP,"data_bit",&err);
+	value = g_key_file_get_integer(ini_file,STR_MODBUS_KEY,"data_bit",&err);
 	if(value == 0){
 		g_critical("Не установлено бит данных на потру: %s",err->message);
 		g_error_free(err);
@@ -133,7 +132,7 @@ int read_config_device(void)
 	g_message("Установлено бит данных на порту : %d",data_bit);
 
 	err = NULL;
-	value = g_key_file_get_integer(ini_file,STR_MODBUS_GROUP,"stop_bit",&err);
+	value = g_key_file_get_integer(ini_file,STR_MODBUS_KEY,"stop_bit",&err);
 	if(value == 0){
 		g_critical("Не установлено стоп бита : %s",err->message);
 		g_error_free(err);
@@ -146,7 +145,7 @@ int read_config_device(void)
 	g_message("Установлен стоп бит : %d",stop_bit);
 
 	err = NULL;
-	value = g_key_file_get_integer(ini_file,STR_MODBUS_GROUP,"ID",&err);
+	value = g_key_file_get_integer(ini_file,STR_MODBUS_KEY,"ID",&err);
 	if(value == 0){
 		g_critical("Нет номера устройства ID : %s",err->message);
 		g_error_free(err);
@@ -158,7 +157,7 @@ int read_config_device(void)
 	}
 
 	err = NULL;
-	str = g_key_file_get_string(ini_file,STR_MODBUS_GROUP,"debug",&err);
+	str = g_key_file_get_string(ini_file,STR_MODBUS_KEY,"debug",&err);
 	if(str == NULL){
 		g_error_free(err);
 	}
@@ -173,7 +172,7 @@ int read_config_device(void)
 	g_message("Отладка протокола Modbus : %d",modbus_debug);
 
 	err = NULL;
-	str = g_key_file_get_string(ini_file,STR_MODBUS_GROUP,"protocol",&err);
+	str = g_key_file_get_string(ini_file,STR_MODBUS_KEY,"protocol",&err);
 	if(str == NULL){
 		g_critical("Нет наименования протокола : %s",err->message);
 		g_error_free(err);

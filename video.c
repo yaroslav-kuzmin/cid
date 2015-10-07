@@ -53,7 +53,6 @@
 
 
 /*****************************************************************************/
-static char STR_VIDEO_KEY[] = "video";
 
 static char * name_stream;
 
