@@ -527,8 +527,10 @@ int check_connect_device(uint16_t * status)
 int init_control_device(void)
 {
 	int rc;
-	dest = g_malloc0(amoun_dest * sizeof(uint16_t));
 
+	if(dest != NULL){
+		dest = g_malloc0(amoun_dest * sizeof(uint16_t));
+	}
 	rc = connect_device();
 	if(rc == DISCONNECT){
 		return rc;
@@ -542,9 +544,15 @@ int init_control_device(void)
 
 int deinit_control_device(void)
 {
-	command_null_mode();
+	rc = check_auto_mode();
+	if(rc != OK){
+		command_null_mode();
+	}
 	disconnect_device();
-	g_free(dest);
+	if(dest != NULL){
+		g_free(dest);
+		dest = NULL;
+	}
 	return SUCCESS;
 }
 
