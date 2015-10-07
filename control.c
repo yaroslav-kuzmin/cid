@@ -337,14 +337,13 @@ int command_manual_mode(void)
 }
 
 int reg_D101 = 0x1065;
-int value_auto_null = 0x00;
+int value_auto_stop = 0x00;
 int value_auto_start = 0x01;
 int value_auto_pause = 0x02;
-int value_auto_stop = 0x03;
 
 int command_auto_null(void)
 {
-	return write_register(reg_D101,value_auto_null);
+	return write_register(reg_D101,value_auto_stop);
 }
 
 int command_auto_start(void)
@@ -536,14 +535,14 @@ int init_control_device(void)
 	}
 	rc = check_auto_mode();
 	if(rc != OK){
-		/*command_null_mode();*/
+		command_null_mode();
 	}
 	return CONNECT;
 }
 
 int deinit_control_device(void)
 {
-	/*command_null_mode();*/
+	command_null_mode();
 	disconnect_device();
 	g_free(dest);
 	return SUCCESS;

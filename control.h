@@ -49,6 +49,7 @@ GtkWidget * create_status_device(void);
 GtkWidget * create_menu_device(void);
 
 int check_connect_device(uint16_t * status);
+int deinit_control_device(void);
 
 int command_wait_mode(void);
 int command_config_mode(void);
