@@ -247,6 +247,16 @@ int deinit_logging(void)
 }
 /*****************************************************************************/
 
+int layout_widget(GtkWidget * w,GtkAlign ha,GtkAlign va,gboolean he,gboolean ve)
+{
+	gtk_widget_set_halign(w,ha);
+	gtk_widget_set_valign(w,va);
+	gtk_widget_set_hexpand(w,he);
+	gtk_widget_set_vexpand(w,ve);
+	return SUCCESS;
+}
+
+/*****************************************************************************/
 GtkWidget * win_main = NULL;
 GtkAccelGroup * accgro_main = NULL;
 
@@ -265,7 +275,7 @@ void destroy_window_main(GtkWidget * w,gpointer ud)
 	gtk_main_quit();
 }
 
-#define MAIN_SPACING       5
+#define MAIN_SPACING       3
 
 int create_window_main(void)
 {

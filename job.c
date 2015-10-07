@@ -2635,14 +2635,12 @@ static GtkWidget * create_job_save(void)
 /* основное окно                                                             */
 /*****************************************************************************/
 
-static char STR_GLOBAL_KEY[] = "global";
 static char STR_HORIZONTAL_OFFSET[] = "horizontal";
 
 static int load_config(void)
 {
 	int rc;
 	GError * err = NULL;
-
 
 	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,&err);
 	if(err != NULL){

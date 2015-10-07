@@ -577,8 +577,12 @@ static GtkWidget * lab_device;
 
 static char STR_CONNECT[] = "Установка подключена";
 static char STR_DISCONNECT[] = "Установка не подключена";
-static char STR_LIMIT_VERTICAL[] = "Предел по вертикале!";
-static char STR_LIMIT_HORIZONTAL[] = "Предел по горизонтали!";
+static char STR_LIMIT_VERTICAL[] =        "Предел по вертикале!";
+static char STR_LIMIT_VERTICAL_TOP[] =    "Предел ВЕРХ!";
+static char STR_LIMIT_VERTICAL_BOTTOM[] = "Предел НИЗ!";
+static char STR_LIMIT_HORIZONTAL[] =       "Предел по горизонтали!";
+static char STR_LIMIT_HORIZONTAL_LEFT[] =  "Предел ЛЕВО!";
+static char STR_LIMIT_HORIZONTAL_RIGHT[] = "Предел ПРАВО!";
 static char STR_DEVICE_CRASH[] = "Установка - АВАРИЯ!";
 static char STR_DEVICE_NORM[] =  "Установка - НОРМА!";
 
@@ -593,37 +597,62 @@ static char STR_OFF_DEVICE[] = "Выключить";
 /* return FALSE закончить*/
 
 #define DEVICE_NORM                      0x00
-#define DEVICE_LIMIT_VERTICAL_PLUS       0x01
-#define DEVICE_LIMIT_VERTICAL_MINUS      0x02
-#define DEVICE_LIMIT_HORIZONTAL_PLUS     0x04
-#define DEVICE_LIMIT_HORIZONTAL_MINUS    0x08
-#define DEVICE_CRASH_0                   0x10
-#define DEVICE_CRASH_1                   0x20
+
+#define DEVICE_LIMIT_VERTICAL            0x03
+#define DEVICE_LIMIT_VERTICAL_TOP        0x01
+#define DEVICE_LIMIT_VERTICAL_BOTTOM     0x02
+
+#define DEVICE_LIMIT_HORIZONTAL          0x0C
+#define DEVICE_LIMIT_HORIZONTAL_LEFT     0x04
+#define DEVICE_LIMIT_HORIZONTAL_RIGHT    0x08
+
+#define DEVICE_CRASH                     0x30
+#define DEVICE_CRASH_VERTICAL            0x10
+#define DEVICE_CRASH_HORIZONTAL          0x20
 
 int set_status_limit_vertical(int status)
 {
 	static int old_status = DEVICE_NORM;
 
-	switch (status){
-		case DEVICE_LIMIT_VERTICAL_PLUS:
-		case DEVICE_LIMIT_VERTICAL_MINUS:{
-			if(old_status == DEVICE_NORM ){
+	if( old_status != (status & DEVICE_LIMIT_VERTICAL) ){
+		old_status = (status & DEVICE_LIMIT_VERTICAL);
+		switch (old_status){
+			case DEVICE_LIMIT_VERTICAL_TOP:{
+				gtk_label_set_text(GTK_LABEL(lab_limit_vertical),STR_LIMIT_VERTICAL_TOP);
+				set_size_font(lab_limit_vertical,SIZE_FONT_MEDIUM);
 				gtk_widget_override_background_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_red);
 				gtk_widget_override_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_white);
-				old_status = status;
+				break;
+			 }
+			case DEVICE_LIMIT_VERTICAL_BOTTOM:{
+				gtk_label_set_text(GTK_LABEL(lab_limit_vertical),STR_LIMIT_VERTICAL_BOTTOM);
+				set_size_font(lab_limit_vertical,SIZE_FONT_MEDIUM);
+				gtk_widget_override_background_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_red);
+				gtk_widget_override_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_white);
+				break;
 			}
-			break;
-		}
-		case DEVICE_NORM:{
-			if(old_status != DEVICE_NORM){
+			case DEVICE_LIMIT_VERTICAL:{
+				gtk_label_set_text(GTK_LABEL(lab_limit_vertical),STR_LIMIT_VERTICAL);
+				set_size_font(lab_limit_vertical,SIZE_FONT_MEDIUM);
+				gtk_widget_override_background_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_red);
+				gtk_widget_override_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_white);
+				break;
+			}
+			case DEVICE_NORM:{
+				gtk_label_set_text(GTK_LABEL(lab_limit_vertical),STR_LIMIT_VERTICAL);
+				set_size_font(lab_limit_vertical,SIZE_FONT_MEDIUM);
 				gtk_widget_override_background_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_green);
 				gtk_widget_override_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_black);
-				old_status = status;
+				break;
 			}
-			break;
+			default:{
+				gtk_label_set_text(GTK_LABEL(lab_limit_vertical),STR_LIMIT_VERTICAL);
+				set_size_font(lab_limit_vertical,SIZE_FONT_MEDIUM);
+				gtk_widget_override_background_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_red);
+				gtk_widget_override_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_white);
+				break;
+			}
 		}
-		default:
-			break;
 	}
 	return SUCCESS;
 }
@@ -632,26 +661,45 @@ int set_status_limit_horizontal(int status)
 {
 	static int old_status = DEVICE_NORM;
 
-	switch (status){
-		case DEVICE_LIMIT_HORIZONTAL_PLUS:
-		case DEVICE_LIMIT_HORIZONTAL_MINUS:{
-			if(old_status == DEVICE_NORM ){
+	if( old_status != (status & DEVICE_LIMIT_HORIZONTAL) ){
+		old_status = (status & DEVICE_LIMIT_HORIZONTAL);
+		switch (old_status){
+			case DEVICE_LIMIT_HORIZONTAL_LEFT:{
+				gtk_label_set_text(GTK_LABEL(lab_limit_horizontal),STR_LIMIT_HORIZONTAL_LEFT);
+				set_size_font(lab_limit_horizontal,SIZE_FONT_MEDIUM);
 				gtk_widget_override_background_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_red);
 				gtk_widget_override_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_white);
-				old_status = status;
+				break;
+			 }
+			case DEVICE_LIMIT_HORIZONTAL_RIGHT:{
+				gtk_label_set_text(GTK_LABEL(lab_limit_horizontal),STR_LIMIT_HORIZONTAL_RIGHT);
+				set_size_font(lab_limit_horizontal,SIZE_FONT_MEDIUM);
+				gtk_widget_override_background_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_red);
+				gtk_widget_override_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_white);
+				break;
 			}
-			break;
-		}
-		case DEVICE_NORM:{
-			if(old_status != DEVICE_NORM){
+			case DEVICE_LIMIT_HORIZONTAL:{
+				gtk_label_set_text(GTK_LABEL(lab_limit_horizontal),STR_LIMIT_HORIZONTAL);
+				set_size_font(lab_limit_horizontal,SIZE_FONT_MEDIUM);
+				gtk_widget_override_background_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_red);
+				gtk_widget_override_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_white);
+				break;
+			}
+			case DEVICE_NORM:{
+				gtk_label_set_text(GTK_LABEL(lab_limit_horizontal),STR_LIMIT_HORIZONTAL);
+				set_size_font(lab_limit_horizontal,SIZE_FONT_MEDIUM);
 				gtk_widget_override_background_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_green);
 				gtk_widget_override_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_black);
-				old_status = status;
+				break;
 			}
-			break;
+			default:{
+				gtk_label_set_text(GTK_LABEL(lab_limit_horizontal),STR_LIMIT_HORIZONTAL);
+				set_size_font(lab_limit_horizontal,SIZE_FONT_MEDIUM);
+				gtk_widget_override_background_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_red);
+				gtk_widget_override_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_white);
+				break;
+			}
 		}
-		default:
-			break;
 	}
 	return SUCCESS;
 }
@@ -660,30 +708,39 @@ int set_status_device(status)
 {
 	static int old_status = DEVICE_NORM;
 
-	switch (status){
-		case DEVICE_CRASH_0:
-		case DEVICE_CRASH_1:{
-			if(old_status == DEVICE_NORM ){
+	if( old_status != (status & DEVICE_CRASH) ){
+		old_status = (status & DEVICE_CRASH);
+		switch (status){
+			case DEVICE_CRASH_VERTICAL:
+			case DEVICE_CRASH_HORIZONTAL:{
 				gtk_label_set_text(GTK_LABEL(lab_device),STR_DEVICE_CRASH);
 				set_size_font(lab_device,SIZE_FONT_MEDIUM);
 				gtk_widget_override_background_color(lab_device,GTK_STATE_FLAG_NORMAL,&color_red);
 				gtk_widget_override_color(lab_device,GTK_STATE_FLAG_NORMAL,&color_white);
-				old_status = status;
+				break;
 			}
-			break;
-		}
-		case DEVICE_NORM:{
-			if(old_status != DEVICE_NORM){
+			case DEVICE_CRASH:{
+				gtk_label_set_text(GTK_LABEL(lab_device),STR_DEVICE_NORM);
+				set_size_font(lab_device,SIZE_FONT_MEDIUM);
+				gtk_widget_override_background_color(lab_device,GTK_STATE_FLAG_NORMAL,&color_red);
+				gtk_widget_override_color(lab_device,GTK_STATE_FLAG_NORMAL,&color_white);
+				break;
+			}
+			case DEVICE_NORM:{
 				gtk_label_set_text(GTK_LABEL(lab_device),STR_DEVICE_NORM);
 				set_size_font(lab_device,SIZE_FONT_MEDIUM);
 				gtk_widget_override_background_color(lab_device,GTK_STATE_FLAG_NORMAL,&color_green);
 				gtk_widget_override_color(lab_device,GTK_STATE_FLAG_NORMAL,&color_black);
-				old_status = status;
+				break;
 			}
-			break;
+			default:{
+				gtk_label_set_text(GTK_LABEL(lab_device),STR_DEVICE_NORM);
+				set_size_font(lab_device,SIZE_FONT_MEDIUM);
+				gtk_widget_override_background_color(lab_device,GTK_STATE_FLAG_NORMAL,&color_red);
+				gtk_widget_override_color(lab_device,GTK_STATE_FLAG_NORMAL,&color_white);
+				break;
+			}
 		}
-		default:
-			break;
 	}
 	return SUCCESS;
 }
@@ -695,11 +752,93 @@ int check_connect_timeout(gpointer ud)
 
 	check_connect_device(&status_sensors);
 	if(ctx == NULL){
-		set_status_device(DEVICE_CRASH_0);
-		set_status_limit_vertical(DEVICE_LIMIT_VERTICAL_PLUS);
-		set_status_limit_horizontal(DEVICE_LIMIT_HORIZONTAL_PLUS);
+		set_status_device(DEVICE_CRASH);
+		set_status_limit_vertical(DEVICE_LIMIT_VERTICAL);
+		set_status_limit_horizontal(DEVICE_LIMIT_HORIZONTAL);
 		return FALSE;
 	}
+
+#if TEST_INTERFACE
+	{
+		static int rc = 0;
+	 	rc ++;
+		switch(rc){
+			case 1:
+				status_sensors = DEVICE_NORM;
+			 	break;
+			case 2:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_LIMIT_VERTICAL_TOP;
+			 	break;
+			case 3:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_LIMIT_VERTICAL_BOTTOM;
+			 	break;
+			case 4:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_LIMIT_HORIZONTAL_LEFT;
+			 	break;
+			case 5:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_LIMIT_HORIZONTAL_RIGHT;
+			 	break;
+			case 6:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_LIMIT_VERTICAL_TOP;
+				status_sensors += DEVICE_LIMIT_HORIZONTAL_RIGHT;
+			 	break;
+			case 7:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_LIMIT_VERTICAL_BOTTOM;
+				status_sensors += DEVICE_LIMIT_HORIZONTAL_RIGHT;
+			 	break;
+			case 8:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_LIMIT_VERTICAL_BOTTOM;
+				status_sensors += DEVICE_LIMIT_HORIZONTAL_LEFT;
+			 	break;
+			case 9:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_LIMIT_VERTICAL_TOP;
+				status_sensors += DEVICE_LIMIT_HORIZONTAL_LEFT;
+			 	break;
+			case 10:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_CRASH_VERTICAL;
+			 	break;
+			case 11:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_CRASH_HORIZONTAL;
+			 	break;
+			case 12:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_CRASH_HORIZONTAL;
+				status_sensors += DEVICE_LIMIT_VERTICAL_TOP;
+				status_sensors += DEVICE_LIMIT_HORIZONTAL_LEFT;
+			 	break;
+			case 13:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_CRASH_HORIZONTAL;
+				status_sensors += DEVICE_LIMIT_VERTICAL_BOTTOM;
+				status_sensors += DEVICE_LIMIT_HORIZONTAL_LEFT;
+			 	break;
+			case 14:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_CRASH_HORIZONTAL;
+				status_sensors += DEVICE_LIMIT_VERTICAL_TOP;
+				status_sensors += DEVICE_LIMIT_HORIZONTAL_RIGHT;
+			 	break;
+			case 15:
+				status_sensors = DEVICE_NORM;
+				status_sensors += DEVICE_CRASH_HORIZONTAL;
+				status_sensors += DEVICE_LIMIT_VERTICAL_BOTTOM;
+				status_sensors += DEVICE_LIMIT_HORIZONTAL_RIGHT;
+			 	break;
+		}
+		if(rc > 16)
+			rc = 0;
+	}
+#endif
 	set_status_device(status_sensors);
 	set_status_limit_vertical(status_sensors);
 	set_status_limit_horizontal(status_sensors);
@@ -707,7 +846,9 @@ int check_connect_timeout(gpointer ud)
 	return TRUE;
 }
 
-int time_check_connect_device = 3 * MILLISECOND;
+#define DEFAULT_TIMEOU_CHECK_PORT    1
+
+int time_check_connect_device = DEFAULT_TIMEOU_CHECK_PORT * MILLISECOND;
 
 int set_status_connect(void)
 {
@@ -719,12 +860,12 @@ int set_status_connect(void)
 
 	g_timeout_add(time_check_connect_device,check_connect_timeout,NULL);
 
-	return SUCCESS;
+ 	return SUCCESS;
 }
 
 int set_status_disconnect(void)
 {
-	gtk_label_set_text(GTK_LABEL(lab_status),STR_DISCONNECT);
+ 	gtk_label_set_text(GTK_LABEL(lab_status),STR_DISCONNECT);
 	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color_red);
 	gtk_widget_override_color(lab_status,GTK_STATE_FLAG_NORMAL,&color_white);
 
@@ -732,42 +873,68 @@ int set_status_disconnect(void)
 	return SUCCESS;
 }
 
+static char STR_TIMEOUT_CHECK_PORT[] = "timeout_check_port";
+
+static int load_config(void)
+{
+	int rc;
+	GError * err = NULL;
+
+	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_TIMEOUT_CHECK_PORT,&err);
+	if(err != NULL){
+		g_message("В секции %s нет ключа %s : %s",STR_GLOBAL_KEY,STR_TIMEOUT_CHECK_PORT,err->message);
+		g_error_free(err);
+		return FAILURE;
+	}
+
+	if( ((rc < 0) || (rc > 60)) ){
+		rc = DEFAULT_TIMEOU_CHECK_PORT;
+	}
+
+	time_check_connect_device = rc * MILLISECOND;
+
+	return SUCCESS;
+}
+
 GtkWidget * create_status_device(void)
 {
 	GtkWidget * box_horizontal;
 
+	load_config();
+
 	fra_status_connect = gtk_frame_new(NULL);
-	gtk_container_set_border_width(GTK_CONTAINER(fra_status_connect),5);
+	gtk_container_set_border_width(GTK_CONTAINER(fra_status_connect),3);
+	layout_widget(fra_status_connect,GTK_ALIGN_FILL,GTK_ALIGN_FILL,TRUE,TRUE);
 
 	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,2);
-	gtk_widget_set_hexpand(box_horizontal,TRUE);
+	layout_widget(box_horizontal,GTK_ALIGN_FILL,GTK_ALIGN_FILL,TRUE,TRUE);
+	gtk_box_set_homogeneous(GTK_BOX(box_horizontal),FALSE);
 
 	lab_status = gtk_label_new(STR_DISCONNECT);
-	gtk_widget_set_hexpand(lab_status,TRUE);
-	gtk_widget_set_vexpand(lab_status,FALSE);
+	layout_widget(lab_status,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,FALSE,FALSE);
 	set_size_font(lab_status,SIZE_FONT_MEDIUM);
 	set_status_disconnect();
 
 	lab_device = gtk_label_new(STR_DEVICE_NORM);
-	gtk_widget_set_hexpand(lab_device,FALSE);
+	layout_widget(lab_device,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,FALSE,FALSE);
 	set_size_font(lab_device,SIZE_FONT_MEDIUM);
-	set_status_device(DEVICE_CRASH_0);
+	set_status_device(DEVICE_CRASH);
 
 	lab_limit_vertical = gtk_label_new(STR_LIMIT_VERTICAL);
-	gtk_widget_set_hexpand(lab_limit_vertical,FALSE);
+	layout_widget(lab_limit_vertical,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,FALSE,FALSE);
 	set_size_font(lab_limit_vertical,SIZE_FONT_MEDIUM);
-	set_status_limit_vertical(DEVICE_LIMIT_VERTICAL_PLUS);
+	set_status_limit_vertical(DEVICE_LIMIT_VERTICAL);
 
 	lab_limit_horizontal = gtk_label_new(STR_LIMIT_HORIZONTAL);
-	gtk_widget_set_hexpand(lab_limit_horizontal,FALSE);
+	layout_widget(lab_limit_horizontal,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,FALSE,FALSE);
 	set_size_font(lab_limit_horizontal,SIZE_FONT_MEDIUM);
-	set_status_limit_horizontal(DEVICE_LIMIT_HORIZONTAL_PLUS);
+	set_status_limit_horizontal(DEVICE_LIMIT_HORIZONTAL);
 
 	gtk_container_add(GTK_CONTAINER(fra_status_connect),box_horizontal);
 	gtk_box_pack_start(GTK_BOX(box_horizontal),lab_status,TRUE,TRUE,2);
-	gtk_box_pack_start(GTK_BOX(box_horizontal),lab_device,FALSE,TRUE,2);
-	gtk_box_pack_start(GTK_BOX(box_horizontal),lab_limit_vertical,FALSE,TRUE,2);
-	gtk_box_pack_start(GTK_BOX(box_horizontal),lab_limit_horizontal,FALSE,TRUE,2);
+	gtk_box_pack_start(GTK_BOX(box_horizontal),lab_device,TRUE,FALSE,2);
+	gtk_box_pack_start(GTK_BOX(box_horizontal),lab_limit_vertical,TRUE,FALSE,2);
+	gtk_box_pack_start(GTK_BOX(box_horizontal),lab_limit_horizontal,TRUE,FALSE,2);
 
 	gtk_widget_show(lab_limit_horizontal);
 	gtk_widget_show(lab_limit_vertical);
@@ -775,6 +942,7 @@ GtkWidget * create_status_device(void)
 	gtk_widget_show(lab_status);
 	gtk_widget_show(box_horizontal);
 	gtk_widget_show(fra_status_connect);
+
 	return fra_status_connect;
 }
 

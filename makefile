@@ -56,7 +56,7 @@ DEPEND=$(patsubst %.c,$(DEPEND_CATALOG)%.d,$(SOURCE))
 CXX=gcc
 CFLAGS=-g2 -Wall -I. -I$(MODBUS_CATALOG) `pkg-config --cflags gtk+-3.0`
 LDFLAGS=-g2 -L$(MODBUS_CATALOG) 
-LIB=`pkg-config --libs gtk+-3.0` -lavformat -lavcodec -lswscale -lsqlite3 $(LIB_MODBUS_OPTION)
+LIB=`pkg-config --libs gtk+-3.0` -lavformat -lavcodec -lswscale -lsqlite3 
 
 RC=rcedit
 ICON=cid.ico

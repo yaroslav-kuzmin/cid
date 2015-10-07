@@ -53,9 +53,9 @@
 
 
 /*****************************************************************************/
-char VIDEO_GROUP[] = "video";
+static char STR_VIDEO_KEY[] = "video";
 
-char *name_stream;
+static char * name_stream;
 
 static char STR_RTSP[] = "rtsp://";
 #define SIZE_STR_RTSP     7
@@ -100,9 +100,9 @@ int read_name_stream(void)
 	int rc;
 	GError * err = NULL;
 
-	name_stream = g_key_file_get_string (ini_file,VIDEO_GROUP,"stream",&err);
+	name_stream = g_key_file_get_string (ini_file,STR_VIDEO_KEY,"stream",&err);
 	if(name_stream == NULL){
-		g_message("В секции %s нет ключа %s : %s",VIDEO_GROUP,"stream",err->message);
+		g_message("В секции %s нет ключа %s : %s",STR_VIDEO_KEY,"stream",err->message);
 		g_error_free(err);
 		return FAILURE;
 	}

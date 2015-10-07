@@ -46,11 +46,12 @@
 
 int save_config(void);
 
-
 extern GtkWidget * win_main;
 extern GtkAccelGroup * accgro_main;
 
 GtkWidget * create_menu_mode(void);
+
+int layout_widget(GtkWidget * w,GtkAlign ha,GtkAlign va,gboolean he,gboolean ve);
 
 #endif
 

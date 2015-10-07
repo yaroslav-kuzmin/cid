@@ -58,6 +58,7 @@ extern const char STR_LOGGING[];
 
 extern const char STR_KEY_FILE_NAME[];
 extern GKeyFile * ini_file;
+extern const char STR_GLOBAL_KEY[];
 
 extern const char STR_NAME_ICON[];
 
@@ -83,7 +84,6 @@ extern GdkRGBA color_lite_green;
 extern GString * temp_string;
 
 #define MILLISECOND      1000
-
 
 #endif
 
