@@ -709,7 +709,7 @@ int set_status_device(status)
 
 	if( old_status != (status & DEVICE_CRASH) ){
 		old_status = (status & DEVICE_CRASH);
-		switch (status){
+		switch (old_status){
 			case DEVICE_CRASH_VERTICAL:
 			case DEVICE_CRASH_HORIZONTAL:{
 				gtk_label_set_text(GTK_LABEL(lab_device),STR_DEVICE_CRASH);
@@ -723,6 +723,7 @@ int set_status_device(status)
 				set_size_font(lab_device,SIZE_FONT_MEDIUM);
 				gtk_widget_override_background_color(lab_device,GTK_STATE_FLAG_NORMAL,&color_red);
 				gtk_widget_override_color(lab_device,GTK_STATE_FLAG_NORMAL,&color_white);
+
 				break;
 			}
 			case DEVICE_NORM:{
@@ -751,6 +752,7 @@ int check_connect_timeout(gpointer ud)
 
 	check_connect_device(&status_sensors);
 	if(ctx == NULL){
+
 		set_status_device(DEVICE_CRASH);
 		set_status_limit_vertical(DEVICE_LIMIT_VERTICAL);
 		set_status_limit_horizontal(DEVICE_LIMIT_HORIZONTAL);
