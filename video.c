@@ -54,19 +54,24 @@
 
 /*****************************************************************************/
 
-static char * name_stream;
+static char * name_stream = NULL;
 
 static char STR_RTSP[] = "rtsp://";
 #define SIZE_STR_RTSP     7
 #define DEFAULT_PORT_VIDEO_STREAM   554
 
-int check_access(char * name)
+static int check_access(char * name)
 {
 	GSocketConnection	* stream_connect;
 	GSocketClient * stream;
 	GError * err = NULL;
-	char * str = g_strstr_len(name,-1,STR_RTSP);
+	char * str = NULL;
 
+	if(name == NULL){
+		return FAILURE;
+	}
+
+	str = g_strstr_len(name,-1,STR_RTSP);
 	if(str == NULL){
 		return FAILURE;
 	}
@@ -94,23 +99,23 @@ int check_access(char * name)
 	return SUCCESS;
 }
 
-int read_name_stream(void)
+static char STR_NOT_NAME_STREAM[] = "Нет имени потока в файле конфигурации!";
+static char STR_NOT_ACCESS_STREAM[] = "Нет доступа к видео потоку : %s";
+static int read_name_stream(void)
 {
 	int rc;
-	GError * err = NULL;
-
-	name_stream = g_key_file_get_string (ini_file,STR_VIDEO_KEY,"stream",&err);
-	if(name_stream == NULL){
-		g_message("В секции %s нет ключа %s : %s",STR_VIDEO_KEY,"stream",err->message);
-		g_error_free(err);
-		return FAILURE;
-	}
-	g_message("Камера : %s",name_stream);
 
 	rc = check_access(name_stream);
 	if(rc != SUCCESS){
-		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
-	                                          ,GTK_BUTTONS_CLOSE,"Нет доступа к видео потоку : %s",name_stream);
+		GtkWidget * error;
+		if(name_stream == NULL){
+			error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+	                                          ,GTK_BUTTONS_CLOSE,"%s",STR_NOT_NAME_STREAM);
+		}
+		else{
+			error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+	                                          ,GTK_BUTTONS_CLOSE,STR_NOT_ACCESS_STREAM,name_stream);
+		}
 		gtk_dialog_run(GTK_DIALOG(error));
 		gtk_widget_destroy(error);
 		return FAILURE;
@@ -303,7 +308,11 @@ int deinit_rtsp(void)
 	return SUCCESS;
 }
 
-int FPS = 40;/*40 милесекунд == 25 кадров/с */
+#define MAX_FPS          100
+#define MIN_FPS          1
+#define DEFAULT_FPS      25
+int FPS = DEFAULT_FPS;
+int timeot_fps = MILLISECOND/DEFAULT_FPS; /*40 милесекунд == 25 кадров/с */
 
 int init_video_stream(void)
 {
@@ -323,7 +332,7 @@ int init_video_stream(void)
 		exit_video_stream = NOT_OK;
 		g_mutex_init(&mutex);
 		tid = g_thread_new("video",play_background,NULL);
-		g_timeout_add(FPS,play_image,NULL);
+		g_timeout_add(timeot_fps,play_image,NULL);
 	 	g_message("Видео запущено");
  	}
 	return SUCCESS;
@@ -408,9 +417,42 @@ static void image_unrealize(GtkWidget *widget, gpointer data)
 {
 }
 
+static char STR_STREAM_KEY[] = "stream";
+static char STR_FPS_KEY[] = "fps";
+
+static int load_config(void)
+{
+	GError * err = NULL;
+
+	name_stream = g_key_file_get_string (ini_file,STR_VIDEO_KEY,STR_STREAM_KEY,&err);
+	if(name_stream == NULL){
+		g_critical("В секции %s нет ключа %s : %s",STR_VIDEO_KEY,STR_STREAM_KEY,err->message);
+		g_error_free(err);
+	}
+	else{
+		g_message("Камера : %s",name_stream);
+	}
+	err = NULL;
+	FPS = g_key_file_get_integer(ini_file,STR_VIDEO_KEY,STR_FPS_KEY,&err);
+	if(FPS == 0){
+		g_critical("В секции %s нет ключа %s : %s",STR_VIDEO_KEY,STR_FPS_KEY,err->message);
+		g_error_free(err);
+	}
+	else{
+		if( (FPS < MIN_FPS) || (FPS > MAX_FPS) ){
+			FPS = DEFAULT_FPS;
+		}
+		timeot_fps = MILLISECOND / FPS;
+	}
+
+	return SUCCESS;
+}
+
 GtkWidget * create_video_stream(void)
 {
 	GError * err = NULL;
+
+	load_config();
 
 	video_stream = gtk_image_new();
 	gtk_widget_set_size_request(video_stream,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
