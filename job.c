@@ -91,7 +91,7 @@ struct _job_s
 {
 	GString * name;
 	int pressure;
-	GDateTime * time; /**TODO преобразовать в секунды*/
+	GDateTime * time; /*TODO преобразовать в секунды*/
 	int uprise;
 	int lowering;
 };

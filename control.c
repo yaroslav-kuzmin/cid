@@ -232,7 +232,6 @@ int connect_device(void)
 
 	modbus_set_slave(ctx, slave_id);
 #if !TEST_INTERFACE
-	/*TODO testing*/
 	rc = modbus_connect(ctx);
 #endif
 	if(rc == -1){
@@ -251,7 +250,6 @@ int disconnect_device(void)
 {
 	if(ctx != NULL){
 #if !TEST_INTERFACE
-		/*TODO testing*/
 		modbus_close(ctx);
 #endif
 		modbus_free(ctx);
@@ -270,7 +268,6 @@ int write_register(int reg,int value)
 		return FAILURE;
 	}
 #if !TEST_INTERFACE
-	/*TODO testing*/
 	rc = modbus_write_register(ctx,reg,value);
 #endif
 	if(rc == -1){
@@ -298,7 +295,6 @@ uint16_t * read_register(int reg,int amount)
 		return NULL;
 	}
 #if !TEST_INTERFACE
-	/*TODO testing*/
 	rc = modbus_read_registers(ctx,reg,amount,dest);
 #endif
 	if(rc == -1){
