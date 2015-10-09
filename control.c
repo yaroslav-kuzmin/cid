@@ -61,18 +61,18 @@
 #define PROTOCOL_ASCII   0
 
 static char DEFAULT_DEVICE_NAME[] = "\\\\.\\COM7";
-char * device_name = NULL;
-int baud = 9600;
-char parity = 'N';
-int data_bit = 8;
-int stop_bit = 1;
-int slave_id = 1;
-int modbus_debug = FALSE;
-int protocol = PROTOCOL_RTU;
+static char * device_name = NULL;
+static int baud = 9600;
+static char parity = 'N';
+static int data_bit = 8;
+static int stop_bit = 1;
+static int slave_id = 1;
+static int modbus_debug = FALSE;
+static int protocol = PROTOCOL_RTU;
 
 /*****************************************************************************/
 
-int read_config_device(void)
+static int read_config_device(void)
 {
 	GError * err = NULL;
 	char *str = NULL;
@@ -151,7 +151,7 @@ int read_config_device(void)
 		g_error_free(err);
 	}
 	else{
-		if((value > 0) && (value < 248)){
+		if((value > 0) && (value < 248)){  /*параметры протокола Modbus*/
 			slave_id = value;
 		}
 	}
@@ -194,12 +194,12 @@ int read_config_device(void)
 	return SUCCESS;
 }
 
-int set_status_connect(void);
-int set_status_disconnect(void);
+static int set_status_connect(void);
+static int set_status_disconnect(void);
 
 static modbus_t *ctx = NULL;
 
-int connect_device(void)
+static int connect_device(void)
 {
 	int rc = 0;
 
@@ -246,7 +246,7 @@ int connect_device(void)
 	return CONNECT;
 }
 
-int disconnect_device(void)
+static int disconnect_device(void)
 {
 	if(ctx != NULL){
 #if !TEST_INTERFACE
@@ -260,7 +260,7 @@ int disconnect_device(void)
 	return DISCONNECT;
 }
 
-int write_register(int reg,int value)
+static int write_register(int reg,int value)
 {
 	int rc = 0;
 	if(ctx == NULL){
@@ -278,17 +278,18 @@ int write_register(int reg,int value)
 	return SUCCESS;
 }
 
-uint16_t * dest = NULL;
-int amoun_dest = 127;
+static uint16_t * dest = NULL;
 
-uint16_t * read_register(int reg,int amount)
+static const int amoun_dest = (260/2) + 1;  /*максимальная длина в протоколе modbus RS232/RS485 256 байт TCP = 260 */
+
+static uint16_t * read_register(int reg,int amount)
 {
 	int rc = 0;
+
 	if(amoun_dest < amount){
-		g_free(dest);
-		amoun_dest = amount;
-		dest = g_malloc0(amoun_dest * sizeof(uint16_t));
+		return NULL;
 	}
+
 	memset(dest,0,(amoun_dest*sizeof(uint16_t)));
 	if(ctx == NULL){
 		g_critical("Нет соединения с портом : %s",device_name);
@@ -305,11 +306,11 @@ uint16_t * read_register(int reg,int amount)
 	return dest;
 }
 
-int reg_D100 = 0x1064;
-int value_wait_mode = 0x00;
-int value_config_mode = 0x01;
-int value_auto_mode = 0x02;
-int value_manual_mode = 0x03;
+static int reg_D100 = 0x1064;
+static int value_wait_mode = 0x00;
+static int value_config_mode = 0x01;
+static int value_auto_mode = 0x02;
+static int value_manual_mode = 0x03;
 
 int command_wait_mode(void)
 {
@@ -331,10 +332,10 @@ int command_manual_mode(void)
 	return write_register(reg_D100,value_manual_mode);
 }
 
-int reg_D101 = 0x1065;
-int value_auto_stop = 0x00;
-int value_auto_start = 0x01;
-int value_auto_pause = 0x02;
+static int reg_D101 = 0x1065;
+static int value_auto_stop = 0x00;
+static int value_auto_start = 0x01;
+static int value_auto_pause = 0x02;
 
 int command_auto_null(void)
 {
@@ -356,14 +357,14 @@ int command_auto_stop(void)
 	return write_register(reg_D101,value_auto_stop);
 }
 
-int reg_D102 = 0x1066;
-int value_manual_null = 0x00;
-int value_manual_up = 0x01;
-int value_manual_down = 0x02;
-int value_manual_left = 0x04;
-int value_manual_right = 0x08;
-int value_manual_on_drive = 0x10;
-int value_manual_off_drive = 0x20;
+static int reg_D102 = 0x1066;
+static int value_manual_null = 0x00;
+static int value_manual_up = 0x01;
+static int value_manual_down = 0x02;
+static int value_manual_left = 0x04;
+static int value_manual_right = 0x08;
+static int value_manual_on_drive = 0x10;
+static int value_manual_off_drive = 0x20;
 
 int command_manual_null(void)
 {
@@ -374,42 +375,48 @@ int command_manual_up(void)
 {
 	return write_register(reg_D102,value_manual_up);
 }
+
 int command_manual_down(void)
 {
 	return write_register(reg_D102,value_manual_down);
 }
+
 int command_manual_left(void)
 {
 	return write_register(reg_D102,value_manual_left);
 }
+
 int command_manual_right(void)
 {
 	return write_register(reg_D102,value_manual_right);
 }
+
 int command_manual_on_drive(void)
 {
 	return write_register(reg_D102,value_manual_on_drive);
 }
+
 int command_manual_off_drive(void)
 {
 	return write_register(reg_D102,value_manual_off_drive);
 }
 
-int reg_D103 = 0x1067;
+static int reg_D103 = 0x1067;
 
 int command_uprise_angle(int value)
 {
 	return write_register(reg_D103,value);
 }
 
-int reg_D104 = 0x1068;
+static int reg_D104 = 0x1068;
 
 int command_lowering_angle(int value)
 {
 	return write_register(reg_D104,value);
 }
 
-int reg_D110 = 0x106E;
+static int reg_D110 = 0x106E;
+
 int command_angle(uint16_t * val)
 {
 	uint16_t * rc;
@@ -421,7 +428,8 @@ int command_angle(uint16_t * val)
 	return FAILURE;
 }
 
-int reg_D111 = 0x106F;
+static int reg_D111 = 0x106F;
+
 int command_pressure(uint16_t * val)
 {
 	uint16_t * rc;
@@ -433,7 +441,8 @@ int command_pressure(uint16_t * val)
 	return FAILURE;
 }
 
-int reg_D112 = 0x1070;
+static int reg_D112 = 0x1070;
+
 int command_sensors(uint16_t * val)
 {
 	uint16_t * rc;
@@ -445,7 +454,8 @@ int command_sensors(uint16_t * val)
 	return FAILURE;
 }
 
-int reg_D113 = 0x1071;
+static int reg_D113 = 0x1071;
+
 int command_input(uint16_t * val)
 {
 	uint16_t * rc;
@@ -457,7 +467,8 @@ int command_input(uint16_t * val)
 	return FAILURE;
 }
 
-int reg_D114 = 0x1072;
+static int reg_D114 = 0x1072;
+
 int command_console(uint16_t * val)
 {
 	uint16_t * rc;
@@ -469,28 +480,34 @@ int command_console(uint16_t * val)
 	return FAILURE;
 }
 
-int reg_D115 = 0x1073;
+static int reg_D115 = 0x1073;
+static uint16_t max_speed_vertical = 4000;
+
 int command_speed_vertical(uint16_t speed)
 {
-	if(speed > 4000){
+	if(speed > max_speed_vertical){
 		return FAILURE;
 	}
 	return write_register(reg_D115,speed);
 }
 
-int reg_D116 = 0x1074;
+static int reg_D116 = 0x1074;
+static uint16_t max_valve = 4000;
+
 int command_valve(uint16_t value)
 {
-	if(value > 4000){
+	if(value > max_valve){
 		return FAILURE;
 	}
 	return write_register(reg_D116,value);
 }
 
-int reg_D117 = 0x1075;
+static int reg_D117 = 0x1075;
+static uint16_t max_horizontal = 60;
+
 int command_horizontal(uint16_t value)
 {
-	if(value > 60){
+	if(value > max_horizontal){
 		return FAILURE;
 	}
 	return write_register(reg_D117,value);
@@ -528,7 +545,7 @@ int check_connect_device(uint16_t * status)
 	return SUCCESS;
 }
 
-int init_control_device(void)
+static int init_control_device(void)
 {
 	int rc;
 	if(dest == NULL){
@@ -581,15 +598,10 @@ static char STR_LIMIT_HORIZONTAL_RIGHT[] = "Предел ПРАВО!";
 static char STR_DEVICE_CRASH[] = "Установка - АВАРИЯ!";
 static char STR_DEVICE_NORM[] =  "Установка - НОРМА!";
 
-GtkWidget * menite_control_device;
+static GtkWidget * menite_control_device;
 static char STR_DEVICE[] = "Порт";
 static char STR_ON_DEVICE[]  = "Включить ";
 static char STR_OFF_DEVICE[] = "Выключить";
-
-/*g_timeout_add(милисекунды,fun,userdata);*/
-/* int fun (userdata)*/
-/* return TRUE продолжать*/
-/* return FALSE закончить*/
 
 #define DEVICE_NORM                      0x00
 
@@ -605,7 +617,7 @@ static char STR_OFF_DEVICE[] = "Выключить";
 #define DEVICE_CRASH_VERTICAL            0x10
 #define DEVICE_CRASH_HORIZONTAL          0x20
 
-int set_status_limit_vertical(int status)
+static int set_status_limit_vertical(int status)
 {
 	static int old_status = DEVICE_NORM;
 
@@ -652,7 +664,7 @@ int set_status_limit_vertical(int status)
 	return SUCCESS;
 }
 
-int set_status_limit_horizontal(int status)
+static int set_status_limit_horizontal(int status)
 {
 	static int old_status = DEVICE_NORM;
 
@@ -699,7 +711,7 @@ int set_status_limit_horizontal(int status)
 	return SUCCESS;
 }
 
-int set_status_device(status)
+static int set_status_device(status)
 {
 	static int old_status = DEVICE_NORM;
 
@@ -742,7 +754,7 @@ int set_status_device(status)
 }
 
 
-int check_connect_timeout(gpointer ud)
+static int check_connect_timeout(gpointer ud)
 {
 	uint16_t status_sensors = DEVICE_NORM;
 
@@ -843,11 +855,13 @@ int check_connect_timeout(gpointer ud)
 	return TRUE;
 }
 
-#define DEFAULT_TIMEOU_CHECK_PORT    1
+#define DEFAULT_TIMEOU_CHECK_PORT    3
+#define MIN_TIMEOUT_CHECK_PORT       1
+#define MAX_TIMEOUT_CHECK_PORT       60
 
-int time_check_connect_device = DEFAULT_TIMEOU_CHECK_PORT * MILLISECOND;
+static int time_check_connect_device = DEFAULT_TIMEOU_CHECK_PORT * MILLISECOND;
 
-int set_status_connect(void)
+static int set_status_connect(void)
 {
 	gtk_label_set_text(GTK_LABEL(lab_status),STR_CONNECT);
 	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color_green);
@@ -860,7 +874,7 @@ int set_status_connect(void)
  	return SUCCESS;
 }
 
-int set_status_disconnect(void)
+static int set_status_disconnect(void)
 {
  	gtk_label_set_text(GTK_LABEL(lab_status),STR_DISCONNECT);
 	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color_red);
@@ -884,7 +898,7 @@ static int load_config(void)
 		return FAILURE;
 	}
 
-	if( ((rc < 0) || (rc > 60)) ){
+	if( ((rc < MIN_TIMEOUT_CHECK_PORT) || (rc > MAX_TIMEOUT_CHECK_PORT)) ){
 		rc = DEFAULT_TIMEOU_CHECK_PORT;
 	}
 
@@ -978,6 +992,8 @@ GtkWidget * create_menu_device(void)
 	GtkWidget * menite_device;
 	GtkWidget * men_device;
 	/*GtkWidget * menite_temp;*/
+
+	read_config_device();
 
 	menite_device = gtk_menu_item_new_with_label(STR_DEVICE);
 

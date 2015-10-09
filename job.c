@@ -66,7 +66,7 @@ static const char QUERY_JOB_TABLE[] = "SELECT * FROM sqlite_master WHERE type = 
 static const char QUERY_CREATE_JOB_TABLE[] =
      "CREATE TABLE job(name PRIMARY KEY,pressure INTEGER,time INTEGER,uprise INTEGER,lowering INTEGER)";
 static const char QUERY_ALL_JOB[] = "SELECT * FROM job";
-char QUIER_INSERT_ROW_JOB[] = "INSERT INTO job VALUES (";
+static char QUIER_INSERT_ROW_JOB[] = "INSERT INTO job VALUES (";
 #define DEFAULT_AMOUNT_COLUMN        5
 
 #define NUMBER_NAME_COLUMN           0
@@ -75,16 +75,16 @@ char QUIER_INSERT_ROW_JOB[] = "INSERT INTO job VALUES (";
 #define NUMBER_UPRISE_COLUMN         3
 #define NUMBER_LOWERING_COLUMN       4
 
-static const char NAME_COLUMN_0[] = "name";
-#define SIZE_NAME_COLUMN_0           4
-static const char NAME_COLUMN_1[] = "pressure";
-#define SIZE_NAME_COLUMN_1           8
-static const char NAME_COLUMN_2[] = "time";
-#define SIZE_NAME_COLUMN_2           4
-static const char NAME_COLUMN_3[] = "uprise";
-#define SIZE_NAME_COLUMN_3           6
-static const char NAME_COLUMN_4[] = "lowering";
-#define SIZE_NAME_COLUMN_4           8
+static const char STR_NAME_COLUMN_0[] = "name";
+#define SIZE_STR_NAME_COLUMN_0           4
+static const char STR_NAME_COLUMN_1[] = "pressure";
+#define SIZE_STR_NAME_COLUMN_1           8
+static const char STR_NAME_COLUMN_2[] = "time";
+#define SIZE_STR_NAME_COLUMN_2           4
+static const char STR_NAME_COLUMN_3[] = "uprise";
+#define SIZE_STR_NAME_COLUMN_3           6
+static const char STR_NAME_COLUMN_4[] = "lowering";
+#define SIZE_STR_NAME_COLUMN_4           8
 
 typedef struct _job_s job_s;
 struct _job_s
@@ -154,31 +154,31 @@ static int fill_list_job_db(void)
 					break;
 				}
 				str = sqlite3_column_name(query,0);
-				str = g_strstr_len(NAME_COLUMN_0,SIZE_NAME_COLUMN_0,str);
+				str = g_strstr_len(STR_NAME_COLUMN_0,SIZE_STR_NAME_COLUMN_0,str);
 				if(str == NULL){
 					g_critical("SQL error not correct column 0 ");
 					break;
 				}
 				str = sqlite3_column_name(query,1);
-				str = g_strstr_len(NAME_COLUMN_1,SIZE_NAME_COLUMN_1,str);
+				str = g_strstr_len(STR_NAME_COLUMN_1,SIZE_STR_NAME_COLUMN_1,str);
 				if(str == NULL){
 					g_critical("SQL error not correct column 1");
 					break;
 				}
 				str = sqlite3_column_name(query,2);
-				str = g_strstr_len(NAME_COLUMN_2,SIZE_NAME_COLUMN_2,str);
+				str = g_strstr_len(STR_NAME_COLUMN_2,SIZE_STR_NAME_COLUMN_2,str);
 				if(str == NULL){
 					g_critical("SQL error not correct column 2");
 					break;
 				}
 				str = sqlite3_column_name(query,3);
-				str = g_strstr_len(NAME_COLUMN_3,SIZE_NAME_COLUMN_3,str);
+				str = g_strstr_len(STR_NAME_COLUMN_3,SIZE_STR_NAME_COLUMN_3,str);
 				if(str == NULL){
 					g_critical("SQL error not correct column 3");
 					break;
 				}
 				str = sqlite3_column_name(query,4);
-				str = g_strstr_len(NAME_COLUMN_4,SIZE_NAME_COLUMN_4,str);
+				str = g_strstr_len(STR_NAME_COLUMN_4,SIZE_STR_NAME_COLUMN_4,str);
 				if(str == NULL){
 					g_critical("SQL error not correct column 4");
 					break;
@@ -238,8 +238,8 @@ static GDateTime * str_time_to_datetime(const char * str)
 #define MATCH_NAME      -1
 #define INVALID_NAME    -2
 
-job_s temp_job = {0};
-GString * query_row_job = NULL;
+static job_s temp_job = {0};
+static GString * query_row_job = NULL;
 
 /*проверка введеных значений лежит на вышестояшей функции*/
 static int insert_job_db(const char * name,const char *pressure,const char * time
@@ -296,7 +296,7 @@ static int insert_job_db(const char * name,const char *pressure,const char * tim
 }
 static const char QUERY_DELETE_ROW_JOB[] = "DELETE FROM job WHERE name=";
 
-int delete_job_db(const char * name)
+static int delete_job_db(const char * name)
 {
 	int rc;
 	char * sql_error;
@@ -321,14 +321,16 @@ int delete_job_db(const char * name)
 	}
 	return SUCCESS;
 }
-GHashTableIter iter_job;
-int job_iter_init(void)
+
+static GHashTableIter iter_job;
+
+static int job_iter_init(void)
 {
 	g_hash_table_iter_init (&iter_job,list_job);
 	return SUCCESS;
 }
 
-job_s * job_iter_next(void)
+static job_s * job_iter_next(void)
 {
 	gpointer key;
 	int rc = g_hash_table_iter_next(&iter_job,&key,NULL);
@@ -408,6 +410,7 @@ int init_db(void)
 	}
 	return SUCCESS;
 }
+
 int deinit_db(void)
 {
 	g_hash_table_destroy(list_job);
@@ -428,12 +431,12 @@ int deinit_db(void)
 /*****************************************************************************/
 /*****************************************************************************/
 
-job_s * current_job = NULL;
-GtkWidget * fra_info = NULL;
-GtkWidget * fra_mode_auto = NULL;
-GtkWidget * fra_mode_manual = NULL;
-GtkWidget * fra_job_load = NULL;
-GtkWidget * fra_job_save = NULL;
+static job_s * current_job = NULL;
+static GtkWidget * fra_info = NULL;
+static GtkWidget * fra_mode_auto = NULL;
+static GtkWidget * fra_mode_manual = NULL;
+static GtkWidget * fra_job_load = NULL;
+static GtkWidget * fra_job_save = NULL;
 
 static char STR_MODE_AUTO[] = "Автоматическое управление";
 static char STR_MODE_MANUAL[] = "Ручное Управление";
@@ -461,7 +464,7 @@ int check_auto_mode(void)
 	return auto_mode_start;
 }
 
-int not_connect_device(void)
+static int not_connect_device(void)
 {
 	GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
 	                                          ,GTK_BUTTONS_CLOSE,"Нет подключения к устройству!");
@@ -470,7 +473,7 @@ int not_connect_device(void)
 	return SUCCESS;
 }
 
-int select_frame(int frame)
+static int select_frame(int frame)
 {
 	int rc;
 	if(current_frame == AUTO_MODE_FRAME){
@@ -560,23 +563,23 @@ int select_frame(int frame)
 /*  подменю управление                                                      */
 /****************************************************************************/
 
-void activate_menu_auto_mode(GtkMenuItem * im,gpointer d)
+static void activate_menu_auto_mode(GtkMenuItem * im,gpointer d)
 {
 	select_frame(AUTO_MODE_FRAME);
 	g_message("%s",STR_MODE_AUTO);
 }
 
-void activate_menu_manual_mode(GtkMenuItem * im,gpointer d)
+static void activate_menu_manual_mode(GtkMenuItem * im,gpointer d)
 {
  	select_frame(MANUAL_MODE_FRAME);
 	g_message("%s",STR_MODE_MANUAL);
 }
 
-char STR_MODE[] = "Режим";
-char STR_AUTO_MODE[] = "автоматический";
-char STR_MANUAL_MODE[] = "ручной";
+static char STR_MODE[] = "Режим";
+static char STR_AUTO_MODE[] = "автоматический";
+static char STR_MANUAL_MODE[] = "ручной";
 
-GtkWidget * create_menu_mode(void)
+static GtkWidget * create_menu_mode(void)
 {
 	GtkWidget * menite_mode;
 	GtkWidget * men_mode;
@@ -718,20 +721,6 @@ int set_notactive_color(GtkButton * w)
 	gtk_widget_override_background_color(GTK_WIDGET(w),GTK_STATE_FLAG_NORMAL,&color_red);
 	return SUCCESS;
 }
-
-int set_size_font(GtkWidget * w,int size)
-{
-	PangoContext * pancon_info;
-	PangoFontDescription * panfondes_info;
-
-	pancon_info = gtk_widget_get_pango_context(w);
-	panfondes_info = pango_context_get_font_description(pancon_info);
-	pango_font_description_set_size(panfondes_info,size);
-	gtk_widget_override_font(w,panfondes_info);
-
-	return SUCCESS;
-}
-
 
 /*****************************************************************************/
 /* Панель информации о работе                                                */

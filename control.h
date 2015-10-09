@@ -44,7 +44,6 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
-int read_config_device(void);
 GtkWidget * create_status_device(void);
 GtkWidget * create_menu_device(void);
 
@@ -77,5 +76,6 @@ int command_speed_vertical(uint16_t speed);
 int command_valve(uint16_t value);
 int command_horizontal(uint16_t value);
 int command_null_mode(void);
+
 #endif
 

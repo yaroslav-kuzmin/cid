@@ -101,6 +101,7 @@ static int check_access(char * name)
 
 static char STR_NOT_NAME_STREAM[] = "Нет имени потока в файле конфигурации!";
 static char STR_NOT_ACCESS_STREAM[] = "Нет доступа к видео потоку : %s";
+
 static int read_name_stream(void)
 {
 	int rc;
@@ -122,25 +123,25 @@ static int read_name_stream(void)
 	}
 	return SUCCESS;
 }
-
-#define DEFAULT_VIDEO_WIDTH      980   /*720*/
-#define DEFAULT_VIDEO_HEIGHT     576
+                                        /*формат видео 16:9 */
+#define DEFAULT_VIDEO_WIDTH    960      /*640*/ /*848*/ /*960*/ /*1280*/ /*1600*/ /*1920*/
+#define DEFAULT_VIDEO_HEIGHT   540      /*360*/ /*480*/ /*540*/ /*768 */ /*900 */ /*1080*/
 
 static int open_stream = NOT_OK;
 static GThread *tid = NULL;
 static GMutex mutex;
 
-int videoStream;
-AVFormatContext *pFormatCtx = NULL;
-AVCodecContext *pCodecCtx = NULL;
-struct SwsContext *sws_ctx = NULL;
-AVCodec *pCodec = NULL;
+static int videoStream;
+static AVFormatContext *pFormatCtx = NULL;
+static AVCodecContext *pCodecCtx = NULL;
+static struct SwsContext *sws_ctx = NULL;
+static AVCodec *pCodec = NULL;
 
-int exit_video_stream = NOT_OK;
+static int exit_video_stream = NOT_OK;
 
-GtkWidget * video_stream = NULL;
-GdkPixbuf * image = NULL;
-GdkPixbuf * image_default = NULL;
+static GtkWidget * video_stream = NULL;
+static GdkPixbuf * image = NULL;
+static GdkPixbuf * image_default = NULL;
 
 /*
 static void pixmap_destroy_notify(guchar *pixels,gpointer data)
@@ -148,9 +149,11 @@ static void pixmap_destroy_notify(guchar *pixels,gpointer data)
 	return ;
 }
 */
-int draw_image = OK;
 
-int deinit_rtsp(void);
+static int draw_image = OK;
+
+static int deinit_rtsp(void);
+
 static gpointer play_background(gpointer args)
 {
 	int rc;
@@ -201,7 +204,10 @@ static gpointer play_background(gpointer args)
 				}
 				if(exit_video_stream == OK){
 					av_free_packet(&packet);
-					draw_image = OK;
+					if(draw_image != OK){
+						draw_image = OK;
+						g_object_unref(image);
+					}
 					g_mutex_unlock(&mutex);
 					g_thread_exit(0);
 				}
@@ -212,20 +218,18 @@ static gpointer play_background(gpointer args)
 		g_thread_yield();
 	}
 	open_stream = NOT_OK;
-	/*TODO высвободить память*/
 	av_free_packet(&packet);
 	deinit_rtsp();
 	g_thread_exit(0);
 	return NULL;
 }
 
-gboolean play_image(gpointer ud)
+static gboolean play_image(gpointer ud)
 {
 	if(draw_image != OK){
 		g_mutex_lock(&mutex);
 		draw_image = OK;
 		gtk_image_set_from_pixbuf((GtkImage*) video_stream,image);
-		/*TODO проверка на высвобождение памяти*/
 		g_object_unref(image);
 		g_mutex_unlock(&mutex);
 	}
@@ -236,7 +240,7 @@ gboolean play_image(gpointer ud)
 	return 	FALSE;
 }
 
-int init_rtsp(void)
+static int init_rtsp(void)
 {
 	int i;
 	int rc;
@@ -297,7 +301,7 @@ int init_rtsp(void)
 	return rc;
 }
 
-int deinit_rtsp(void)
+static int deinit_rtsp(void)
 {
 	/*TODO проверка на освободение памяти буферами кадра*/
 	avcodec_close(pCodecCtx);
@@ -314,7 +318,7 @@ int deinit_rtsp(void)
 int FPS = DEFAULT_FPS;
 int timeot_fps = MILLISECOND/DEFAULT_FPS; /*40 милесекунд == 25 кадров/с */
 
-int init_video_stream(void)
+static int init_video_stream(void)
 {
 	int rc;
 

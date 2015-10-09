@@ -49,7 +49,6 @@ int deinit_db(void);
 GtkWidget * create_menu_main(void);
 GtkWidget * create_control_panel(void);
 int check_auto_mode(void);
-int set_size_font(GtkWidget * w,int size);
 
 #endif
 
