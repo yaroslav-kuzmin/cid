@@ -425,7 +425,7 @@ GtkWidget * create_menu_video(void)
 	return menite_video;
 }
 
-static void image_realize(GtkWidget *widget, gpointer data)
+static void realize_main_screen(GtkWidget *widget, gpointer data)
 {
 	video_stream_0.open = NOT_OK;
 	video_stream_0.draw = OK;
@@ -433,7 +433,7 @@ static void image_realize(GtkWidget *widget, gpointer data)
 	g_timeout_add(timeot_fps,write_screen,NULL);
 }
 
-static void image_unrealize(GtkWidget *widget, gpointer data)
+static void unrealize_main_screen(GtkWidget *widget, gpointer data)
 {
 }
 
@@ -474,8 +474,8 @@ GtkWidget * create_video_stream(void)
 
 	main_screen = gtk_image_new();
 	gtk_widget_set_size_request(main_screen,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
-	g_signal_connect(main_screen,"realize",G_CALLBACK(image_realize),NULL);
-	g_signal_connect(main_screen,"unrealize",G_CALLBACK(image_unrealize),NULL);
+	g_signal_connect(main_screen,"realize",G_CALLBACK(realize_main_screen),NULL);
+	g_signal_connect(main_screen,"unrealize",G_CALLBACK(unrealize_main_screen),NULL);
 
 	image_screen = gdk_pixbuf_new(GDK_COLORSPACE_RGB,0,8,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
 
