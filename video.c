@@ -130,39 +130,46 @@ static int check_name_stream(char * name)
 #define DEFAULT_VIDEO_WIDTH    960      /*640*/ /*848*/ /*960*/ /*1280*/ /*1600*/ /*1920*/
 #define DEFAULT_VIDEO_HEIGHT   540      /*360*/ /*480*/ /*540*/ /*768 */ /*900 */ /*1080*/
 
+struct _video_stream_s{
 
-static char * name_stream_main = NULL;
+	char * name;
 
-static int open_stream = NOT_OK;
-static GThread *tid = NULL;
-static GMutex mutex;
+	int open;
+	GThread * tid;
+	GMutex mutex;
 
-static int number_video_stream;
-static AVFormatContext *av_format_context = NULL;
-static AVCodecContext *ac_codec_context = NULL;
-static struct SwsContext *sws_ctx = NULL;
-static AVCodec *av_codec = NULL;
+	int number;
+	AVFormatContext * format_context;
+	AVCodecContext * codec_context;
+	struct SwsContext * sws_context;
+	AVCodec * codec;
 
-static int exit_video_stream = NOT_OK;
+	int exit;
 
-static GtkWidget * video_stream = NULL;
-static GdkPixbuf * image = NULL;
-static GdkPixbuf * image_default = NULL;
+	GdkPixbuf * screen;
+	int draw;
+};
 
-static int draw_image = OK;
+typedef struct _video_stream_s video_stream_s;
+
+video_stream_s video_stream_0 = {0};
+
+static GdkPixbuf * image_main = NULL;
+static GtkWidget * main_screen = NULL;
 
 static int deinit_rtsp(void);
 
 static gpointer play_background(gpointer args)
 {
 	int rc;
+
 	AVPacket packet;
 	AVFrame *av_frame = NULL;
 	AVFrame *picture_rgb;
 	uint8_t *buffer;
 	int frameFinished = 0;
-	int width = ac_codec_context->width;
-	int height = ac_codec_context->height;
+	int width = video_stream_0.codec_context->width;
+	int height = video_stream_0.codec_context->height;
 
 	av_init_packet(&packet);
 	packet.data = NULL;
@@ -173,50 +180,50 @@ static gpointer play_background(gpointer args)
 	buffer = malloc (avpicture_get_size(PIX_FMT_RGB24,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT));
 	avpicture_fill((AVPicture *)picture_rgb, buffer, PIX_FMT_RGB24,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
 
-	av_read_play(av_format_context);
+	av_read_play(video_stream_0.format_context);
 
 	/*параметры преобразования кадра*/
-	sws_ctx = sws_getContext(width,height,ac_codec_context->pix_fmt
+	video_stream_0.sws_context = sws_getContext(width,height,video_stream_0.codec_context->pix_fmt
 	                        ,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT
 	                        ,PIX_FMT_RGB24,SWS_BICUBIC
 	                        ,NULL,NULL,NULL);
 	for(;;){
-		rc = av_read_frame(av_format_context, &packet);
+		rc = av_read_frame(video_stream_0.format_context, &packet);
 		if(rc != 0){
 			g_critical("Видео потока завершен!");
 			break;
 		}
-		if(packet.stream_index == number_video_stream) {
-			rc = avcodec_decode_video2(ac_codec_context, av_frame, &frameFinished,&packet);
+		if(packet.stream_index == video_stream_0.number) {
+			rc = avcodec_decode_video2(video_stream_0.codec_context, av_frame, &frameFinished,&packet);
 	    if (frameFinished) {
-				sws_scale(sws_ctx,(uint8_t const * const *) av_frame->data, av_frame->linesize,0,height
+				sws_scale(video_stream_0.sws_context,(uint8_t const * const *) av_frame->data, av_frame->linesize,0,height
 				                  ,picture_rgb->data,picture_rgb->linesize);
 
-				g_mutex_lock(&mutex);
-				if(draw_image == OK){
-					image = gdk_pixbuf_new_from_data(picture_rgb->data[0],GDK_COLORSPACE_RGB
+				g_mutex_lock(&(video_stream_0.mutex));
+				if(video_stream_0.draw == OK){
+					video_stream_0.screen = gdk_pixbuf_new_from_data(picture_rgb->data[0],GDK_COLORSPACE_RGB
 				                                  ,0,8
 																					,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT
 																					,picture_rgb->linesize[0]
 																					,NULL,NULL);/*,pixmap_destroy_notify,NULL);*/
-					draw_image = NOT_OK;
+					video_stream_0.draw = NOT_OK;
 				}
-				if(exit_video_stream == OK){
+				if(video_stream_0.exit == OK){
 					av_free_packet(&packet);
-					if(draw_image != OK){
-						draw_image = OK;
-						g_object_unref(image);
+					if(video_stream_0.draw != OK){
+						video_stream_0.draw = OK;
+						g_object_unref(video_stream_0.screen);
 					}
-					g_mutex_unlock(&mutex);
+					g_mutex_unlock(&(video_stream_0.mutex));
 					g_thread_exit(0);
 				}
-				g_mutex_unlock(&mutex);
+				g_mutex_unlock(&(video_stream_0.mutex));
 			}
 		}
 		av_free_packet(&packet);
 		g_thread_yield();
 	}
-	open_stream = NOT_OK;
+	video_stream_0.open = NOT_OK;
 	av_free_packet(&packet);
 	deinit_rtsp();
 	g_thread_exit(0);
@@ -225,17 +232,19 @@ static gpointer play_background(gpointer args)
 
 static gboolean play_image(gpointer ud)
 {
-	if(draw_image != OK){
-		g_mutex_lock(&mutex);
-		draw_image = OK;
-		gtk_image_set_from_pixbuf((GtkImage*) video_stream,image);
-		g_object_unref(image);
-		g_mutex_unlock(&mutex);
+	if(video_stream_0.draw != OK){
+		g_mutex_lock(&(video_stream_0.mutex));
+		video_stream_0.draw = OK;
+		gtk_image_set_from_pixbuf((GtkImage*) main_screen,video_stream_0.screen);
+		g_object_unref(video_stream_0.screen);
+		g_mutex_unlock(&(video_stream_0.mutex));
 	}
-	if(open_stream == OK){
+	if(video_stream_0.open == OK){
 		return TRUE;
 	}
-	gtk_image_set_from_pixbuf(GTK_IMAGE(video_stream),image_default);
+
+	gdk_pixbuf_fill(image_main,0x0);
+	gtk_image_set_from_pixbuf(GTK_IMAGE(main_screen),image_main);
 	return 	FALSE;
 }
 
@@ -245,7 +254,7 @@ static int init_rtsp(char * name_stream)
 	int rc;
 	AVDictionary *optionsDict = NULL;
 
-	if(open_stream == OK){
+	if(video_stream_0.open == OK){
 		g_critical("Видео поток уже открыт!");
 		return FAILURE;
 	}
@@ -253,14 +262,14 @@ static int init_rtsp(char * name_stream)
   av_register_all();
 	avformat_network_init();
 
-	rc = avformat_open_input(&av_format_context,name_stream , NULL, NULL);
+	rc = avformat_open_input(&(video_stream_0.format_context),name_stream , NULL, NULL);
 	if(rc != 0) {
 		g_message("Не смог открыть видео поток");
 		return FAILURE;
 	}
 	g_message("Открыл поток с камеры!");
 
-	rc = avformat_find_stream_info(av_format_context, NULL);
+	rc = avformat_find_stream_info(video_stream_0.format_context, NULL);
 	if(rc < 0){
 		g_message("Не нашел поток");
 		return FAILURE;
@@ -268,46 +277,46 @@ static int init_rtsp(char * name_stream)
 	g_message("Нашел поток");
 
 	/*информация в стандартный поток о видео потоке*/
-	av_dump_format(av_format_context, 0, name_stream, 0);
+	av_dump_format(video_stream_0.format_context, 0, name_stream, 0);
 
-	number_video_stream=-1;
-	for(i = 0;i < av_format_context->nb_streams;i++){
-		if(av_format_context->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
-	    number_video_stream = i;
+	video_stream_0.number = -1;
+	for(i = 0;i < video_stream_0.format_context->nb_streams;i++){
+		if(video_stream_0.format_context->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
+	    video_stream_0.number = i;
 	    break;
 		}
 	}
-	if(number_video_stream == -1){
+	if(video_stream_0.number == -1){
 		g_message("Не нашел видео поток");
 		return FAILURE; // Didn't find a video stream
 	}
 	g_message("Нашел видео поток");
 
-	ac_codec_context = av_format_context->streams[number_video_stream]->codec;
-	av_codec = avcodec_find_decoder(ac_codec_context->codec_id);
-	if(av_codec==NULL) {
-		g_message("Кодек не поддерживается : %s",av_codec->long_name);
+	video_stream_0.codec_context = video_stream_0.format_context->streams[video_stream_0.number]->codec;
+	video_stream_0.codec = avcodec_find_decoder(video_stream_0.codec_context->codec_id);
+	if(video_stream_0.codec == NULL) {
+		g_message("Кодек не поддерживается : %s",video_stream_0.codec->long_name);
 		return FAILURE; // Codec not found
 	}
-	g_message("Кодек поддерживается : %s",av_codec->long_name);
+	g_message("Кодек поддерживается : %s",video_stream_0.codec->long_name);
 
-	rc = avcodec_open2(ac_codec_context, av_codec, &optionsDict);
+	rc = avcodec_open2(video_stream_0.codec_context, video_stream_0.codec, &optionsDict);
 	if(rc < 0){
 		g_message("Не смог открыть кодек");
 		return FAILURE;
 	}
 	g_message("Запустил кодек");
-	g_message("Инизиализировал видео поток %dх%d",ac_codec_context->width,ac_codec_context->height);
+	g_message("Инизиализировал видео поток %dх%d",video_stream_0.codec_context->width,video_stream_0.codec_context->height);
 	return rc;
 }
 
 static int deinit_rtsp(void)
 {
 	/*TODO проверка на освободение памяти буферами кадра*/
-	avcodec_close(ac_codec_context);
-	ac_codec_context = NULL;
-	avformat_close_input(&av_format_context);
-	av_format_context = NULL;
+	avcodec_close(video_stream_0.codec_context);
+	video_stream_0.codec_context = NULL;
+	avformat_close_input(&(video_stream_0.format_context));
+	video_stream_0.format_context = NULL;
 	avformat_network_deinit();
 	return SUCCESS;
 }
@@ -322,20 +331,20 @@ static int init_video_stream(void)
 {
 	int rc;
 
-	rc = check_name_stream(name_stream_main);
+	rc = check_name_stream(video_stream_0.name);
 	if(rc == FAILURE){
 		return rc;
 	}
 
-	rc = init_rtsp(name_stream_main);
+	rc = init_rtsp(video_stream_0.name);
 	if(rc == SUCCESS){
-		open_stream = OK;
+		video_stream_0.open = OK;
 	}
-	if(open_stream == OK){
-		draw_image = OK;
-		exit_video_stream = NOT_OK;
-		g_mutex_init(&mutex);
-		tid = g_thread_new("video",play_background,NULL);
+	if(video_stream_0.open == OK){
+		video_stream_0.draw = OK;
+		video_stream_0.exit = NOT_OK;
+		g_mutex_init(&(video_stream_0.mutex));
+		video_stream_0.tid = g_thread_new("video",play_background,NULL);
 		g_timeout_add(timeot_fps,play_image,NULL);
 	 	g_message("Видео запущено");
  	}
@@ -344,12 +353,13 @@ static int init_video_stream(void)
 
 int deinit_video_stream(void)
 {
-	if(open_stream == OK){
-		exit_video_stream = OK;
-		g_thread_join(tid);
-		g_mutex_clear(&mutex);
+	if(video_stream_0.open == OK){
+		video_stream_0.exit = OK;
+		g_thread_join(video_stream_0.tid);
+		g_mutex_clear(&(video_stream_0.mutex));
 		deinit_rtsp();
-		open_stream = NOT_OK;
+		video_stream_0.open = NOT_OK;
+		video_stream_0.draw = NOT_OK;
 		g_message("Видео поток закрыт");
 	}
 	return SUCCESS;
@@ -363,7 +373,7 @@ static char STR_OFF_VIDEO[] = "Выключить";
 
 static void activate_menu_video(GtkMenuItem * mi,gpointer ud)
 {
-	if(open_stream != OK){
+	if(video_stream_0.open != OK){
 		gtk_menu_item_set_label(mi,STR_OFF_VIDEO);
 		init_video_stream();
 	}
@@ -415,6 +425,9 @@ GtkWidget * create_menu_video(void)
 
 static void image_realize(GtkWidget *widget, gpointer data)
 {
+	video_stream_0.open = NOT_OK;
+	video_stream_0.draw = OK;
+	video_stream_0.exit = NOT_OK;
 }
 
 static void image_unrealize(GtkWidget *widget, gpointer data)
@@ -428,13 +441,13 @@ static int load_config(void)
 {
 	GError * err = NULL;
 
-	name_stream_main = g_key_file_get_string (ini_file,STR_VIDEO_KEY,STR_STREAM_KEY,&err);
-	if(name_stream_main == NULL){
+	video_stream_0.name = g_key_file_get_string (ini_file,STR_VIDEO_KEY,STR_STREAM_KEY,&err);
+	if(video_stream_0.name == NULL){
 		g_critical("В секции %s нет ключа %s : %s",STR_VIDEO_KEY,STR_STREAM_KEY,err->message);
 		g_error_free(err);
 	}
 	else{
-		g_message("Камера : %s",name_stream_main);
+		g_message("Камера : %s",video_stream_0.name);
 	}
 	err = NULL;
 	FPS = g_key_file_get_integer(ini_file,STR_VIDEO_KEY,STR_FPS_KEY,&err);
@@ -454,26 +467,19 @@ static int load_config(void)
 
 GtkWidget * create_video_stream(void)
 {
-	GError * err = NULL;
-
 	load_config();
 
-	video_stream = gtk_image_new();
-	gtk_widget_set_size_request(video_stream,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
+	main_screen = gtk_image_new();
+	gtk_widget_set_size_request(main_screen,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
+	g_signal_connect(main_screen,"realize",G_CALLBACK(image_realize),NULL);
+	g_signal_connect(main_screen,"unrealize",G_CALLBACK(image_unrealize),NULL);
 
-	image_default = gdk_pixbuf_new_from_file(STR_NAME_DEFAULT_VIDEO,&err);
-	if(err != NULL){
-		g_message("%s",err->message);
-		g_error_free(err);
-	}
-	else{
-		gtk_image_set_from_pixbuf(GTK_IMAGE(video_stream),image_default);
-	}
+	image_main = gdk_pixbuf_new(GDK_COLORSPACE_RGB,0,8,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
+	gdk_pixbuf_fill(image_main,0x0);
+	gtk_image_set_from_pixbuf(GTK_IMAGE(main_screen),image_main);
 
-	g_signal_connect(video_stream,"realize",G_CALLBACK(image_realize),NULL);
-	g_signal_connect(video_stream,"unrealize",G_CALLBACK(image_unrealize),NULL);
-	gtk_widget_show(video_stream);
+	gtk_widget_show(main_screen);
 
-	return video_stream;
+	return main_screen;
 }
 /*****************************************************************************/
