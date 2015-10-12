@@ -152,7 +152,7 @@ struct _video_stream_s{
 
 typedef struct _video_stream_s video_stream_s;
 
-video_stream_s video_stream_0 = {0};
+static video_stream_s video_stream_0 = {0};
 
 static GdkPixbuf * image_screen = NULL;
 static GtkWidget * main_screen = NULL;
