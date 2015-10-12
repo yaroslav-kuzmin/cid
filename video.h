@@ -44,7 +44,7 @@
 #ifndef VIDEO_H
 #define VIDEO_H
 
-int deinit_video_stream(void);
+int deinit_video_stream_0(void);
 GtkWidget * create_video_stream(void);
 GtkWidget * create_menu_video(void);
 

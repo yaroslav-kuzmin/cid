@@ -56,7 +56,7 @@
 /*  взаимодействие с контролером                                             */
 /*****************************************************************************/
 
-#define TEST_INTERFACE              TRUE
+#define TEST_INTERFACE              FALSE
 
 #define PROTOCOL_RTU     1
 #define PROTOCOL_ASCII   0

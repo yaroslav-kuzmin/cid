@@ -279,7 +279,7 @@ static void unrealaze_window_main(GtkWidget * w,gpointer ud)
 static void destroy_window_main(GtkWidget * w,gpointer ud)
 {
 	deinit_control_device();
-	deinit_video_stream();
+	deinit_video_stream_0();
 	deinit_db();
 	g_message("Останов системы\n");
 	deinit_config();
