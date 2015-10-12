@@ -52,7 +52,7 @@
 #include "cid.h"
 #include "job.h"
 
-#define TEST_INTERFACE              FALSE
+#define TEST_INTERFACE              TRUE
 /*****************************************************************************/
 /*  взаимодействие с контролером                                             */
 /*****************************************************************************/
@@ -290,11 +290,11 @@ static uint16_t * read_register(int reg,int amount)
 		return NULL;
 	}
 
-	memset(dest,0,(amoun_dest*sizeof(uint16_t)));
 	if(ctx == NULL){
 		g_critical("Нет соединения с портом : %s",device_name);
 		return NULL;
 	}
+	memset(dest,0,(amoun_dest*sizeof(uint16_t)));
 #if !TEST_INTERFACE
 	rc = modbus_read_registers(ctx,reg,amount,dest);
 #endif
@@ -419,7 +419,7 @@ static int reg_D110 = 0x106E;
 
 int command_angle(uint16_t * val)
 {
-	uint16_t * rc;
+	uint16_t * rc = NULL;
 	rc = read_register(reg_D110,1);
 	if(rc != NULL){
 		*val = rc[0];

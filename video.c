@@ -54,7 +54,7 @@
 
 /*****************************************************************************/
 
-static char * name_stream = NULL;
+static char * name_stream_main = NULL;
 
 static char STR_RTSP[] = "rtsp://";
 #define SIZE_STR_RTSP     7
@@ -102,20 +102,20 @@ static int check_access(char * name)
 static char STR_NOT_NAME_STREAM[] = "Нет имени потока в файле конфигурации!";
 static char STR_NOT_ACCESS_STREAM[] = "Нет доступа к видео потоку : %s";
 
-static int read_name_stream(void)
+static int check_name_stream(char * name)
 {
 	int rc;
 
-	rc = check_access(name_stream);
+	rc = check_access(name);
 	if(rc != SUCCESS){
 		GtkWidget * error;
-		if(name_stream == NULL){
+		if(name == NULL){
 			error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
 	                                          ,GTK_BUTTONS_CLOSE,"%s",STR_NOT_NAME_STREAM);
 		}
 		else{
 			error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
-	                                          ,GTK_BUTTONS_CLOSE,STR_NOT_ACCESS_STREAM,name_stream);
+	                                          ,GTK_BUTTONS_CLOSE,STR_NOT_ACCESS_STREAM,name);
 		}
 		gtk_dialog_run(GTK_DIALOG(error));
 		gtk_widget_destroy(error);
@@ -131,11 +131,11 @@ static int open_stream = NOT_OK;
 static GThread *tid = NULL;
 static GMutex mutex;
 
-static int videoStream;
-static AVFormatContext *pFormatCtx = NULL;
-static AVCodecContext *pCodecCtx = NULL;
+static int number_video_stream;
+static AVFormatContext *av_format_context = NULL;
+static AVCodecContext *ac_codec_context = NULL;
 static struct SwsContext *sws_ctx = NULL;
-static AVCodec *pCodec = NULL;
+static AVCodec *av_codec = NULL;
 
 static int exit_video_stream = NOT_OK;
 
@@ -158,47 +158,47 @@ static gpointer play_background(gpointer args)
 {
 	int rc;
 	AVPacket packet;
-	AVFrame *pFrame = NULL;
-	AVFrame *picture_RGB;
+	AVFrame *av_frame = NULL;
+	AVFrame *picture_rgb;
 	uint8_t *buffer;
 	int frameFinished = 0;
-	int width = pCodecCtx->width;
-	int height = pCodecCtx->height;
+	int width = ac_codec_context->width;
+	int height = ac_codec_context->height;
 
 	av_init_packet(&packet);
 	packet.data = NULL;
 	packet.size = 0;
 
-	pFrame = avcodec_alloc_frame();
-  picture_RGB = avcodec_alloc_frame();
+	av_frame = avcodec_alloc_frame();
+  picture_rgb = avcodec_alloc_frame();
 	buffer = malloc (avpicture_get_size(PIX_FMT_RGB24,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT));
-	avpicture_fill((AVPicture *)picture_RGB, buffer, PIX_FMT_RGB24,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
+	avpicture_fill((AVPicture *)picture_rgb, buffer, PIX_FMT_RGB24,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT);
 
-	av_read_play(pFormatCtx);
+	av_read_play(av_format_context);
 
 	/*параметры преобразования кадра*/
-	sws_ctx = sws_getContext(width,height,pCodecCtx->pix_fmt
+	sws_ctx = sws_getContext(width,height,ac_codec_context->pix_fmt
 	                        ,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT
 	                        ,PIX_FMT_RGB24,SWS_BICUBIC
 	                        ,NULL,NULL,NULL);
 	for(;;){
-		rc = av_read_frame(pFormatCtx, &packet);
+		rc = av_read_frame(av_format_context, &packet);
 		if(rc != 0){
 			g_critical("Видео потока завершен!");
 			break;
 		}
-		if(packet.stream_index == videoStream) {
-			rc = avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,&packet);
+		if(packet.stream_index == number_video_stream) {
+			rc = avcodec_decode_video2(ac_codec_context, av_frame, &frameFinished,&packet);
 	    if (frameFinished) {
-				sws_scale(sws_ctx,(uint8_t const * const *) pFrame->data, pFrame->linesize,0,height
-				                  ,picture_RGB->data,picture_RGB->linesize);
+				sws_scale(sws_ctx,(uint8_t const * const *) av_frame->data, av_frame->linesize,0,height
+				                  ,picture_rgb->data,picture_rgb->linesize);
 
 				g_mutex_lock(&mutex);
 				if(draw_image == OK){
-					image = gdk_pixbuf_new_from_data(picture_RGB->data[0],GDK_COLORSPACE_RGB
+					image = gdk_pixbuf_new_from_data(picture_rgb->data[0],GDK_COLORSPACE_RGB
 				                                  ,0,8
 																					,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT
-																					,picture_RGB->linesize[0]
+																					,picture_rgb->linesize[0]
 																					,NULL,NULL);/*,pixmap_destroy_notify,NULL);*/
 					draw_image = NOT_OK;
 				}
@@ -254,60 +254,60 @@ static int init_rtsp(void)
   av_register_all();
 	avformat_network_init();
 
-	rc = avformat_open_input(&pFormatCtx,name_stream , NULL, NULL);
+	rc = avformat_open_input(&av_format_context,name_stream_main , NULL, NULL);
 	if(rc != 0) {
 		g_message("Не смог открыть видео поток");
 		return FAILURE;
 	}
 	g_message("Открыл поток с камеры!");
 
-	rc = avformat_find_stream_info(pFormatCtx, NULL);
+	rc = avformat_find_stream_info(av_format_context, NULL);
 	if(rc < 0){
 		g_message("Не нашел поток");
 		return FAILURE;
 	}
 	g_message("Нашел поток");
 
-	av_dump_format(pFormatCtx, 0, name_stream, 0);
+	av_dump_format(av_format_context, 0, name_stream_main, 0);
 
-	videoStream=-1;
-	for(i = 0;i < pFormatCtx->nb_streams;i++){
-		if(pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
-	    videoStream = i;
+	number_video_stream=-1;
+	for(i = 0;i < av_format_context->nb_streams;i++){
+		if(av_format_context->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
+	    number_video_stream = i;
 	    break;
 		}
 	}
-	if(videoStream == -1){
+	if(number_video_stream == -1){
 		g_message("Не нашел видео поток");
 		return FAILURE; // Didn't find a video stream
 	}
 	g_message("Нашел видео поток");
 
-	pCodecCtx = pFormatCtx->streams[videoStream]->codec;
-	pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
-	if(pCodec==NULL) {
-		g_message("Кодек не поддерживается : %s",pCodec->long_name);
+	ac_codec_context = av_format_context->streams[number_video_stream]->codec;
+	av_codec = avcodec_find_decoder(ac_codec_context->codec_id);
+	if(av_codec==NULL) {
+		g_message("Кодек не поддерживается : %s",av_codec->long_name);
 		return FAILURE; // Codec not found
 	}
-	g_message("Кодек поддерживается : %s",pCodec->long_name);
+	g_message("Кодек поддерживается : %s",av_codec->long_name);
 
-	rc = avcodec_open2(pCodecCtx, pCodec, &optionsDict);
+	rc = avcodec_open2(ac_codec_context, av_codec, &optionsDict);
 	if(rc < 0){
 		g_message("Не смог открыть кодек");
 		return FAILURE;
 	}
 	g_message("Запустил кодек");
-	g_message("Инизиализировал видео поток %dх%d",pCodecCtx->width,pCodecCtx->height);
+	g_message("Инизиализировал видео поток %dх%d",ac_codec_context->width,ac_codec_context->height);
 	return rc;
 }
 
 static int deinit_rtsp(void)
 {
 	/*TODO проверка на освободение памяти буферами кадра*/
-	avcodec_close(pCodecCtx);
-	pCodecCtx = NULL;
-	avformat_close_input(&pFormatCtx);
-	pFormatCtx = NULL;
+	avcodec_close(ac_codec_context);
+	ac_codec_context = NULL;
+	avformat_close_input(&av_format_context);
+	av_format_context = NULL;
 	avformat_network_deinit();
 	return SUCCESS;
 }
@@ -322,7 +322,7 @@ static int init_video_stream(void)
 {
 	int rc;
 
-	rc = read_name_stream();
+	rc = check_name_stream(name_stream_main);
 	if(rc == FAILURE){
 		return rc;
 	}
@@ -428,13 +428,13 @@ static int load_config(void)
 {
 	GError * err = NULL;
 
-	name_stream = g_key_file_get_string (ini_file,STR_VIDEO_KEY,STR_STREAM_KEY,&err);
-	if(name_stream == NULL){
+	name_stream_main = g_key_file_get_string (ini_file,STR_VIDEO_KEY,STR_STREAM_KEY,&err);
+	if(name_stream_main == NULL){
 		g_critical("В секции %s нет ключа %s : %s",STR_VIDEO_KEY,STR_STREAM_KEY,err->message);
 		g_error_free(err);
 	}
 	else{
-		g_message("Камера : %s",name_stream);
+		g_message("Камера : %s",name_stream_main);
 	}
 	err = NULL;
 	FPS = g_key_file_get_integer(ini_file,STR_VIDEO_KEY,STR_FPS_KEY,&err);

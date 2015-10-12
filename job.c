@@ -1312,16 +1312,28 @@ void clicked_button_manual_pump(GtkButton * b,gpointer d)
 
 uint16_t VALVEL_MIN = 0;
 uint16_t VALVE_MAX = 4000;
-uint16_t VALVE_STEP = 10;
+uint16_t VALVE_STEP = 200;
 
 gboolean change_value_scale_valve(GtkRange * r,GtkScrollType s,gdouble v,gpointer ud)
 {
-	uint16_t value = v;
-	if(value > VALVE_MAX){
-		value  = VALVE_MAX;
+	double valve_d = v;
+	uint16_t valve_ui;
+
+	valve_d = v / VALVE_STEP;
+	valve_d = (int)valve_d;
+	valve_d *= VALVE_STEP;
+
+	if(valve_d < 0 ){
+		valve_d = 0;
 	}
-	command_valve(value);
-	return FALSE;
+	if(valve_d > VALVE_MAX){
+		valve_d = VALVE_MAX;
+	}
+
+	gtk_range_set_value(r,valve_d);
+	valve_ui = (uint16_t)valve_d;
+	command_valve(valve_ui);
+	return TRUE;
 }
 
 gboolean change_value_scale_speed(GtkRange * r,GtkScrollType s,gdouble v,gpointer ud)
@@ -1524,6 +1536,7 @@ GtkWidget * create_scale_vertical_speed(void)
 	gtk_widget_set_halign(sca_speed,GTK_ALIGN_FILL);
 	gtk_widget_set_valign(sca_speed,GTK_ALIGN_FILL);
 	gtk_range_set_inverted(GTK_RANGE(sca_speed),TRUE);
+	gtk_range_set_value(GTK_RANGE(sca_speed),SPEED_VERTICAL_MAX/2); /**/
 	/*gtk_widget_override_background_color(sca_speed,GTK_STATE_FLAG_NORMAL,&color_red);*/
 	/*gtk_widget_override_color(sca_speed,GTK_STATE_FLAG_NORMAL,&color_green);*/
 	g_signal_connect(sca_speed,"change-value",G_CALLBACK(change_value_scale_speed),NULL);
