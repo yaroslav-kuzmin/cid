@@ -52,10 +52,11 @@
 #include "cid.h"
 #include "job.h"
 
-#define TEST_INTERFACE              TRUE
 /*****************************************************************************/
 /*  взаимодействие с контролером                                             */
 /*****************************************************************************/
+
+#define TEST_INTERFACE              TRUE
 
 #define PROTOCOL_RTU     1
 #define PROTOCOL_ASCII   0

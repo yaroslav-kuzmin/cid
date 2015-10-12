@@ -53,8 +53,7 @@
 
 
 /*****************************************************************************/
-
-static char * name_stream_main = NULL;
+#define TEST_VIDEO              TRUE
 
 static char STR_RTSP[] = "rtsp://";
 #define SIZE_STR_RTSP     7
@@ -73,7 +72,11 @@ static int check_access(char * name)
 
 	str = g_strstr_len(name,-1,STR_RTSP);
 	if(str == NULL){
+#if TEST_VIDEO
+		return SUCCESS;
+#else
 		return FAILURE;
+#endif
 	}
 	str += SIZE_STR_RTSP;
 
@@ -127,6 +130,9 @@ static int check_name_stream(char * name)
 #define DEFAULT_VIDEO_WIDTH    960      /*640*/ /*848*/ /*960*/ /*1280*/ /*1600*/ /*1920*/
 #define DEFAULT_VIDEO_HEIGHT   540      /*360*/ /*480*/ /*540*/ /*768 */ /*900 */ /*1080*/
 
+
+static char * name_stream_main = NULL;
+
 static int open_stream = NOT_OK;
 static GThread *tid = NULL;
 static GMutex mutex;
@@ -142,13 +148,6 @@ static int exit_video_stream = NOT_OK;
 static GtkWidget * video_stream = NULL;
 static GdkPixbuf * image = NULL;
 static GdkPixbuf * image_default = NULL;
-
-/*
-static void pixmap_destroy_notify(guchar *pixels,gpointer data)
-{
-	return ;
-}
-*/
 
 static int draw_image = OK;
 
@@ -240,7 +239,7 @@ static gboolean play_image(gpointer ud)
 	return 	FALSE;
 }
 
-static int init_rtsp(void)
+static int init_rtsp(char * name_stream)
 {
 	int i;
 	int rc;
@@ -254,7 +253,7 @@ static int init_rtsp(void)
   av_register_all();
 	avformat_network_init();
 
-	rc = avformat_open_input(&av_format_context,name_stream_main , NULL, NULL);
+	rc = avformat_open_input(&av_format_context,name_stream , NULL, NULL);
 	if(rc != 0) {
 		g_message("Не смог открыть видео поток");
 		return FAILURE;
@@ -268,7 +267,8 @@ static int init_rtsp(void)
 	}
 	g_message("Нашел поток");
 
-	av_dump_format(av_format_context, 0, name_stream_main, 0);
+	/*информация в стандартный поток о видео потоке*/
+	av_dump_format(av_format_context, 0, name_stream, 0);
 
 	number_video_stream=-1;
 	for(i = 0;i < av_format_context->nb_streams;i++){
@@ -327,7 +327,7 @@ static int init_video_stream(void)
 		return rc;
 	}
 
-	rc = init_rtsp();
+	rc = init_rtsp(name_stream_main);
 	if(rc == SUCCESS){
 		open_stream = OK;
 	}
