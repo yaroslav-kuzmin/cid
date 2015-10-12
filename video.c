@@ -223,6 +223,7 @@ static gpointer read_video_stream(gpointer args)
 		g_thread_yield();
 	}
 	vs->open = NOT_OK;
+	vs->draw = OK;
 	av_free_packet(&packet);
 	deinit_rtsp(vs);
 	g_thread_exit(0);
@@ -233,10 +234,6 @@ static gboolean write_screen(gpointer ud)
 {
 	video_stream_s * vs0 = &video_stream_0;
 
-	if(vs0->open != OK){
-		gdk_pixbuf_fill(image_screen,0x0);
-	}
-
 	if(vs0->draw != OK){
 		g_mutex_lock(&(vs0->mutex));
 		vs0->draw = OK;
@@ -245,7 +242,12 @@ static gboolean write_screen(gpointer ud)
 		g_mutex_unlock(&(vs0->mutex));
 	}
 
+	if(vs0->open != OK){
+		gdk_pixbuf_fill(image_screen,0x0);
+	}
+
 	gtk_image_set_from_pixbuf(GTK_IMAGE(main_screen),image_screen);
+
 	return 	TRUE;
 }
 

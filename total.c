@@ -56,8 +56,6 @@ const char STR_MODBUS_KEY[] = "modbus";
 const char STR_VIDEO_KEY[] = "video";
 
 const char STR_LOGGING[] = "cid.log";
-const char STR_NAME_ICON[] = "cid.png";
-const char STR_NAME_DEFAULT_VIDEO[] = "video_720x576.png";
 const char STR_NAME_DB[] = "cid.db";
 
 GdkRGBA color_black =     {0  ,0  ,0  ,1};

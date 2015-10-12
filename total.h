@@ -62,10 +62,6 @@ extern const char STR_GLOBAL_KEY[];
 extern const char STR_MODBUS_KEY[];
 extern const char STR_VIDEO_KEY[];
 
-extern const char STR_NAME_ICON[];
-
-extern const char STR_NAME_DEFAULT_VIDEO[];
-
 extern const char STR_NAME_DB[];
 
 extern GdkRGBA color_black;

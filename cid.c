@@ -294,18 +294,6 @@ static int create_window_main(void)
 	GtkWidget * vbox = NULL;
 	GtkWidget * wtemp;
 
-/*
-	GError * err = NULL;
-	GdkPixbuf * icon = NULL;
-	icon = gdk_pixbuf_new_from_file(STR_NAME_ICON,&err);
-	if(err != NULL){
-		g_critical("%s",err->message);
-		g_error_free(err);
-	}
-	else{
-		gtk_window_set_default_icon(icon);
-	}
-*/
 	accgro_main = gtk_accel_group_new();
 
 	win_main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
