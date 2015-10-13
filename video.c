@@ -180,12 +180,20 @@ static gpointer read_video_stream(gpointer args)
 	av_init_packet(&packet);
 	packet.data = NULL;
 	packet.size = 0;
-
+#if (LIBAVFORMAR_VERSION_MICRO != 101)
 	av_frame = avcodec_alloc_frame();
 	picture_rgb = avcodec_alloc_frame();
-
 	buffer = g_malloc0(avpicture_get_size(vs->format_rgb,vs->width,vs->height));
 	avpicture_fill((AVPicture *)picture_rgb, buffer, vs->format_rgb,vs->width,vs->height);
+#else
+#define ALIGN_BUFFER           32
+	av_frame = av_frame_alloc();
+	picture_rgb = av_frame_alloc();
+	picture_rgb->format = vs->format_rgb;
+	picture_rgb->width = vs->width;
+	picture_rgb->height = vs->height;
+	av_frame_get_buffer(picture_rgb, ALIGN_BUFFER);
+#endif
 
 	av_read_play(vs->format_context);
 
@@ -217,10 +225,14 @@ static gpointer read_video_stream(gpointer args)
 				}
 				if(vs->exit == OK){
 					av_free_packet(&packet);
+#if (LIBAVFORMAR_VERSION_MICRO != 101)
 					g_free(buffer);
 					avcodec_free_frame(&av_frame);
 					avcodec_free_frame(&picture_rgb);
-
+#else
+					av_frame_free(&av_frame);
+					av_frame_free(&picture_rgb);
+#endif
 					if(vs->draw != OK){
 						vs->draw = OK;
 					}
@@ -236,9 +248,14 @@ static gpointer read_video_stream(gpointer args)
 	vs->open = NOT_OK;
 	vs->draw = OK;
 	av_free_packet(&packet);
+#if (LIBAVFORMAR_VERSION_MICRO != 101)
 	g_free(buffer);
 	avcodec_free_frame(&av_frame);
 	avcodec_free_frame(&picture_rgb);
+#else
+	av_frame_free(&av_frame);
+	av_frame_free(&picture_rgb);
+#endif
 	deinit_rtsp(vs);
 	g_thread_exit(0);
 	return NULL;
