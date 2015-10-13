@@ -420,8 +420,7 @@ static int reg_D110 = 0x106E;
 
 int command_angle(uint16_t * val)
 {
-	uint16_t * rc = NULL;
-	rc = read_register(reg_D110,1);
+	uint16_t * rc = read_register(reg_D110,1);
 	if(rc != NULL){
 		*val = rc[0];
 		return SUCCESS;
@@ -433,8 +432,7 @@ static int reg_D111 = 0x106F;
 
 int command_pressure(uint16_t * val)
 {
-	uint16_t * rc;
-	rc = read_register(reg_D111,1);
+	uint16_t * rc = read_register(reg_D111,1);
 	if(rc != NULL){
 		*val = rc[0];
 		return SUCCESS;
@@ -446,8 +444,7 @@ static int reg_D112 = 0x1070;
 
 int command_sensors(uint16_t * val)
 {
-	uint16_t * rc;
-	rc = read_register(reg_D112,1);
+	uint16_t * rc = read_register(reg_D112,1);
 	if(rc != NULL){
 		*val = rc[0];
 		return SUCCESS;
@@ -459,8 +456,7 @@ static int reg_D113 = 0x1071;
 
 int command_input(uint16_t * val)
 {
-	uint16_t * rc;
-	rc = read_register(reg_D113,1);
+	uint16_t * rc = read_register(reg_D113,1);
 	if(rc != NULL){
 		*val = rc[0];
 		return SUCCESS;
@@ -472,8 +468,7 @@ static int reg_D114 = 0x1072;
 
 int command_console(uint16_t * val)
 {
-	uint16_t * rc;
-	rc = read_register(reg_D114,1);
+	uint16_t * rc = read_register(reg_D114,1);
 	if(rc != NULL){
 		*val = rc[0];
 		return SUCCESS;
@@ -631,7 +626,7 @@ static int set_status_limit_vertical(int status)
 				gtk_widget_override_background_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_red);
 				gtk_widget_override_color(lab_limit_vertical,GTK_STATE_FLAG_NORMAL,&color_white);
 				break;
-			 }
+			}
 			case DEVICE_LIMIT_VERTICAL_BOTTOM:{
 				gtk_label_set_text(GTK_LABEL(lab_limit_vertical),STR_LIMIT_VERTICAL_BOTTOM);
 				set_size_font(lab_limit_vertical,SIZE_FONT_MEDIUM);
@@ -678,7 +673,7 @@ static int set_status_limit_horizontal(int status)
 				gtk_widget_override_background_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_red);
 				gtk_widget_override_color(lab_limit_horizontal,GTK_STATE_FLAG_NORMAL,&color_white);
 				break;
-			 }
+			}
 			case DEVICE_LIMIT_HORIZONTAL_RIGHT:{
 				gtk_label_set_text(GTK_LABEL(lab_limit_horizontal),STR_LIMIT_HORIZONTAL_RIGHT);
 				set_size_font(lab_limit_horizontal,SIZE_FONT_MEDIUM);
@@ -775,75 +770,75 @@ static int check_connect_timeout(gpointer ud)
 		switch(rc){
 			case 1:
 				status_sensors = DEVICE_NORM;
-			 	break;
+				break;
 			case 2:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_LIMIT_VERTICAL_TOP;
-			 	break;
+				break;
 			case 3:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_LIMIT_VERTICAL_BOTTOM;
-			 	break;
+				break;
 			case 4:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_LIMIT_HORIZONTAL_LEFT;
-			 	break;
+				break;
 			case 5:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_LIMIT_HORIZONTAL_RIGHT;
-			 	break;
+				break;
 			case 6:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_LIMIT_VERTICAL_TOP;
 				status_sensors += DEVICE_LIMIT_HORIZONTAL_RIGHT;
-			 	break;
+				break;
 			case 7:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_LIMIT_VERTICAL_BOTTOM;
 				status_sensors += DEVICE_LIMIT_HORIZONTAL_RIGHT;
-			 	break;
+				break;
 			case 8:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_LIMIT_VERTICAL_BOTTOM;
 				status_sensors += DEVICE_LIMIT_HORIZONTAL_LEFT;
-			 	break;
+				break;
 			case 9:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_LIMIT_VERTICAL_TOP;
 				status_sensors += DEVICE_LIMIT_HORIZONTAL_LEFT;
-			 	break;
+				break;
 			case 10:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_CRASH_VERTICAL;
-			 	break;
+				break;
 			case 11:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_CRASH_HORIZONTAL;
-			 	break;
+				break;
 			case 12:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_CRASH_HORIZONTAL;
 				status_sensors += DEVICE_LIMIT_VERTICAL_TOP;
 				status_sensors += DEVICE_LIMIT_HORIZONTAL_LEFT;
-			 	break;
+				break;
 			case 13:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_CRASH_HORIZONTAL;
 				status_sensors += DEVICE_LIMIT_VERTICAL_BOTTOM;
 				status_sensors += DEVICE_LIMIT_HORIZONTAL_LEFT;
-			 	break;
+				break;
 			case 14:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_CRASH_HORIZONTAL;
 				status_sensors += DEVICE_LIMIT_VERTICAL_TOP;
 				status_sensors += DEVICE_LIMIT_HORIZONTAL_RIGHT;
-			 	break;
+				break;
 			case 15:
 				status_sensors = DEVICE_NORM;
 				status_sensors += DEVICE_CRASH_HORIZONTAL;
 				status_sensors += DEVICE_LIMIT_VERTICAL_BOTTOM;
 				status_sensors += DEVICE_LIMIT_HORIZONTAL_RIGHT;
-			 	break;
+				break;
 		}
 		if(rc > 16)
 			rc = 0;
@@ -877,7 +872,7 @@ static int set_status_connect(void)
 
 static int set_status_disconnect(void)
 {
- 	gtk_label_set_text(GTK_LABEL(lab_status),STR_DISCONNECT);
+	gtk_label_set_text(GTK_LABEL(lab_status),STR_DISCONNECT);
 	gtk_widget_override_background_color(lab_status,GTK_STATE_FLAG_NORMAL,&color_red);
 	gtk_widget_override_color(lab_status,GTK_STATE_FLAG_NORMAL,&color_white);
 

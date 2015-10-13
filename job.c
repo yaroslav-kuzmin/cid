@@ -64,7 +64,7 @@ static sqlite3 * database = NULL;
 
 static const char QUERY_JOB_TABLE[] = "SELECT * FROM sqlite_master WHERE type = 'table'";
 static const char QUERY_CREATE_JOB_TABLE[] =
-     "CREATE TABLE job(name PRIMARY KEY,pressure INTEGER,time INTEGER,uprise INTEGER,lowering INTEGER)";
+"CREATE TABLE job(name PRIMARY KEY,pressure INTEGER,time INTEGER,uprise INTEGER,lowering INTEGER)";
 static const char QUERY_ALL_JOB[] = "SELECT * FROM job";
 static char QUIER_INSERT_ROW_JOB[] = "INSERT INTO job VALUES (";
 #define DEFAULT_AMOUNT_COLUMN        5
@@ -116,7 +116,7 @@ static void destroy_job(gpointer job)
 	GDateTime *t = j->time;
 	g_string_free(s,TRUE);
 	g_date_time_unref(t);
- 	g_slice_free1(sizeof(job_s),j);
+	g_slice_free1(sizeof(job_s),j);
 }
 
 static int fill_list_job_db(void)
@@ -479,7 +479,7 @@ static int select_frame(int frame)
 	if(current_frame == AUTO_MODE_FRAME){
 		if(auto_mode_start == OK){
 			GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
-			                              ,GTK_BUTTONS_CLOSE,"Остановите Установку!");
+			                                          ,GTK_BUTTONS_CLOSE,"Остановите Установку!");
 			gtk_dialog_run(GTK_DIALOG(error));
 			gtk_widget_destroy(error);
 			return FAILURE;
@@ -535,11 +535,11 @@ static int select_frame(int frame)
 			 	current_frame = LOAD_JOB_FRAME;
 			}
 			else{
-			 	gtk_widget_hide(fra_job_load);
+				gtk_widget_hide(fra_job_load);
 				gtk_widget_show(fra_mode_auto);
 				current_frame = AUTO_MODE_FRAME;
 			}
-			 break;
+			break;
 		}
 		case  MANUAL_MODE_FRAME:{
 			rc = check_connect_device(NULL);
@@ -571,7 +571,7 @@ static void activate_menu_auto_mode(GtkMenuItem * im,gpointer d)
 
 static void activate_menu_manual_mode(GtkMenuItem * im,gpointer d)
 {
- 	select_frame(MANUAL_MODE_FRAME);
+	select_frame(MANUAL_MODE_FRAME);
 	g_message("%s",STR_MODE_MANUAL);
 }
 
@@ -1476,7 +1476,7 @@ GtkWidget * create_scale_valve(void)
 	gtk_widget_set_valign(lab_valve,GTK_ALIGN_START);
 	set_size_font(lab_valve,SIZE_FONT_MINI);
 
- 	sca_valve = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL
+	sca_valve = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL
 	                                    ,VALVEL_MIN,VALVE_MAX,VALVE_STEP);
 	gtk_scale_set_digits(GTK_SCALE(sca_valve),0); /*колличество знаков после запятой*/
 	gtk_scale_set_value_pos(GTK_SCALE(sca_valve),GTK_POS_RIGHT);
@@ -1527,7 +1527,7 @@ GtkWidget * create_scale_vertical_speed(void)
 	gtk_widget_set_valign(lab_speed,GTK_ALIGN_START);
 	set_size_font(lab_speed,SIZE_FONT_MINI);
 
- 	sca_speed = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL
+	sca_speed = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL
 	                                    ,SPEED_VERTICAL_MIN,SPEED_VERTICAL_MAX,SPEED_VERTICAL_STEP);
 	gtk_scale_set_digits(GTK_SCALE(sca_speed),2); /*колличество знаков после запятой*/
 	gtk_scale_set_value_pos(GTK_SCALE(sca_speed),GTK_POS_RIGHT);
@@ -2074,7 +2074,7 @@ GtkWidget * tree_view_job;
 GtkWidget * create_job_load(void)
 {
 	GtkWidget * lab_fra_job_load;
- 	GtkWidget * box_main;
+	GtkWidget * box_main;
 	GtkWidget * box_tree_view;
 	GtkWidget * scrwin_job;
 	GtkTreeModel * tremod_job;

@@ -89,7 +89,7 @@ static int init_config(void)
 	rc = g_key_file_load_from_file(ini_file,STR_KEY_FILE_NAME,G_KEY_FILE_NONE,&err);
 	if(rc == FALSE){
 		GtkWidget * md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_OK
-		                              ,"Нет файла конфигурации %s \n %s",STR_KEY_FILE_NAME,err->message);
+		                                           ,"Нет файла конфигурации %s \n %s",STR_KEY_FILE_NAME,err->message);
 		gtk_dialog_run(GTK_DIALOG(md_err));
 		gtk_widget_destroy (md_err);
 		g_critical("%s : %s",STR_KEY_FILE_NAME,err->message);
@@ -151,15 +151,15 @@ static void save_logging(const gchar *log_domain,GLogLevelFlags log_level,
 				goto set_str_level;
 			}
 set_str_level:
- 			g_get_current_time (&current_time);
+			g_get_current_time (&current_time);
 			p_dt = g_date_time_new_from_timeval_local(&current_time);
 			g_string_printf(logging,STR_CURRENT_TIME
- 		         ,g_date_time_get_day_of_month(p_dt)
-		         ,g_date_time_get_month(p_dt)
-		         ,g_date_time_get_year(p_dt)
-		         ,g_date_time_get_hour(p_dt)
-		         ,g_date_time_get_minute(p_dt)
-		         ,g_date_time_get_second(p_dt));
+			               ,g_date_time_get_day_of_month(p_dt)
+			               ,g_date_time_get_month(p_dt)
+			               ,g_date_time_get_year(p_dt)
+			               ,g_date_time_get_hour(p_dt)
+			               ,g_date_time_get_minute(p_dt)
+			               ,g_date_time_get_second(p_dt));
 			g_string_append(logging,str_level);
 			g_string_append(logging,message);
 			g_date_time_unref(p_dt);
@@ -199,7 +199,7 @@ static int flush_logging(gpointer ud)
 	if(rc != G_IO_STATUS_NORMAL){
 		GtkWidget * md_err;
 		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
-			                               ,"Ошибка ведения лога : %s\nЛог закрыт",err->message);
+		                               ,"Ошибка ведения лога : %s\nЛог закрыт",err->message);
 		gtk_dialog_run(GTK_DIALOG(md_err));
 		gtk_widget_destroy(md_err);
 		g_error_free(err);
@@ -224,7 +224,7 @@ static int init_logging(void)
 	logging_channel = g_io_channel_new_file(name_logging,"a",&err);
 	if(logging_channel == NULL){
 		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
-		                              ,"Несмог создать систему логирования %s \n %s",STR_LOGGING,err->message);
+		                               ,"Несмог создать систему логирования %s \n %s",STR_LOGGING,err->message);
 		gtk_dialog_run(GTK_DIALOG(md_err));
 		gtk_widget_destroy (md_err);
 		g_critical(" %s : %s",STR_LOGGING,err->message);
