@@ -93,7 +93,7 @@ static int check_access(char * name)
 	stream_connect = g_socket_client_connect_to_host(stream,temp_string->str
 	                                                ,DEFAULT_PORT_VIDEO_STREAM,NULL,&err);
 	if(stream_connect == NULL){
-		g_critical("Доступ по адресу %s : %s",temp_string->str,err->message);
+		g_critical("Доступ по адресу %s : %s!",temp_string->str,err->message);
 		g_error_free(err);
 		return FAILURE;
 	}
@@ -330,8 +330,8 @@ static int init_rtsp(video_stream_s * vs)
 		g_critical("Не смог открыть кодек в потоке %s!",vs->name);
 		return FAILURE;
 	}
-	g_message("Запустил кодек в потоке %s",vs->name);
-	g_message("Инизиализировал видео поток %s размер %dх%d",vs->name,vs->codec_context->width,vs->codec_context->height);
+	g_message("Запустил кодек в потоке %s.",vs->name);
+	g_message("Инизиализировал видео поток %s размер %dх%d.",vs->name,vs->codec_context->width,vs->codec_context->height);
 	return rc;
 }
 
@@ -371,7 +371,7 @@ static int init_video_stream(video_stream_s * vs)
 		vs->exit = NOT_OK;
 		g_mutex_init(&(vs->mutex));
 		vs->tid = g_thread_new("video",read_video_stream,vs);
-		g_message("Видео %s запущено",vs->name);
+		g_message("Камера %s включена.",vs->name);
 	}
 	return SUCCESS;
 }
@@ -385,7 +385,7 @@ static int deinit_video_stream(video_stream_s * vs)
 		vs->draw = OK;
 		vs->open = NOT_OK;
 		deinit_rtsp(vs);
-		g_message("Видео %s закрыто",vs->name);
+		g_message("Камера %s выключена.",vs->name);
 	}
 	return SUCCESS;
 }
@@ -429,7 +429,7 @@ static void activate_menu_video_1(GtkMenuItem * mi,gpointer ud)
 /*
 static void activate_menu_setting(GtkMenuItem * mi,gpointer ud)
 {
-	g_message("Установил настройки видео потока");
+	g_message("Установил настройки видео потока.");
 }
 */
 GtkWidget * create_menu_video(void)
@@ -508,26 +508,26 @@ static int load_config(void)
 	err = NULL;
 	video_stream_0.name = g_key_file_get_string (ini_file,STR_VIDEO_KEY,STR_STREAM_0_KEY,&err);
 	if(video_stream_0.name == NULL){
-		g_critical("В секции %s нет ключа %s : %s",STR_VIDEO_KEY,STR_STREAM_0_KEY,err->message);
+		g_critical("В секции %s нет ключа %s : %s!",STR_VIDEO_KEY,STR_STREAM_0_KEY,err->message);
 		g_error_free(err);
 	}
 	else{
-		g_message("Камера 0 : %s",video_stream_0.name);
+		g_message("Камера 0 : %s.",video_stream_0.name);
 	}
 	err = NULL;
 	video_stream_1.name = g_key_file_get_string (ini_file,STR_VIDEO_KEY,STR_STREAM_1_KEY,&err);
 	if(video_stream_1.name == NULL){
-		g_critical("В секции %s нет ключа %s : %s",STR_VIDEO_KEY,STR_STREAM_1_KEY,err->message);
+		g_critical("В секции %s нет ключа %s : %s!",STR_VIDEO_KEY,STR_STREAM_1_KEY,err->message);
 		g_error_free(err);
 	}
 	else{
-		g_message("Камера 1 : %s",video_stream_1.name);
+		g_message("Камера 1 : %s.",video_stream_1.name);
 	}
 
 	err = NULL;
 	FPS = g_key_file_get_integer(ini_file,STR_VIDEO_KEY,STR_FPS_KEY,&err);
 	if(FPS == 0){
-		g_critical("В секции %s нет ключа %s : %s",STR_VIDEO_KEY,STR_FPS_KEY,err->message);
+		g_critical("В секции %s нет ключа %s : %s!",STR_VIDEO_KEY,STR_FPS_KEY,err->message);
 		g_error_free(err);
 	}
 	else{

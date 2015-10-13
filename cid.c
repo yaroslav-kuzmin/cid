@@ -92,7 +92,7 @@ static int init_config(void)
 		                                           ,"Нет файла конфигурации %s \n %s",STR_KEY_FILE_NAME,err->message);
 		gtk_dialog_run(GTK_DIALOG(md_err));
 		gtk_widget_destroy (md_err);
-		g_critical("%s : %s",STR_KEY_FILE_NAME,err->message);
+		g_critical("%s : %s!",STR_KEY_FILE_NAME,err->message);
 		exit(0);
 	}
 	return SUCCESS;
@@ -227,7 +227,7 @@ static int init_logging(void)
 		                               ,"Несмог создать систему логирования %s \n %s",STR_LOGGING,err->message);
 		gtk_dialog_run(GTK_DIALOG(md_err));
 		gtk_widget_destroy (md_err);
-		g_critical(" %s : %s",STR_LOGGING,err->message);
+		g_critical(" %s : %s!",STR_LOGGING,err->message);
 		exit(FAILURE);
 	}
 	g_timeout_add(timeout_flush_logging,flush_logging,NULL);
@@ -281,7 +281,7 @@ static void destroy_window_main(GtkWidget * w,gpointer ud)
 	deinit_control_device();
 	deinit_video();
 	deinit_db();
-	g_message("Останов системы\n");
+	g_message("Останов системы.\n");
 	deinit_config();
 	deinit_logging();
 	gtk_main_quit();
@@ -333,7 +333,7 @@ int main(int argc,char * argv[])
 
 	init_config();
 	init_logging();
-	g_message("Запуск системы : %s",STR_NAME_PROGRAMM);
+	g_message("Запуск системы : %s.",STR_NAME_PROGRAMM);
 	init_db();
 
 	create_window_main();

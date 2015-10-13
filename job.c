@@ -130,7 +130,7 @@ static int fill_list_job_db(void)
 
 	rc = sqlite3_prepare_v2(database,QUERY_ALL_JOB,-1,&query,NULL);
 	if(rc != SQLITE_OK){
-		g_critical("SQL error QUERY_ALL_JOB : %s",sqlite3_errmsg(database));
+		g_critical("SQL error QUERY_ALL_JOB : %s!",sqlite3_errmsg(database));
 		return FAILURE;
 	}
 	for(;;){
@@ -139,7 +139,7 @@ static int fill_list_job_db(void)
 			break;	/* данных в запросе нет*/
 		}
 		if(rc == SQLITE_ERROR ){
-			g_critical("SQL error QUERY_ALL_JOB step : %s",sqlite3_errmsg(database));
+			g_critical("SQL error QUERY_ALL_JOB step : %s!",sqlite3_errmsg(database));
 			break;
 		}
 		if(rc == SQLITE_ROW){
@@ -150,37 +150,37 @@ static int fill_list_job_db(void)
 				int amount_column;
 				amount_column = sqlite3_data_count(query);
 				if(amount_column != DEFAULT_AMOUNT_COLUMN){
-					g_critical("SQL error not correct table job : %d",amount_column);
+					g_critical("SQL error not correct table job : %d!",amount_column);
 					break;
 				}
 				str = sqlite3_column_name(query,0);
 				str = g_strstr_len(STR_NAME_COLUMN_0,SIZE_STR_NAME_COLUMN_0,str);
 				if(str == NULL){
-					g_critical("SQL error not correct column 0 ");
+					g_critical("SQL error not correct column 0!");
 					break;
 				}
 				str = sqlite3_column_name(query,1);
 				str = g_strstr_len(STR_NAME_COLUMN_1,SIZE_STR_NAME_COLUMN_1,str);
 				if(str == NULL){
-					g_critical("SQL error not correct column 1");
+					g_critical("SQL error not correct column 1!");
 					break;
 				}
 				str = sqlite3_column_name(query,2);
 				str = g_strstr_len(STR_NAME_COLUMN_2,SIZE_STR_NAME_COLUMN_2,str);
 				if(str == NULL){
-					g_critical("SQL error not correct column 2");
+					g_critical("SQL error not correct column 2!");
 					break;
 				}
 				str = sqlite3_column_name(query,3);
 				str = g_strstr_len(STR_NAME_COLUMN_3,SIZE_STR_NAME_COLUMN_3,str);
 				if(str == NULL){
-					g_critical("SQL error not correct column 3");
+					g_critical("SQL error not correct column 3!");
 					break;
 				}
 				str = sqlite3_column_name(query,4);
 				str = g_strstr_len(STR_NAME_COLUMN_4,SIZE_STR_NAME_COLUMN_4,str);
 				if(str == NULL){
-					g_critical("SQL error not correct column 4");
+					g_critical("SQL error not correct column 4!");
 					break;
 				}
 				check_column = OK;
@@ -196,7 +196,7 @@ static int fill_list_job_db(void)
 			g_hash_table_add(list_job,job);
 			continue;
 		}
-		g_critical("SQL error QUERY_ALL_JOB end");
+		g_critical("SQL error QUERY_ALL_JOB end!");
 		break;
 	}
 	sqlite3_finalize(query);
@@ -287,7 +287,7 @@ static int insert_job_db(const char * name,const char *pressure,const char * tim
 	rc = sqlite3_exec(database,query_row_job->str,NULL,NULL,&sql_error);
 	if(rc != SQLITE_OK){
 		/*TODO окно пользователю что несмог записать*/
-		g_critical("SQL error QUERY_INSERT_JOB : %s",sql_error);
+		g_critical("SQL error QUERY_INSERT_JOB : %s!",sql_error);
 		sqlite3_free(sql_error);
 		return FAILURE;
 	}
@@ -315,7 +315,7 @@ static int delete_job_db(const char * name)
 	rc = sqlite3_exec(database,query_row_job->str,NULL,NULL,&sql_error);
 	if(rc != SQLITE_OK){
 		/*TODO окно пользователю что несмог удалить*/
-		g_critical("SQL error QUERY_DELETE_ROW_JOB : %s",sql_error);
+		g_critical("SQL error QUERY_DELETE_ROW_JOB : %s!",sql_error);
 		sqlite3_free(sql_error);
 		return FAILURE;
 	}
@@ -377,7 +377,7 @@ int init_db(void)
 
 	rc = sqlite3_open(name_database,&database); // откравает базу данных
 	if(rc != SQLITE_OK){
-		char STR_ERROR[] = "Несмог открыть базу данных %s : %s";
+		char STR_ERROR[] = "Несмог открыть базу данных %s : %s!";
 		GtkWidget * md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
 		                                           ,STR_ERROR,name_database,sqlite3_errmsg(database));
 		g_critical(STR_ERROR,STR_NAME_DB,sqlite3_errmsg(database));
@@ -389,7 +389,7 @@ int init_db(void)
 
 	rc = sqlite3_exec(database,QUERY_JOB_TABLE,check_table_job_db,NULL,&error_message);
 	if( rc != SQLITE_OK ){
-		g_critical("SQL error QUERY_JOB_TABLE : %s\n",error_message);
+		g_critical("SQL error QUERY_JOB_TABLE : %s!",error_message);
 		sqlite3_free(error_message);
 		return FAILURE;
 	}
@@ -397,12 +397,12 @@ int init_db(void)
 	if(table_job == NOT_OK){
 		rc = sqlite3_exec(database,QUERY_CREATE_JOB_TABLE,NULL,NULL, &error_message);
 		if( rc != SQLITE_OK){
-			g_critical("SQL error QUERY_CREATE_JOB_TABLE : %s",error_message);
+			g_critical("SQL error QUERY_CREATE_JOB_TABLE : %s!",error_message);
 			sqlite3_free(error_message);
 			return FAILURE;
 		}
 	}
-	g_message("Открыл базу данных");
+	g_message("Открыл базу данных.");
 
 	rc = fill_list_job_db();
 	if(rc != SUCCESS){
@@ -417,7 +417,7 @@ int deinit_db(void)
 	list_job = NULL;
 	if(database != NULL){
 		sqlite3_close(database);
-		g_message("Закрыл базу данных");
+		g_message("Закрыл базу данных.");
 		database = NULL;
 	}
 
@@ -566,13 +566,13 @@ static int select_frame(int frame)
 static void activate_menu_auto_mode(GtkMenuItem * im,gpointer d)
 {
 	select_frame(AUTO_MODE_FRAME);
-	g_message("%s",STR_MODE_AUTO);
+	g_message("%s.",STR_MODE_AUTO);
 }
 
 static void activate_menu_manual_mode(GtkMenuItem * im,gpointer d)
 {
 	select_frame(MANUAL_MODE_FRAME);
-	g_message("%s",STR_MODE_MANUAL);
+	g_message("%s.",STR_MODE_MANUAL);
 }
 
 static char STR_MODE[] = "Режим";
@@ -615,13 +615,13 @@ static GtkWidget * create_menu_mode(void)
 void activate_menu_load_job(GtkMenuItem * b,gpointer d)
 {
 	select_frame(LOAD_JOB_FRAME);
-	g_message("%s",STR_JOB_LOAD);
+	g_message("%s.",STR_JOB_LOAD);
 }
 
 void activate_menu_save_job(GtkMenuItem * b,gpointer d)
 {
 	select_frame(SAVE_JOB_FRAME);
-	g_message("%s",STR_JOB_SAVE);
+	g_message("%s.",STR_JOB_SAVE);
 }
 
 static char STR_JOB[] = "Работа";
@@ -1027,7 +1027,7 @@ int set_current_value_auto_mode(void)
 int set_preset_value_auto_mode(void)
 {
 	if(current_job == NULL){
-		g_critical("не выбрана работа!");
+		g_critical("Не выбрана работа!");
 		return FAILURE;
 	}
 	gtk_label_set_text(GTK_LABEL(lab_auto_mode_name_job),current_job->name->str);
@@ -1812,7 +1812,7 @@ int select_current_job(GtkTreeView * tre_job)
 
 	name = select_row_activated(tre_job);
 	if(name == NULL){
-		g_critical("Cписок выбора не корректный (0)");
+		g_critical("Cписок выбора не корректный (0)!");
 		return FAILURE;
 	}
 
@@ -1821,7 +1821,7 @@ int select_current_job(GtkTreeView * tre_job)
 
 	g_hash_table_lookup_extended(list_job,&temp_job,&pt,NULL);
 	if(pt == NULL){
-		g_critical("Таблица хешей не корректна (0)");
+		g_critical("Таблица хешей не корректна (0)!");
 		return FAILURE;
 	}
 	current_job = (job_s *)pt;
@@ -1852,7 +1852,7 @@ void clicked_button_del_job(GtkButton * but,GtkTreeView * tre_job)
 
 	name = select_row_activated(tre_job);
 	if(name == NULL){
-		g_critical("Cписок выбора не корректный (1)");
+		g_critical("Cписок выбора не корректный (1)!");
 		return ;
 	}
 
@@ -1861,7 +1861,7 @@ void clicked_button_del_job(GtkButton * but,GtkTreeView * tre_job)
 
 	rc = g_hash_table_remove(list_job,&temp_job);
 	if(rc != TRUE){
-		g_critical("Таблица хешей не корректна (1)");
+		g_critical("Таблица хешей не корректна (1)!");
 		return;
 	}
 
@@ -2350,7 +2350,7 @@ void clicked_button_save_job(GtkButton * b,gpointer d)
 
 	g_hash_table_lookup_extended(list_job,&temp_job,&pt,NULL);
 	if(pt == NULL){
-		g_critical("Таблица хешей не корректна (0)");
+		g_critical("Таблица хешей не корректна (2)!");
 		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
 		                              ,GTK_BUTTONS_CLOSE,"Нет возможности записать в базу данных!");
 		gtk_dialog_run(GTK_DIALOG(error));
@@ -2646,7 +2646,7 @@ static int load_config(void)
 
 	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,&err);
 	if(err != NULL){
-		g_message("В секции %s нет ключа %s : %s",STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,err->message);
+		g_critical("В секции %s нет ключа %s : %s!",STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,err->message);
 		g_error_free(err);
 		return FAILURE;
 	}

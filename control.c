@@ -81,30 +81,30 @@ static int read_config_device(void)
 	/*TODO проверка вводимых данных*/
 	str = g_key_file_get_string (ini_file,STR_MODBUS_KEY,"device",&err);
 	if(str == NULL){
-		g_critical("Нет имени порта : %s",err->message);
+		g_critical("Нет имени порта : %s!",err->message);
 		g_error_free(err);
 		device_name = DEFAULT_DEVICE_NAME;
 	}
 	else{
 		device_name = str;
 	}
-	g_message("Порт : %s",device_name);
+	g_message("Порт : %s.",device_name);
 
 	err = NULL;
 	value = g_key_file_get_integer(ini_file,STR_MODBUS_KEY,"baud",&err);
 	if(value == 0){
-		g_critical("Нет скорости на порту : %s",err->message);
+		g_critical("Нет скорости на порту : %s!",err->message);
 		g_error_free(err);
 	}
 	else{
 		baud = value;
 	}
-	g_message("Скорость на порту : %d",baud);
+	g_message("Скорость на порту : %d.",baud);
 
 	err = NULL;
 	str = g_key_file_get_string(ini_file,STR_MODBUS_KEY,"parity",&err);
 	if(str == NULL){
-		g_critical("Нет четности : %s",err->message);
+		g_critical("Нет четности : %s!",err->message);
 		g_error_free(err);
 	}
 	else{
@@ -117,12 +117,12 @@ static int read_config_device(void)
 			}
 		}
 	}
-	g_message("Установлена четность на потру : %c",parity);
+	g_message("Установлена четность на потру : %c.",parity);
 
 	err = NULL;
 	value = g_key_file_get_integer(ini_file,STR_MODBUS_KEY,"data_bit",&err);
 	if(value == 0){
-		g_critical("Не установлено бит данных на потру: %s",err->message);
+		g_critical("Не установлено бит данных на потру: %s!",err->message);
 		g_error_free(err);
 	}
 	else{
@@ -130,12 +130,12 @@ static int read_config_device(void)
 			data_bit = value;
 		}
 	}
-	g_message("Установлено бит данных на порту : %d",data_bit);
+	g_message("Установлено бит данных на порту : %d.",data_bit);
 
 	err = NULL;
 	value = g_key_file_get_integer(ini_file,STR_MODBUS_KEY,"stop_bit",&err);
 	if(value == 0){
-		g_critical("Не установлено стоп бита : %s",err->message);
+		g_critical("Не установлено стоп бита : %s!",err->message);
 		g_error_free(err);
 	}
 	else{
@@ -143,12 +143,12 @@ static int read_config_device(void)
 			stop_bit = value;
 		}
 	}
-	g_message("Установлен стоп бит : %d",stop_bit);
+	g_message("Установлен стоп бит : %d.",stop_bit);
 
 	err = NULL;
 	value = g_key_file_get_integer(ini_file,STR_MODBUS_KEY,"ID",&err);
 	if(value == 0){
-		g_critical("Нет номера устройства ID : %s",err->message);
+		g_critical("Нет номера устройства ID : %s!",err->message);
 		g_error_free(err);
 	}
 	else{
@@ -170,12 +170,12 @@ static int read_config_device(void)
 			modbus_debug = FALSE;
 		}
 	}
-	g_message("Отладка протокола Modbus : %d",modbus_debug);
+	g_message("Отладка протокола Modbus : %d.",modbus_debug);
 
 	err = NULL;
 	str = g_key_file_get_string(ini_file,STR_MODBUS_KEY,"protocol",&err);
 	if(str == NULL){
-		g_critical("Нет наименования протокола : %s",err->message);
+		g_critical("Нет наименования протокола : %s!",err->message);
 		g_error_free(err);
 	}
 	else{
@@ -187,10 +187,10 @@ static int read_config_device(void)
 		}
 	}
 	if(protocol == PROTOCOL_RTU){
-		g_message("протокол передачи RTU");
+		g_message("протокол передачи RTU.");
 	}
 	else{
-		g_message("протокол передачи ASCII");
+		g_message("протокол передачи ASCII.");
 	}
 	return SUCCESS;
 }
@@ -205,12 +205,12 @@ static int connect_device(void)
 	int rc = 0;
 
 	if(ctx != NULL){
-		g_critical("Устройство уже подключено");
+		g_critical("Устройство уже подключено!");
 		return CONNECT;
 	}
 
 	if(device_name == NULL){
-		g_critical("Нет имени устройства");
+		g_critical("Нет имени устройства!");
 		return DISCONNECT;
 	}
 
@@ -221,7 +221,7 @@ static int connect_device(void)
 	}
 
 	if(ctx == NULL){
-		g_critical("Несмог создать подключение");
+		g_critical("Несмог создать подключение!");
 	 	return DISCONNECT;
 	}
 
@@ -238,12 +238,12 @@ static int connect_device(void)
 	if(rc == -1){
 		modbus_free(ctx);
 		ctx = NULL;
-		g_critical("Несмог подсоединится к порту : %s",device_name);
+		g_critical("Несмог подсоединится к порту : %s!",device_name);
 		return DISCONNECT;
 	}
 
 	set_status_connect();
-	g_message("Подсоединился к порту : %s",device_name);
+	g_message("Подсоединился к порту : %s.",device_name);
 	return CONNECT;
 }
 
@@ -256,7 +256,7 @@ static int disconnect_device(void)
 		modbus_free(ctx);
 		ctx = NULL;
 		set_status_disconnect();
-		g_message("Отсоединился от порта : %s",device_name);
+		g_message("Отсоединился от порта : %s.",device_name);
 	}
 	return DISCONNECT;
 }
@@ -265,14 +265,14 @@ static int write_register(int reg,int value)
 {
 	int rc = 0;
 	if(ctx == NULL){
-		g_critical("Нет соединения с портом : %s",device_name);
+		g_critical("Нет соединения с портом : %s!",device_name);
 		return FAILURE;
 	}
 #if !TEST_INTERFACE
 	rc = modbus_write_register(ctx,reg,value);
 #endif
 	if(rc == -1){
-		g_critical("Несмог записать данные в порт");
+		g_critical("Несмог записать данные в порт!");
 		disconnect_device();
 		return FAILURE;
 	}
@@ -292,7 +292,7 @@ static uint16_t * read_register(int reg,int amount)
 	}
 
 	if(ctx == NULL){
-		g_critical("Нет соединения с портом : %s",device_name);
+		g_critical("Нет соединения с портом : %s!",device_name);
 		return NULL;
 	}
 	memset(dest,0,(amoun_dest*sizeof(uint16_t)));
@@ -300,7 +300,7 @@ static uint16_t * read_register(int reg,int amount)
 	rc = modbus_read_registers(ctx,reg,amount,dest);
 #endif
 	if(rc == -1){
-		g_critical("Несмог считать данные из порта");
+		g_critical("Несмог считать данные из порта!");
 		disconnect_device();
 		return NULL;
 	}
@@ -889,7 +889,7 @@ static int load_config(void)
 
 	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_TIMEOUT_CHECK_PORT,&err);
 	if(err != NULL){
-		g_message("В секции %s нет ключа %s : %s",STR_GLOBAL_KEY,STR_TIMEOUT_CHECK_PORT,err->message);
+		g_critical("В секции %s нет ключа %s : %s!",STR_GLOBAL_KEY,STR_TIMEOUT_CHECK_PORT,err->message);
 		g_error_free(err);
 		return FAILURE;
 	}
@@ -979,7 +979,7 @@ static void activate_menu_device(GtkMenuItem * mi,gpointer ud)
 /*
 static void activate_menu_setting(GtkMenuItem * mi,gpointer ud)
 {
-	g_message("Установил настройки видео потока");
+	g_message("Установил настройки видео потока.");
 }
 */
 
