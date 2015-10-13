@@ -53,7 +53,7 @@
 
 
 /*****************************************************************************/
-#define TEST_VIDEO              FALSE
+#define TEST_VIDEO              TRUE
 
 static char STR_RTSP[] = "rtsp://";
 #define SIZE_STR_RTSP     7
@@ -234,16 +234,16 @@ static gboolean write_screen(gpointer ud)
 {
 	video_stream_s * vs0 = &video_stream_0;
 
+	if(vs0->open != OK){
+		gdk_pixbuf_fill(image_screen,0x0);
+	}
+
 	if(vs0->draw != OK){
 		g_mutex_lock(&(vs0->mutex));
 		vs0->draw = OK;
 		gdk_pixbuf_copy_area(vs0->screen,0,0,DEFAULT_VIDEO_WIDTH,DEFAULT_VIDEO_HEIGHT,image_screen,0,0);
 		g_object_unref(vs0->screen);
 		g_mutex_unlock(&(vs0->mutex));
-	}
-
-	if(vs0->open != OK){
-		gdk_pixbuf_fill(image_screen,0x0);
 	}
 
 	gtk_image_set_from_pixbuf(GTK_IMAGE(main_screen),image_screen);
@@ -356,12 +356,12 @@ static int init_video_stream_0(void)
 int deinit_video_stream_0(void)
 {
 	if(video_stream_0.open == OK){
-		video_stream_0.open = NOT_OK;
 		video_stream_0.exit = OK;
 		g_thread_join(video_stream_0.tid);
 		g_mutex_clear(&(video_stream_0.mutex));
+		video_stream_0.draw = OK;
+		video_stream_0.open = NOT_OK;
 		deinit_rtsp(&video_stream_0);
-		video_stream_0.draw = NOT_OK;
 		g_message("Видео поток закрыт");
 	}
 	return SUCCESS;
