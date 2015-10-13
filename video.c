@@ -53,7 +53,7 @@
 
 
 /*****************************************************************************/
-#define TEST_VIDEO              TRUE
+#define TEST_VIDEO              FALSE
 
 static char STR_RTSP[] = "rtsp://";
 #define SIZE_STR_RTSP     7
