@@ -53,7 +53,8 @@
 
 
 /*****************************************************************************/
-#define TEST_VIDEO              TRUE
+#define TEST_VIDEO              FALSE
+#define ALLOC_FRAME             FALSE
 
 static char STR_RTSP[] = "rtsp://";
 #define SIZE_STR_RTSP     7
@@ -194,7 +195,9 @@ static gpointer read_video_stream(gpointer args)
 	AVPacket packet;
 	AVFrame *av_frame = NULL;
 	AVFrame *picture_rgb;
+#if ALLOC_FRAME
 	uint8_t *buffer;
+#endif
 	int frameFinished = 0;
 	int width;
 	int height;
@@ -212,7 +215,7 @@ static gpointer read_video_stream(gpointer args)
 	packet.data = NULL;
 	packet.size = 0;
 
-#if (LIBAVFORMAR_VERSION_MICRO != 101)
+#if ALLOC_FRAME
 	av_frame = avcodec_alloc_frame();
 	picture_rgb = avcodec_alloc_frame();
 	buffer = g_malloc0(avpicture_get_size(vs->format_rgb,width,height));
@@ -257,7 +260,7 @@ static gpointer read_video_stream(gpointer args)
 				}
 				if(vs->exit == OK){
 					av_free_packet(&packet);
-#if (LIBAVFORMAR_VERSION_MICRO != 101)
+#if ALLOC_FRAME
 					g_free(buffer);
 					avcodec_free_frame(&av_frame);
 					avcodec_free_frame(&picture_rgb);
@@ -280,7 +283,7 @@ static gpointer read_video_stream(gpointer args)
 	vs->open = NOT_OK;
 	vs->draw = OK;
 	av_free_packet(&packet);
-#if (LIBAVFORMAR_VERSION_MICRO != 101)
+#if ALLOC_FRAME
 	g_free(buffer);
 	avcodec_free_frame(&av_frame);
 	avcodec_free_frame(&picture_rgb);
