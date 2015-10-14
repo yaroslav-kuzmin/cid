@@ -53,7 +53,7 @@
 
 
 /*****************************************************************************/
-#define TEST_VIDEO              FALSE
+#define TEST_VIDEO              TRUE
 
 static char STR_RTSP[] = "rtsp://";
 #define SIZE_STR_RTSP     7
@@ -126,13 +126,22 @@ static int check_name_stream(char * name)
 	}
 	return SUCCESS;
 }
-                                        /*формат видео 16:9 */
-#define DEFAULT_VIDEO_0_WIDTH    960      /*640*/ /*848*/ /*960*/ /*1280*/ /*1600*/ /*1920*/
-#define DEFAULT_VIDEO_0_HEIGHT   540      /*360*/ /*480*/ /*540*/ /*768 */ /*900 */ /*1080*/
-                                        /*формат видео 5:4 */
-#define DEFAULT_VIDEO_1_WIDTH    160      /*160*/ /*320*/ /*640*/ /*800*/ /*1280*/
-#define DEFAULT_VIDEO_1_HEIGHT   128      /*128*/ /*256*/ /*512*/ /*640*/ /*1024*/
 
+/*формат видео 16:9 */
+/*640*/ /*848*/ /*960*/ /*1280*/ /*1600*/ /*1920*/
+/*360*/ /*480*/ /*540*/ /*768 */ /*900 */ /*1080*/
+#define DEFAULT_VIDEO_0_WIDTH      960
+#define DEFAULT_VIDEO_0_HEIGHT     540
+#define DEFAULT_VIDEO_0_I_WIDTH    160
+#define DEFAULT_VIDEO_0_I_HEIGHT   90
+
+/*формат видео 5:4 */
+/*160*/ /*320*/ /*640*/ /*800*/ /*1280*/
+/*128*/ /*256*/ /*512*/ /*640*/ /*1024*/
+#define DEFAULT_VIDEO_1_WIDTH      160
+#define DEFAULT_VIDEO_1_HEIGHT     128
+#define DEFAULT_VIDEO_1_I_WIDTH    675
+#define DEFAULT_VIDEO_1_I_HEIGHT   540
 
 struct _video_stream_s{
 
@@ -150,20 +159,31 @@ struct _video_stream_s{
 
 	int exit;
 
+	int x;
+	int y;
+	int x_i;
+	int y_i;
 	int width;
 	int height;
+	int width_i;
+	int height_i;
 	int format_rgb;
+	int inversion;
+
 	GdkPixbuf * screen;
 	int draw;
 };
-
 typedef struct _video_stream_s video_stream_s;
 
-static video_stream_s video_stream_0 = {0};
-static video_stream_s video_stream_1 = {0};
+struct _screen_s{
+	GdkPixbuf * image;
+	GtkWidget * main;
+	int inversion;
 
-static GdkPixbuf * image_screen = NULL;
-static GtkWidget * main_screen = NULL;
+	video_stream_s * vs0;
+	video_stream_s * vs1;
+};
+typedef struct _screen_s screen_s;
 
 static int deinit_rtsp(video_stream_s * vs);
 
@@ -176,22 +196,34 @@ static gpointer read_video_stream(gpointer args)
 	AVFrame *picture_rgb;
 	uint8_t *buffer;
 	int frameFinished = 0;
+	int width;
+	int height;
+
+	if(vs->inversion != OK){
+		width = vs->width;
+		height = vs->height;
+	}
+	else{
+		width = vs->width_i;
+		height = vs->height_i;
+	}
 
 	av_init_packet(&packet);
 	packet.data = NULL;
 	packet.size = 0;
+
 #if (LIBAVFORMAR_VERSION_MICRO != 101)
 	av_frame = avcodec_alloc_frame();
 	picture_rgb = avcodec_alloc_frame();
-	buffer = g_malloc0(avpicture_get_size(vs->format_rgb,vs->width,vs->height));
-	avpicture_fill((AVPicture *)picture_rgb, buffer, vs->format_rgb,vs->width,vs->height);
+	buffer = g_malloc0(avpicture_get_size(vs->format_rgb,width,height));
+	avpicture_fill((AVPicture *)picture_rgb, buffer, vs->format_rgb,width,height);
 #else
 #define ALIGN_BUFFER           32
 	av_frame = av_frame_alloc();
 	picture_rgb = av_frame_alloc();
 	picture_rgb->format = vs->format_rgb;
-	picture_rgb->width = vs->width;
-	picture_rgb->height = vs->height;
+	picture_rgb->width = width;
+	picture_rgb->height = height;
 	av_frame_get_buffer(picture_rgb, ALIGN_BUFFER);
 #endif
 
@@ -199,7 +231,7 @@ static gpointer read_video_stream(gpointer args)
 
 	/*параметры преобразования кадра*/
 	vs->sws_context = sws_getContext(vs->codec_context->width,vs->codec_context->height,vs->codec_context->pix_fmt
-	                                ,vs->width,vs->height,vs->format_rgb
+	                                ,width,height,vs->format_rgb
 	                                ,SWS_BICUBIC
 	                                ,NULL,NULL,NULL);
 	for(;;){
@@ -218,7 +250,7 @@ static gpointer read_video_stream(gpointer args)
 				if(vs->draw == OK){
 					vs->screen = gdk_pixbuf_new_from_data(picture_rgb->data[0],GDK_COLORSPACE_RGB
 					                                     ,0,8
-					                                     ,vs->width,vs->height
+					                                     ,width,height
 					                                     ,picture_rgb->linesize[0]
 					                                     ,NULL,NULL);
 					vs->draw = NOT_OK;
@@ -263,29 +295,47 @@ static gpointer read_video_stream(gpointer args)
 
 static gboolean write_screen(gpointer ud)
 {
-	video_stream_s * vs0 = &video_stream_0;
-	video_stream_s * vs1 = &video_stream_1;
+	screen_s * s = (screen_s*)ud;
+	video_stream_s * vs0 = s->vs0;
+	video_stream_s * vs1 = s->vs1;
 
 	if( (vs0->open != OK) && (vs1->open != OK) ){
-		gdk_pixbuf_fill(image_screen,0x0);
+		gdk_pixbuf_fill(s->image,0x0);
 	}
 
-	if(vs0->draw != OK){
-		g_mutex_lock(&(vs0->mutex));
-		vs0->draw = OK;
-		gdk_pixbuf_copy_area(vs0->screen,0,0,vs0->width,vs0->height,image_screen,0,0);
-		g_object_unref(vs0->screen);
-		g_mutex_unlock(&(vs0->mutex));
+	if(s->inversion != OK){
+		if(vs0->draw != OK){
+			g_mutex_lock(&(vs0->mutex));
+			vs0->draw = OK;
+			gdk_pixbuf_copy_area(vs0->screen,0,0,vs0->width,vs0->height,s->image,vs0->x,vs0->y);
+			g_object_unref(vs0->screen);
+			g_mutex_unlock(&(vs0->mutex));
+		}
+		if(vs1->draw != OK){
+			g_mutex_lock(&(vs1->mutex));
+			vs1->draw = OK;
+			gdk_pixbuf_copy_area(vs1->screen,0,0,vs1->width,vs1->height,s->image,vs1->x,vs1->y);
+			g_object_unref(vs1->screen);
+			g_mutex_unlock(&(vs1->mutex));
+		}
 	}
-	if(vs1->draw != OK){
-		g_mutex_lock(&(vs1->mutex));
-		vs1->draw = OK;
-		gdk_pixbuf_copy_area(vs1->screen,0,0,vs1->width,vs1->height,image_screen,0,0);
-		g_object_unref(vs1->screen);
-		g_mutex_unlock(&(vs1->mutex));
+	else{
+		if(vs1->draw != OK){
+			g_mutex_lock(&(vs1->mutex));
+			vs1->draw = OK;
+			gdk_pixbuf_copy_area(vs1->screen,0,0,vs1->width_i,vs1->height_i,s->image,vs1->x_i,vs1->y_i);
+			g_object_unref(vs1->screen);
+			g_mutex_unlock(&(vs1->mutex));
+		}
+		if(vs0->draw != OK){
+			g_mutex_lock(&(vs0->mutex));
+			vs0->draw = OK;
+			gdk_pixbuf_copy_area(vs0->screen,0,0,vs0->width_i,vs0->height_i,s->image,vs0->x_i,vs0->y_i);
+			g_object_unref(vs0->screen);
+			g_mutex_unlock(&(vs0->mutex));
+		}
 	}
-
-	gtk_image_set_from_pixbuf(GTK_IMAGE(main_screen),image_screen);
+	gtk_image_set_from_pixbuf(GTK_IMAGE(s->main),s->image);
 
 	return TRUE;
 }
@@ -407,19 +457,33 @@ static int deinit_video_stream(video_stream_s * vs)
 	return SUCCESS;
 }
 
-int deinit_video(void)
-{
-	deinit_video_stream(&video_stream_0);
-	deinit_video_stream(&video_stream_1);
-	return SUCCESS;
-}
 /*****************************************************************************/
 static char STR_VIDEO[] = "Камеры";
 static char STR_ON_VIDEO_0[]  = "Включить Камеру 0";
 static char STR_OFF_VIDEO_0[] = "Выключить Камеру 0";
 static char STR_ON_VIDEO_1[]  = "Включить Камеру 1";
 static char STR_OFF_VIDEO_1[] = "Выключить Камеру 1";
+static char STR_INVERSION[] = "Инвертировать";
 /*static char STR_SETTING_VIDEO[] = "Настройка";*/
+
+static video_stream_s video_stream_0 = {0};
+static video_stream_s video_stream_1 = {0};
+static screen_s screen = {0};
+
+int deinit_video(void)
+{
+	deinit_video_stream(&video_stream_0);
+	deinit_video_stream(&video_stream_1);
+	return SUCCESS;
+}
+
+static int set_inversion(int i)
+{
+	video_stream_0.inversion = i;
+	video_stream_1.inversion = i;
+	screen.inversion = i;
+	return SUCCESS;
+}
 
 static void activate_menu_video_0(GtkMenuItem * mi,gpointer ud)
 {
@@ -432,6 +496,7 @@ static void activate_menu_video_0(GtkMenuItem * mi,gpointer ud)
 		deinit_video_stream(&video_stream_0);
 	}
 }
+
 static void activate_menu_video_1(GtkMenuItem * mi,gpointer ud)
 {
 	if(video_stream_1.open != OK){
@@ -442,6 +507,32 @@ static void activate_menu_video_1(GtkMenuItem * mi,gpointer ud)
 		gtk_menu_item_set_label(mi,STR_ON_VIDEO_1);
 		deinit_video_stream(&video_stream_1);
 	}
+}
+
+static void activate_menu_inversion(GtkMenuItem * mi,gpointer ud)
+{
+	int old_open_vs0 = video_stream_0.open;
+	int old_open_vs1 = video_stream_1.open;
+
+	deinit_video_stream(&video_stream_0);
+	deinit_video_stream(&video_stream_1);
+
+	gdk_pixbuf_fill(screen.image,0x0);
+
+	if(screen.inversion != OK){
+		set_inversion(OK);
+	}
+	else{
+		set_inversion(NOT_OK);
+	}
+	if(old_open_vs0 == OK){
+		init_video_stream(&video_stream_0);
+	}
+	if(old_open_vs1 == OK){
+		init_video_stream(&video_stream_1);
+	}
+
+	g_message("Инвертировать видео.");
 }
 /*
 static void activate_menu_setting(GtkMenuItem * mi,gpointer ud)
@@ -474,6 +565,13 @@ GtkWidget * create_menu_video(void)
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
 	gtk_widget_show(menite_temp);
 
+	menite_temp = gtk_menu_item_new_with_label(STR_INVERSION);
+	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_inversion),NULL);
+/*	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
+	                          ,'V',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);*/
+	gtk_menu_shell_append(GTK_MENU_SHELL(men_video),menite_temp);
+	gtk_widget_show(menite_temp);
+
 	/*TODO добавить настройки*/
 /*
 	menite_temp = gtk_separator_menu_item_new();
@@ -496,18 +594,35 @@ static void realize_main_screen(GtkWidget *widget, gpointer data)
 	video_stream_0.open = NOT_OK;
 	video_stream_0.draw = OK;
 	video_stream_0.exit = NOT_OK;
+	video_stream_0.x = 0;
+	video_stream_0.y = 0;
+	video_stream_0.x_i = 0;
+	video_stream_0.y_i = 0;
 	video_stream_0.width = DEFAULT_VIDEO_0_WIDTH;
 	video_stream_0.height = DEFAULT_VIDEO_0_HEIGHT;
+	video_stream_0.width_i = DEFAULT_VIDEO_0_I_WIDTH;
+	video_stream_0.height_i = DEFAULT_VIDEO_0_I_HEIGHT;
 	video_stream_0.format_rgb = PIX_FMT_RGB24;
 
 	video_stream_1.open = NOT_OK;
 	video_stream_1.draw = OK;
 	video_stream_1.exit = NOT_OK;
+	video_stream_1.x = 0;
+	video_stream_1.y = 0;
+	video_stream_1.x_i = (DEFAULT_VIDEO_0_WIDTH/2) - (DEFAULT_VIDEO_1_I_WIDTH/2);
+	video_stream_1.y_i = 0;
 	video_stream_1.width = DEFAULT_VIDEO_1_WIDTH;
 	video_stream_1.height = DEFAULT_VIDEO_1_HEIGHT;
+	video_stream_1.width_i = DEFAULT_VIDEO_1_I_WIDTH;
+	video_stream_1.height_i = DEFAULT_VIDEO_1_I_HEIGHT;
 	video_stream_1.format_rgb = PIX_FMT_RGB24;
 
-	g_timeout_add(timeot_fps,write_screen,NULL);
+	screen.vs0 = &video_stream_0;
+	screen.vs1 = &video_stream_1;
+
+	set_inversion(NOT_OK);
+
+	g_timeout_add(timeot_fps,write_screen,&screen);
 }
 
 static void unrealize_main_screen(GtkWidget *widget, gpointer data)
@@ -561,15 +676,15 @@ GtkWidget * create_video_stream(void)
 {
 	load_config();
 
-	main_screen = gtk_image_new();
-	gtk_widget_set_size_request(main_screen,DEFAULT_VIDEO_0_WIDTH,DEFAULT_VIDEO_0_HEIGHT);
-	g_signal_connect(main_screen,"realize",G_CALLBACK(realize_main_screen),NULL);
-	g_signal_connect(main_screen,"unrealize",G_CALLBACK(unrealize_main_screen),NULL);
+	screen.main = gtk_image_new();
+	gtk_widget_set_size_request(screen.main,DEFAULT_VIDEO_0_WIDTH,DEFAULT_VIDEO_0_HEIGHT);
+	g_signal_connect(screen.main,"realize",G_CALLBACK(realize_main_screen),NULL);
+	g_signal_connect(screen.main,"unrealize",G_CALLBACK(unrealize_main_screen),NULL);
 
-	image_screen = gdk_pixbuf_new(GDK_COLORSPACE_RGB,0,8,DEFAULT_VIDEO_0_WIDTH,DEFAULT_VIDEO_0_HEIGHT);
+	screen.image = gdk_pixbuf_new(GDK_COLORSPACE_RGB,0,8,DEFAULT_VIDEO_0_WIDTH,DEFAULT_VIDEO_0_HEIGHT);
 
-	gtk_widget_show(main_screen);
+	gtk_widget_show(screen.main);
 
-	return main_screen;
+	return screen.main;
 }
 /*****************************************************************************/
