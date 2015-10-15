@@ -195,7 +195,7 @@ static gpointer read_video_stream(gpointer args)
 	AVPacket packet;
 	AVFrame *av_frame = NULL;
 	AVFrame *picture_rgb;
-#if ALLOC_FRAME
+#if !ALLOC_FRAME
 	uint8_t *buffer;
 #endif
 	int frameFinished = 0;
@@ -216,11 +216,6 @@ static gpointer read_video_stream(gpointer args)
 	packet.size = 0;
 
 #if ALLOC_FRAME
-	av_frame = avcodec_alloc_frame();
-	picture_rgb = avcodec_alloc_frame();
-	buffer = g_malloc0(avpicture_get_size(vs->format_rgb,width,height));
-	avpicture_fill((AVPicture *)picture_rgb, buffer, vs->format_rgb,width,height);
-#else
 #define ALIGN_BUFFER           32
 	av_frame = av_frame_alloc();
 	picture_rgb = av_frame_alloc();
@@ -228,6 +223,11 @@ static gpointer read_video_stream(gpointer args)
 	picture_rgb->width = width;
 	picture_rgb->height = height;
 	av_frame_get_buffer(picture_rgb, ALIGN_BUFFER);
+#else
+	av_frame = avcodec_alloc_frame();
+	picture_rgb = avcodec_alloc_frame();
+	buffer = g_malloc0(avpicture_get_size(vs->format_rgb,width,height));
+	avpicture_fill((AVPicture *)picture_rgb, buffer, vs->format_rgb,width,height);
 #endif
 
 	av_read_play(vs->format_context);
@@ -261,12 +261,12 @@ static gpointer read_video_stream(gpointer args)
 				if(vs->exit == OK){
 					av_free_packet(&packet);
 #if ALLOC_FRAME
+					av_frame_free(&av_frame);
+					av_frame_free(&picture_rgb);
+#else
 					g_free(buffer);
 					avcodec_free_frame(&av_frame);
 					avcodec_free_frame(&picture_rgb);
-#else
-					av_frame_free(&av_frame);
-					av_frame_free(&picture_rgb);
 #endif
 					if(vs->draw != OK){
 						vs->draw = OK;
@@ -284,12 +284,12 @@ static gpointer read_video_stream(gpointer args)
 	vs->draw = OK;
 	av_free_packet(&packet);
 #if ALLOC_FRAME
+	av_frame_free(&av_frame);
+	av_frame_free(&picture_rgb);
+#else
 	g_free(buffer);
 	avcodec_free_frame(&av_frame);
 	avcodec_free_frame(&picture_rgb);
-#else
-	av_frame_free(&av_frame);
-	av_frame_free(&picture_rgb);
 #endif
 	deinit_rtsp(vs);
 	g_thread_exit(0);
