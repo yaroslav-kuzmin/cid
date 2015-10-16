@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <glib/gprintf.h>
+#include <glib/gstdio.h>
 #include <gtk/gtk.h>
 
 #include "total.h"
@@ -210,6 +211,31 @@ static int flush_logging(gpointer ud)
 	return TRUE;
 }
 
+#define MAX_LOGGING_FILE        0x800000
+
+off_t max_logging_file = MAX_LOGGING_FILE;
+
+static int check_size_log(const char * name)
+{
+	int rc;
+	GStatBuf info;
+
+	rc = g_file_test(name,G_FILE_TEST_IS_REGULAR);
+	if(rc == FALSE){
+		return SUCCESS;
+	}
+	else{
+		rc = g_stat(name,&info);
+		if(rc != 0){
+			return FAILURE;
+		}
+		if(info.st_size > max_logging_file){
+			g_remove(name);
+		}
+	}
+	return SUCCESS;
+}
+
 #define DEFAULT_TIMEOUT_FLUSH_LOGGING    60
 
 static int timeout_flush_logging = DEFAULT_TIMEOUT_FLUSH_LOGGING * MILLISECOND;
@@ -219,7 +245,9 @@ static int init_logging(void)
 	GtkWidget * md_err;
 	GError * err = NULL;
 	const char * name_logging = STR_LOGGING;
-	/*TODO проверка на размер лога и архивирование*/
+
+	check_size_log(name_logging);
+
 	/*TODO брать имя лога из ini файла */
 	logging_channel = g_io_channel_new_file(name_logging,"a",&err);
 	if(logging_channel == NULL){
