@@ -1243,6 +1243,7 @@ static char STR_BUTTON_MANUAL_UP[] =    "ВВЕРХ";
 static char STR_BUTTON_MANUAL_DOWN[] =  "ВНИЗ";
 static char STR_BUTTON_MANUAL_LEFT[] =  "ВЛЕВО";
 static char STR_BUTTON_MANUAL_RIGHT[] = "ВПРАВО";
+static char STR_BUTTON_MANUAL_LASER[] = "Лазер";
 static char STR_BUTTON_MANUAL_OPEN[] =  "Включить\n Насос";
 static char STR_BUTTON_MANUAL_CLOSE[] = "Выключить\n Насос";
 static char STR_ANGLE[] = "Угол, градусов";
@@ -1251,43 +1252,43 @@ static char STR_VALVE[] = "Задвижка";
 void press_button_manual_up(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_active_color(b);
-	command_manual_up();
+	command_manual_up_on();
 }
 void release_button_manual_up(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_notactive_color(b);
-	command_manual_null();
+	command_manual_up_off();
 }
 void press_button_manual_down(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_active_color(b);
-	command_manual_down();
+	command_manual_down_on();
 }
 void release_button_manual_down(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_notactive_color(b);
-	command_manual_null();
+	command_manual_down_off();
 }
 void press_button_manual_left(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_active_color(b);
-	command_manual_left();
+	command_manual_left_on();
 }
 
 void release_button_manual_left(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_notactive_color(b);
-	command_manual_null();
+	command_manual_left_off();
 }
 void press_button_manual_right(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_active_color(b);
-	command_manual_right();
+	command_manual_right_on();
 }
 void release_button_manual_right(GtkButton * b,GdkEvent * e,gpointer ud)
 {
 	set_notactive_color(b);
-	command_manual_null();
+	command_manual_right_off();
 }
 
 int manual_pump_open = NOT_OK;
@@ -1296,15 +1297,32 @@ void clicked_button_manual_pump(GtkButton * b,gpointer d)
 {
 	if(manual_pump_open == OK){
 		manual_pump_open = NOT_OK;
-		command_manual_off_drive();
+		command_manual_drive_off();
 		gtk_button_set_label(b,STR_BUTTON_MANUAL_OPEN);
 		/*set_size_font(gtk_bin_get_child(GTK_BIN(b)),SIZE_FONT_SMALL);*/
 		set_notactive_color(b);
 	}
 	else{
 		manual_pump_open = OK;
-		command_manual_on_drive();
+		command_manual_drive_on();
 		gtk_button_set_label(b,STR_BUTTON_MANUAL_CLOSE);
+		/*set_size_font(gtk_bin_get_child(GTK_BIN(b)),SIZE_FONT_SMALL);*/
+		set_active_color(b);
+	}
+}
+
+int manual_laser = NOT_OK;
+void clicked_button_manual_laser(GtkButton * b,gpointer d)
+{
+	if(manual_laser == OK){
+		manual_laser = NOT_OK;
+		command_manual_laser_off();
+		/*set_size_font(gtk_bin_get_child(GTK_BIN(b)),SIZE_FONT_SMALL);*/
+		set_notactive_color(b);
+	}
+	else{
+		manual_laser = OK;
+		command_manual_laser_on();
 		/*set_size_font(gtk_bin_get_child(GTK_BIN(b)),SIZE_FONT_SMALL);*/
 		set_active_color(b);
 	}
@@ -1436,6 +1454,7 @@ void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 	int rc;
 	rc = command_manual_mode();
 	if(rc == SUCCESS){
+		command_manual_null();
 		command_speed_vertical(0);
 		amount_manual_mode = 0;
 		manual_mode_start = OK;
@@ -1446,6 +1465,7 @@ void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 void hide_frame_manual_mode(GtkWidget * w,gpointer ud)
 {
 	manual_mode_start = NOT_OK;
+	command_manual_null();
 	command_null_mode();
 }
 
@@ -1557,11 +1577,11 @@ GtkWidget * create_button_mode_manual(void)
 {
 	GtkWidget * fra_mode;
 	GtkWidget * gri_mode;
-
 	GtkWidget * but_up;
 	GtkWidget * but_down;
 	GtkWidget * but_left;
 	GtkWidget * but_right;
+	GtkWidget * but_laser;
 	GtkWidget * but_pump;
 	GtkWidget * fra_vertical_speed;
 	GtkWidget * fra_valve;
@@ -1585,55 +1605,39 @@ GtkWidget * create_button_mode_manual(void)
 	gtk_container_set_border_width(GTK_CONTAINER(gri_mode),5);
 
 	but_up = gtk_button_new_with_label(STR_BUTTON_MANUAL_UP);
-	gtk_widget_set_halign(but_up,GTK_ALIGN_FILL);
-	gtk_widget_set_valign(but_up,GTK_ALIGN_CENTER);
-	gtk_widget_set_hexpand(but_up,TRUE);
-	gtk_widget_set_vexpand(but_up,TRUE);
-	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_up)),SIZE_FONT_SMALL);*/
+	layout_widget(but_up,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
 	set_notactive_color(GTK_BUTTON(but_up));
 	g_signal_connect(but_up,"button-press-event",G_CALLBACK(press_button_manual_up),NULL);
 	g_signal_connect(but_up,"button-release-event",G_CALLBACK(release_button_manual_up),NULL);
 
 	but_down = gtk_button_new_with_label(STR_BUTTON_MANUAL_DOWN);
-	gtk_widget_set_halign(but_down,GTK_ALIGN_FILL);
-	gtk_widget_set_valign(but_down,GTK_ALIGN_CENTER);
-	gtk_widget_set_hexpand(but_down,TRUE);
-	gtk_widget_set_vexpand(but_down,TRUE);
-	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_down)),SIZE_FONT_SMALL);*/
+	layout_widget(but_down,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
 	set_notactive_color(GTK_BUTTON(but_down));
 	g_signal_connect(but_down,"button-press-event",G_CALLBACK(press_button_manual_down),NULL);
 	g_signal_connect(but_down,"button-release-event",G_CALLBACK(release_button_manual_down),NULL);
 
 	but_left = gtk_button_new_with_label(STR_BUTTON_MANUAL_LEFT);
-	gtk_widget_set_halign(but_left,GTK_ALIGN_FILL);
-	gtk_widget_set_valign(but_left,GTK_ALIGN_CENTER);
-	gtk_widget_set_hexpand(but_left,TRUE);
-	gtk_widget_set_vexpand(but_left,TRUE);
-	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_left)),SIZE_FONT_SMALL);*/
+	layout_widget(but_left,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
 	set_notactive_color(GTK_BUTTON(but_left));
 	g_signal_connect(but_left,"button-press-event",G_CALLBACK(press_button_manual_left),NULL);
 	g_signal_connect(but_left,"button-release-event",G_CALLBACK(release_button_manual_left),NULL);
 
 	but_right = gtk_button_new_with_label(STR_BUTTON_MANUAL_RIGHT);
-	gtk_widget_set_halign(but_right,GTK_ALIGN_FILL);
-	gtk_widget_set_valign(but_right,GTK_ALIGN_CENTER);
-	gtk_widget_set_hexpand(but_right,TRUE);
-	gtk_widget_set_vexpand(but_right,TRUE);
-	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_right)),SIZE_FONT_SMALL);*/
+	layout_widget(but_right,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
 	set_notactive_color(GTK_BUTTON(but_right));
 	g_signal_connect(but_right,"button-press-event",G_CALLBACK(press_button_manual_right),NULL);
 	g_signal_connect(but_right,"button-release-event",G_CALLBACK(release_button_manual_right),NULL);
 
+	but_laser = gtk_button_new_with_label(STR_BUTTON_MANUAL_LASER);
+	layout_widget(but_laser,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
+	set_notactive_color(GTK_BUTTON(but_laser));
+	g_signal_connect(but_laser,"clicked",G_CALLBACK(clicked_button_manual_laser),NULL);
+
 	fra_vertical_speed = create_scale_vertical_speed();
 
 	but_pump = gtk_button_new_with_label(STR_BUTTON_MANUAL_OPEN);
-	gtk_widget_set_halign(but_pump,GTK_ALIGN_FILL);
-	gtk_widget_set_valign(but_pump,GTK_ALIGN_CENTER);
-	gtk_widget_set_hexpand(but_pump,TRUE);
-	gtk_widget_set_vexpand(but_pump,TRUE);
-	/*set_size_font(gtk_bin_get_child(GTK_BIN(but_pump)),SIZE_FONT_SMALL);*/
+	layout_widget(but_pump,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
 	set_notactive_color(GTK_BUTTON(but_pump));
-	/*gtk_widget_set_size_request(but_pump,150,-1);*/
 	g_signal_connect(but_pump,"clicked",G_CALLBACK(clicked_button_manual_pump),NULL);
 
 	fra_valve = create_scale_valve();
@@ -1643,11 +1647,13 @@ GtkWidget * create_button_mode_manual(void)
 	gtk_grid_attach(GTK_GRID(gri_mode),but_down          ,1,2,1,1);
 	gtk_grid_attach(GTK_GRID(gri_mode),but_left          ,0,1,1,1);
 	gtk_grid_attach(GTK_GRID(gri_mode),but_right         ,2,1,1,1);
+	gtk_grid_attach(GTK_GRID(gri_mode),but_laser         ,1,1,1,1);
 	gtk_grid_attach(GTK_GRID(gri_mode),fra_vertical_speed,3,0,1,3);
 	gtk_grid_attach(GTK_GRID(gri_mode),but_pump          ,4,1,1,1);
 	gtk_grid_attach(GTK_GRID(gri_mode),fra_valve         ,5,0,1,3);
 
 	gtk_widget_show(but_pump);
+	gtk_widget_show(but_laser);
 	gtk_widget_show(but_right);
 	gtk_widget_show(but_left);
 	gtk_widget_show(but_down);

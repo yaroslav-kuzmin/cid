@@ -56,7 +56,7 @@
 /*  взаимодействие с контролером                                             */
 /*****************************************************************************/
 
-#define TEST_INTERFACE              FALSE
+#define TEST_INTERFACE              TRUE
 
 #define PROTOCOL_RTU     1
 #define PROTOCOL_ASCII   0
@@ -359,47 +359,99 @@ int command_auto_stop(void)
 }
 
 static int reg_D102 = 0x1066;
-static int value_manual_null = 0x00;
-static int value_manual_up = 0x01;
-static int value_manual_down = 0x02;
-static int value_manual_left = 0x04;
-static int value_manual_right = 0x08;
-static int value_manual_on_drive = 0x10;
-static int value_manual_off_drive = 0x20;
+static uint16_t value_manual_current = 0x00;
+#define MANUAL_MODE_NULL           0x0000
+
+#define MANUAL_MODE_UP_ON          0x0001
+#define MANUAL_MODE_UP_OFF         (0xFFFF^MANUAL_MODE_UP_ON)
+#define MANUAL_MODE_DOWN_ON        0x0002
+#define MANUAL_MODE_DOWN_OFF       (0xFFFF^MANUAL_MODE_DOWN_ON)
+#define MANUAL_MODE_LEFT_ON        0x0004
+#define MANUAL_MODE_LEFT_OFF       (0xFFFF^MANUAL_MODE_LEFT_ON)
+#define MANUAL_MODE_RIGHT_ON       0x0008
+#define MANUAL_MODE_RIGHT_OFF      (0xFFFF^MANUAL_MODE_RIGHT_ON)
+#define MANUAL_MODE_DRIVE_ON       0x0010
+#define MANUAL_MODE_DRIVE_OFF      (0xFFFF^MANUAL_MODE_DRIVE_ON)
+#define MANUAL_MODE_LASER_ON       0x0020
+#define MANUAL_MODE_LASER_OFF      (0xFFFF^MANUAL_MODE_LASER_ON)
 
 int command_manual_null(void)
 {
-	return write_register(reg_D102,value_manual_null);
+	value_manual_current = MANUAL_MODE_NULL;
+	return write_register(reg_D102,value_manual_current);
 }
 
-int command_manual_up(void)
+int command_manual_up_on(void)
 {
-	return write_register(reg_D102,value_manual_up);
+	value_manual_current = value_manual_current | MANUAL_MODE_UP_ON;
+	return write_register(reg_D102,value_manual_current);
 }
 
-int command_manual_down(void)
+int command_manual_up_off(void)
 {
-	return write_register(reg_D102,value_manual_down);
+	value_manual_current = value_manual_current & MANUAL_MODE_UP_OFF;
+	return write_register(reg_D102,value_manual_current);
 }
 
-int command_manual_left(void)
+int command_manual_down_on(void)
 {
-	return write_register(reg_D102,value_manual_left);
+	value_manual_current = value_manual_current | MANUAL_MODE_DOWN_ON;
+	return write_register(reg_D102,value_manual_current);
 }
 
-int command_manual_right(void)
+int command_manual_down_off(void)
 {
-	return write_register(reg_D102,value_manual_right);
+	value_manual_current = value_manual_current & MANUAL_MODE_DOWN_OFF;
+	return write_register(reg_D102,value_manual_current);
 }
 
-int command_manual_on_drive(void)
+int command_manual_left_on(void)
 {
-	return write_register(reg_D102,value_manual_on_drive);
+	value_manual_current = value_manual_current | MANUAL_MODE_LEFT_ON;
+	return write_register(reg_D102,value_manual_current);
 }
 
-int command_manual_off_drive(void)
+int command_manual_left_off(void)
 {
-	return write_register(reg_D102,value_manual_off_drive);
+	value_manual_current = value_manual_current & MANUAL_MODE_LEFT_OFF;
+	return write_register(reg_D102,value_manual_current);
+}
+
+
+int command_manual_right_on(void)
+{
+	value_manual_current = value_manual_current | MANUAL_MODE_RIGHT_ON;
+	return write_register(reg_D102,value_manual_current);
+}
+
+int command_manual_right_off(void)
+{
+	value_manual_current = value_manual_current & MANUAL_MODE_RIGHT_OFF;
+	return write_register(reg_D102,value_manual_current);
+}
+
+int command_manual_drive_on(void)
+{
+	value_manual_current = value_manual_current | MANUAL_MODE_DRIVE_ON;
+	return write_register(reg_D102,value_manual_current);
+}
+
+int command_manual_drive_off(void)
+{
+	value_manual_current = value_manual_current & MANUAL_MODE_DRIVE_OFF;
+	return write_register(reg_D102,value_manual_current);
+}
+
+int command_manual_laser_on(void)
+{
+	value_manual_current = value_manual_current | MANUAL_MODE_LASER_ON;
+	return write_register(reg_D102,value_manual_current);
+}
+
+int command_manual_laser_off(void)
+{
+	value_manual_current = value_manual_current & MANUAL_MODE_LASER_OFF;
+	return write_register(reg_D102,value_manual_current);
 }
 
 static int reg_D103 = 0x1067;
