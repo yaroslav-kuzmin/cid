@@ -722,6 +722,84 @@ int set_notactive_color(GtkButton * w)
 	return SUCCESS;
 }
 
+static char STR_SPEED_VERTICAL[] = "Скорость\nвертикальная,\nград/сек";
+
+double SPEED_VERTICAL_MIN = 0;
+double SPEED_VERTICAL_MAX = 6;
+double SPEED_VERTICAL_STEP = 0.75;
+double SPEED_VERTICAL_RATE = 666.66667;
+
+gboolean change_value_scale_speed(GtkRange * r,GtkScrollType s,gdouble v,gpointer ud)
+{
+	double speed_d;
+	uint16_t speed_ui;
+
+	speed_d = v / SPEED_VERTICAL_STEP;
+	speed_d = (int)speed_d;
+	speed_d *= SPEED_VERTICAL_STEP;
+
+	gtk_range_set_value(r,speed_d);
+
+	speed_ui = (uint16_t)(speed_d * SPEED_VERTICAL_RATE);
+	command_speed_vertical(speed_ui);
+	return TRUE;
+}
+
+GtkWidget * create_scale_vertical_speed(double value)
+{
+	GtkWidget * fra_speed;
+	GtkWidget * box_speed;
+	GtkWidget * lab_speed;
+	GtkWidget * sca_speed;
+
+	if(value > SPEED_VERTICAL_MAX){
+		value = SPEED_VERTICAL_MAX;
+	}
+	if(value < SPEED_VERTICAL_MIN){
+		value = SPEED_VERTICAL_MIN;
+	}
+	fra_speed = gtk_frame_new(NULL);
+	gtk_widget_set_vexpand(fra_speed,TRUE);
+	gtk_widget_set_hexpand(fra_speed,TRUE);
+	gtk_widget_set_halign(fra_speed,GTK_ALIGN_FILL);
+	gtk_widget_set_valign(fra_speed,GTK_ALIGN_FILL);
+
+	box_speed = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
+	gtk_widget_set_vexpand(box_speed,TRUE);
+	gtk_widget_set_hexpand(box_speed,TRUE);
+	gtk_widget_set_halign(box_speed,GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box_speed,GTK_ALIGN_FILL);
+	gtk_container_set_border_width(GTK_CONTAINER(box_speed),0);
+
+	lab_speed = gtk_label_new(STR_SPEED_VERTICAL);
+	gtk_widget_set_hexpand(lab_speed,FALSE);
+	gtk_widget_set_vexpand(lab_speed,FALSE);
+	gtk_widget_set_halign(lab_speed,GTK_ALIGN_START);
+	gtk_widget_set_valign(lab_speed,GTK_ALIGN_START);
+	set_size_font(lab_speed,SIZE_FONT_MINI);
+
+	sca_speed = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL
+	                                    ,SPEED_VERTICAL_MIN,SPEED_VERTICAL_MAX,SPEED_VERTICAL_STEP);
+	gtk_scale_set_digits(GTK_SCALE(sca_speed),2); /*колличество знаков после запятой*/
+	gtk_scale_set_value_pos(GTK_SCALE(sca_speed),GTK_POS_RIGHT);
+	layout_widget(sca_speed,GTK_ALIGN_FILL,GTK_ALIGN_FILL,FALSE,TRUE);
+	gtk_range_set_inverted(GTK_RANGE(sca_speed),TRUE);
+
+	gtk_range_set_value(GTK_RANGE(sca_speed),value); /**/
+	g_signal_connect(sca_speed,"change-value",G_CALLBACK(change_value_scale_speed),NULL);
+
+	gtk_container_add(GTK_CONTAINER(fra_speed),box_speed);
+	gtk_box_pack_start(GTK_BOX(box_speed),lab_speed,FALSE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(box_speed),sca_speed,TRUE,TRUE,0);
+
+	gtk_widget_show(sca_speed);
+	gtk_widget_show(lab_speed);
+	gtk_widget_show(box_speed);
+	gtk_widget_show(fra_speed);
+
+	return fra_speed;
+}
+
 /*****************************************************************************/
 /* Панель информации о работе                                                */
 /*****************************************************************************/
@@ -867,7 +945,6 @@ static char STR_BUTTON_AUTO_STOP[]  = "СТОП";
 static char STR_BUTTON_AUTO_PAUSE[] = "ПАУЗА";
 static char STR_SET_VALUE[] = "Установленое значение";
 static char STR_CURRENT_VALUE[] = "Текущее значение";
-static char STR_SPEED_VERTICAL[] = "Скорость\nвертикальная,\nград/сек";
 
 int amount_auto_mode = 0;
 int auto_mode_pause = NOT_OK;
@@ -1003,11 +1080,6 @@ void clicked_button_auto_pause(GtkButton * b,gpointer d)
 }
 
 uint16_t speed_vertical_auto_mode = 4000;
-
-double SPEED_VERTICAL_MIN = 0;
-double SPEED_VERTICAL_MAX = 6;
-double SPEED_VERTICAL_STEP = 0.75;
-double SPEED_VERTICAL_RATE = 666.66667;
 
 GtkWidget * lab_auto_mode_name_job;
 GtkWidget * lab_auto_mode_pressure;
@@ -1354,22 +1426,6 @@ gboolean change_value_scale_valve(GtkRange * r,GtkScrollType s,gdouble v,gpointe
 	return TRUE;
 }
 
-gboolean change_value_scale_speed(GtkRange * r,GtkScrollType s,gdouble v,gpointer ud)
-{
-	double speed_d;
-	uint16_t speed_ui;
-
-	speed_d = v / SPEED_VERTICAL_STEP;
-	speed_d = (int)speed_d;
-	speed_d *= SPEED_VERTICAL_STEP;
-
-	gtk_range_set_value(r,speed_d);
-
-	speed_ui = (uint16_t)(speed_d * SPEED_VERTICAL_RATE);
-	command_speed_vertical(speed_ui);
-	return TRUE;
-}
-
 struct _label_manual_mode_s
 {
 	GtkWidget * pressure;
@@ -1520,59 +1576,6 @@ GtkWidget * create_scale_valve(void)
 
 	return fra_valve;
 }
-GtkWidget * create_scale_vertical_speed(void)
-{
-	GtkWidget * fra_speed;
-	GtkWidget * box_speed;
-	GtkWidget * lab_speed;
-	GtkWidget * sca_speed;
-
-	fra_speed = gtk_frame_new(NULL);
-	gtk_widget_set_vexpand(fra_speed,TRUE);
-	gtk_widget_set_hexpand(fra_speed,TRUE);
-	gtk_widget_set_halign(fra_speed,GTK_ALIGN_FILL);
-	gtk_widget_set_valign(fra_speed,GTK_ALIGN_FILL);
-
-	box_speed = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
-	gtk_widget_set_vexpand(box_speed,TRUE);
-	gtk_widget_set_hexpand(box_speed,TRUE);
-	gtk_widget_set_halign(box_speed,GTK_ALIGN_FILL);
-	gtk_widget_set_valign(box_speed,GTK_ALIGN_FILL);
-	gtk_container_set_border_width(GTK_CONTAINER(box_speed),0);
-
-	lab_speed = gtk_label_new(STR_SPEED_VERTICAL);
-	gtk_widget_set_hexpand(lab_speed,FALSE);
-	gtk_widget_set_vexpand(lab_speed,FALSE);
-	gtk_widget_set_halign(lab_speed,GTK_ALIGN_START);
-	gtk_widget_set_valign(lab_speed,GTK_ALIGN_START);
-	set_size_font(lab_speed,SIZE_FONT_MINI);
-
-	sca_speed = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL
-	                                    ,SPEED_VERTICAL_MIN,SPEED_VERTICAL_MAX,SPEED_VERTICAL_STEP);
-	gtk_scale_set_digits(GTK_SCALE(sca_speed),2); /*колличество знаков после запятой*/
-	gtk_scale_set_value_pos(GTK_SCALE(sca_speed),GTK_POS_RIGHT);
-	gtk_widget_set_hexpand(sca_speed,FALSE);
-	gtk_widget_set_vexpand(sca_speed,TRUE);
-	gtk_widget_set_halign(sca_speed,GTK_ALIGN_FILL);
-	gtk_widget_set_valign(sca_speed,GTK_ALIGN_FILL);
-	gtk_range_set_inverted(GTK_RANGE(sca_speed),TRUE);
-	gtk_range_set_value(GTK_RANGE(sca_speed),SPEED_VERTICAL_MAX/2); /**/
-	/*gtk_widget_override_background_color(sca_speed,GTK_STATE_FLAG_NORMAL,&color_red);*/
-	/*gtk_widget_override_color(sca_speed,GTK_STATE_FLAG_NORMAL,&color_green);*/
-	g_signal_connect(sca_speed,"change-value",G_CALLBACK(change_value_scale_speed),NULL);
-
-	gtk_container_add(GTK_CONTAINER(fra_speed),box_speed);
-	gtk_box_pack_start(GTK_BOX(box_speed),lab_speed,FALSE,TRUE,0);
-	gtk_box_pack_start(GTK_BOX(box_speed),sca_speed,TRUE,TRUE,0);
-
-	gtk_widget_show(sca_speed);
-	gtk_widget_show(lab_speed);
-	gtk_widget_show(box_speed);
-	gtk_widget_show(fra_speed);
-
-	return fra_speed;
-}
-
 GtkWidget * create_button_mode_manual(void)
 {
 	GtkWidget * fra_mode;
@@ -1633,7 +1636,7 @@ GtkWidget * create_button_mode_manual(void)
 	set_notactive_color(GTK_BUTTON(but_laser));
 	g_signal_connect(but_laser,"clicked",G_CALLBACK(clicked_button_manual_laser),NULL);
 
-	fra_vertical_speed = create_scale_vertical_speed();
+	fra_vertical_speed = create_scale_vertical_speed(SPEED_VERTICAL_MAX/2);
 
 	but_pump = gtk_button_new_with_label(STR_BUTTON_MANUAL_OPEN);
 	layout_widget(but_pump,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);

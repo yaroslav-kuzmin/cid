@@ -361,7 +361,6 @@ int command_auto_stop(void)
 static int reg_D102 = 0x1066;
 static uint16_t value_manual_current = 0x00;
 #define MANUAL_MODE_NULL           0x0000
-
 #define MANUAL_MODE_UP_ON          0x0001
 #define MANUAL_MODE_UP_OFF         (0xFFFF^MANUAL_MODE_UP_ON)
 #define MANUAL_MODE_DOWN_ON        0x0002
