@@ -248,7 +248,6 @@ static int init_logging(void)
 
 	check_size_log(name_logging);
 
-	/*TODO брать имя лога из ini файла */
 	logging_channel = g_io_channel_new_file(name_logging,"a",&err);
 	if(logging_channel == NULL){
 		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE

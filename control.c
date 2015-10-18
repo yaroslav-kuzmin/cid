@@ -78,7 +78,7 @@ static int read_config_device(void)
 	GError * err = NULL;
 	char *str = NULL;
 	int value;
-	/*TODO проверка вводимых данных*/
+
 	str = g_key_file_get_string (ini_file,STR_MODBUS_KEY,"device",&err);
 	if(str == NULL){
 		g_critical("Нет имени порта : %s!",err->message);
@@ -533,7 +533,7 @@ static uint16_t max_speed_vertical = 4000;
 int command_speed_vertical(uint16_t speed)
 {
 	if(speed > max_speed_vertical){
-		return FAILURE;
+		speed = max_speed_vertical;
 	}
 	return write_register(reg_D115,speed);
 }
@@ -544,7 +544,7 @@ static uint16_t max_valve = 4000;
 int command_valve(uint16_t value)
 {
 	if(value > max_valve){
-		return FAILURE;
+		value = max_valve;
 	}
 	return write_register(reg_D116,value);
 }

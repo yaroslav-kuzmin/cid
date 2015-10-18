@@ -101,6 +101,7 @@ static guint hash_job(gconstpointer job)
 	job_s * j = (job_s*)job;
 	return g_string_hash(j->name);
 }
+
 static gboolean equal_job(gconstpointer a,gconstpointer b)
 {
 	job_s * p_a = (job_s*)a;
@@ -109,6 +110,7 @@ static gboolean equal_job(gconstpointer a,gconstpointer b)
 	GString * s_b = p_b->name;
 	return g_string_equal(s_a,s_b);
 }
+
 static void destroy_job(gpointer job)
 {
 	job_s *j = (job_s*)job;
@@ -724,6 +726,10 @@ int set_notactive_color(GtkButton * w)
 
 static char STR_SPEED_VERTICAL[] = "Скорость\nвертикальная,\nград/сек";
 
+#define DEFAULT_SPEED_VERTICAL_MANUAL_MODE         0000
+#define DEFAULT_SPEED_VERTICAL_AUTO_MODE           4000
+#define DEFAULT_SPEED_VERTICAL_SAVE_JOB            2000
+
 double SPEED_VERTICAL_MIN = 0;
 double SPEED_VERTICAL_MAX = 6;
 double SPEED_VERTICAL_STEP = 0.75;
@@ -745,19 +751,14 @@ gboolean change_value_scale_speed(GtkRange * r,GtkScrollType s,gdouble v,gpointe
 	return TRUE;
 }
 
-GtkWidget * create_scale_vertical_speed(double value)
+GtkWidget * create_scale_vertical_speed(uint16_t speed)
 {
 	GtkWidget * fra_speed;
 	GtkWidget * box_speed;
 	GtkWidget * lab_speed;
 	GtkWidget * sca_speed;
+	gdouble speed_d = (gdouble)speed / SPEED_VERTICAL_RATE;
 
-	if(value > SPEED_VERTICAL_MAX){
-		value = SPEED_VERTICAL_MAX;
-	}
-	if(value < SPEED_VERTICAL_MIN){
-		value = SPEED_VERTICAL_MIN;
-	}
 	fra_speed = gtk_frame_new(NULL);
 	gtk_widget_set_vexpand(fra_speed,TRUE);
 	gtk_widget_set_hexpand(fra_speed,TRUE);
@@ -784,8 +785,7 @@ GtkWidget * create_scale_vertical_speed(double value)
 	gtk_scale_set_value_pos(GTK_SCALE(sca_speed),GTK_POS_RIGHT);
 	layout_widget(sca_speed,GTK_ALIGN_FILL,GTK_ALIGN_FILL,FALSE,TRUE);
 	gtk_range_set_inverted(GTK_RANGE(sca_speed),TRUE);
-
-	gtk_range_set_value(GTK_RANGE(sca_speed),value); /**/
+	gtk_range_set_value(GTK_RANGE(sca_speed),speed_d);
 	g_signal_connect(sca_speed,"change-value",G_CALLBACK(change_value_scale_speed),NULL);
 
 	gtk_container_add(GTK_CONTAINER(fra_speed),box_speed);
@@ -1079,7 +1079,6 @@ void clicked_button_auto_pause(GtkButton * b,gpointer d)
 	}
 }
 
-uint16_t speed_vertical_auto_mode = 4000;
 
 GtkWidget * lab_auto_mode_name_job;
 GtkWidget * lab_auto_mode_pressure;
@@ -1144,8 +1143,7 @@ GtkWidget * create_label_mode_auto(void)
 	lab_auto_mode_name_job = gtk_label_new(STR_NOT_DEVICE);
 	gtk_widget_set_hexpand(lab_auto_mode_name_job,TRUE);
 	gtk_widget_set_vexpand(lab_auto_mode_name_job,TRUE);
-	set_size_font(lab_auto_mode_name_job,SIZE_FONT_SMALL);
-
+	set_size_font(lab_auto_mode_name_job,SIZE_FONT_MEDIUM);
 
 	lab_set = gtk_label_new(STR_SET_VALUE);
 	set_size_font(lab_set,SIZE_FONT_SMALL);
@@ -1218,16 +1216,19 @@ uint16_t horizontal_offset = DEFAULT_HORIZONTAL_OFFSET;
 
 void show_frame_auto_mode(GtkWidget * w,gpointer ud)
 {
-	/*TODO проверка на связь*/
-	command_auto_mode();
-	command_uprise_angle(current_job->uprise);
-	command_lowering_angle(current_job->lowering);
-	command_speed_vertical(speed_vertical_auto_mode);
-	command_horizontal(horizontal_offset);
-	auto_mode_start = NOT_OK;
-	auto_mode_pause = NOT_OK;
-	set_preset_value_auto_mode();
-	set_current_value_auto_mode();
+	int rc;
+
+	rc = command_auto_mode();
+	if(rc == SUCCESS){
+		command_uprise_angle(current_job->uprise);
+		command_lowering_angle(current_job->lowering);
+		command_speed_vertical(DEFAULT_SPEED_VERTICAL_MANUAL_MODE);
+		command_horizontal(horizontal_offset);
+		auto_mode_start = NOT_OK;
+		auto_mode_pause = NOT_OK;
+		set_preset_value_auto_mode();
+		set_current_value_auto_mode();
+	}
 }
 
 void hide_frame_auto_mode(GtkWidget * w,gpointer ud)
@@ -1242,6 +1243,7 @@ GtkWidget * create_mode_auto(void)
 	GtkWidget * box_hor_but;
 	GtkWidget * but_start;
 	GtkWidget * but_stop;
+	GtkWidget * fra_scale;
 	GtkWidget * gri_auto;
 
 	fra_mode_auto = gtk_frame_new(NULL);
@@ -1285,16 +1287,20 @@ GtkWidget * create_mode_auto(void)
 	set_notactive_color(GTK_BUTTON(but_auto_mode_pause));
 	g_signal_connect(but_auto_mode_pause,"clicked",G_CALLBACK(clicked_button_auto_pause),but_start);
 
+	fra_scale = create_scale_vertical_speed(DEFAULT_SPEED_VERTICAL_AUTO_MODE);
+
 	gri_auto = create_label_mode_auto();
 
 	gtk_frame_set_label_widget(GTK_FRAME(fra_mode_auto),lab_fra_mode_auto);
 	gtk_container_add(GTK_CONTAINER(fra_mode_auto),box_hor_main);
 	gtk_box_pack_start(GTK_BOX(box_hor_main),box_hor_but,TRUE,TRUE,5);
-	gtk_box_pack_start(GTK_BOX(box_hor_but),but_start,TRUE,TRUE,10);
-	gtk_box_pack_start(GTK_BOX(box_hor_but),but_stop,TRUE,TRUE,10);
-	gtk_box_pack_start(GTK_BOX(box_hor_but),but_auto_mode_pause,TRUE,TRUE,10);
+	gtk_box_pack_start(GTK_BOX(box_hor_but),but_start,TRUE,TRUE,5);
+	gtk_box_pack_start(GTK_BOX(box_hor_but),but_stop,TRUE,TRUE,5);
+	gtk_box_pack_start(GTK_BOX(box_hor_but),but_auto_mode_pause,TRUE,TRUE,5);
+	gtk_box_pack_start(GTK_BOX(box_hor_but),fra_scale,TRUE,TRUE,5);
 	gtk_box_pack_start(GTK_BOX(box_hor_main),gri_auto,TRUE,TRUE,5);
 
+	gtk_widget_show(fra_scale);
 	gtk_widget_show(but_auto_mode_pause);
 	gtk_widget_show(but_stop);
 	gtk_widget_show(but_start);
@@ -1492,6 +1498,7 @@ int check_registers_manual_mode(gpointer ud)
 
 	g_string_printf(temp_string,ANGLE_FORMAT,angle);
 	gtk_label_set_text(GTK_LABEL(label_manual_mode.angle),temp_string->str);
+
 	/*TODO testing*/
 	g_printf("\n");
 	g_printf("%02d:%02d:%02d\n",hour,minut,second);
@@ -1511,7 +1518,7 @@ void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 	rc = command_manual_mode();
 	if(rc == SUCCESS){
 		command_manual_null();
-		command_speed_vertical(0);
+		command_speed_vertical(DEFAULT_SPEED_VERTICAL_MANUAL_MODE);
 		amount_manual_mode = 0;
 		manual_mode_start = OK;
 		g_timeout_add(timeout_manual_mode,check_registers_manual_mode,NULL);
@@ -1636,7 +1643,7 @@ GtkWidget * create_button_mode_manual(void)
 	set_notactive_color(GTK_BUTTON(but_laser));
 	g_signal_connect(but_laser,"clicked",G_CALLBACK(clicked_button_manual_laser),NULL);
 
-	fra_vertical_speed = create_scale_vertical_speed(SPEED_VERTICAL_MAX/2);
+	fra_vertical_speed = create_scale_vertical_speed(DEFAULT_SPEED_VERTICAL_MANUAL_MODE);
 
 	but_pump = gtk_button_new_with_label(STR_BUTTON_MANUAL_OPEN);
 	layout_widget(but_pump,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
@@ -2207,7 +2214,7 @@ int check_entry_pressure(const char * pressure)
 	}
 	return SUCCESS;
 }
-/*TODO обединеть с проверкой в базе данных*/
+
 int check_entry_time(const char * str)
 {
 	gint hour = 0;
@@ -2317,6 +2324,7 @@ void clicked_button_save_job(GtkButton * b,gpointer d)
 		gtk_widget_destroy(error);
 		return;
 	}
+
 	rc = check_entry_angle(uprise,lowering);
 	if(rc != SUCCESS){
 		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
@@ -2357,6 +2365,7 @@ void clicked_button_save_job(GtkButton * b,gpointer d)
 	g_string_truncate(temp_job.name,0);
 	g_string_append(temp_job.name,name);
 
+	pt = NULL;
 	g_hash_table_lookup_extended(list_job,&temp_job,&pt,NULL);
 	if(pt == NULL){
 		g_critical("Таблица хешей не корректна (2)!");
@@ -2504,8 +2513,6 @@ GtkWidget * create_entry_job_save(void)
 
 GtkWidget * lab_angle_save_job;
 
-uint16_t speed_vertical_config_mode = 2000;
-
 GtkWidget * create_button_job_save(void)
 {
 	GtkWidget * fra_button;
@@ -2513,6 +2520,7 @@ GtkWidget * create_button_job_save(void)
 	GtkWidget * but_up;
 	GtkWidget * but_down;
 	GtkWidget * lab_angle;
+	GtkWidget * fra_scale;
 
 	fra_button = gtk_frame_new(NULL);
 	gtk_widget_set_hexpand(fra_button,TRUE);
@@ -2552,12 +2560,16 @@ GtkWidget * create_button_job_save(void)
 	lab_angle_save_job = gtk_label_new(STR_ANGLE_DEFAULT);
 	set_size_font(lab_angle_save_job,SIZE_FONT_SMALL);
 
+	fra_scale = create_scale_vertical_speed(DEFAULT_SPEED_VERTICAL_SAVE_JOB);
+
 	gtk_container_add(GTK_CONTAINER(fra_button),gri_button);
 	gtk_grid_attach(GTK_GRID(gri_button),but_up            ,1,0,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),but_down          ,1,1,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),lab_angle         ,0,2,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),lab_angle_save_job,1,2,1,1);
+	gtk_grid_attach(GTK_GRID(gri_button),fra_scale         ,2,0,1,3);
 
+	gtk_widget_show(fra_scale);
 	gtk_widget_show(lab_angle_save_job);
 	gtk_widget_show(lab_angle);
 	gtk_widget_show(but_down);
@@ -2592,13 +2604,16 @@ int timeout_config_mode = 1000;
 
 void show_frame_save_job(GtkWidget * w,gpointer ud)
 {
-	value_uprise = ANGLE_NULL;
-	value_lowering = ANGLE_NULL;
-	config_mode = OK;
-	/*TODO проверка конекта */
-	command_config_mode();
-	command_speed_vertical(speed_vertical_config_mode);
-	g_timeout_add(timeout_config_mode,check_registers_config_mode,NULL);
+	int rc;
+
+	rc = command_config_mode();
+	if(rc == SUCCESS){
+		command_speed_vertical(DEFAULT_SPEED_VERTICAL_SAVE_JOB);
+		value_uprise = ANGLE_NULL;
+		value_lowering = ANGLE_NULL;
+		config_mode = OK;
+		g_timeout_add(timeout_config_mode,check_registers_config_mode,NULL);
+	}
 }
 
 void hide_frame_save_job(GtkWidget * w,gpointer ud)
