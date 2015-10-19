@@ -68,6 +68,10 @@ HEADRE_RESOURCE=$(RESOURCE_CATALOG)cid.h
 OBJ_RESOURCE=$(RESOURCE_CATALOG)cid.o
 COMPILE_RESOURCE=glib-compile-resources 
 
+HEADER_VERSION=version.h
+GIT_REPOSITOR=.git
+GIT_VERSION=./git_version.sh
+
 $(EXEC):$(OBJS) $(OBJ_RESOURCE) $(LIB_MODBUS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LIB)
 	$(RC) $(EXEC) --set-icon $(ICON)
@@ -91,6 +95,9 @@ $(SOURCE_RESOURCE):$(RESOURCE)
 	
 $(HEADRE_RESOURCE):$(RESOURCE)
 	$(COMPILE_RESOURCE) --target=$@ --generate-header $<
+
+$(HEADER_VERSION):$(GIT_REPOSITOR)
+	$(GIT_VERSION)
 	
 .PHONY:clean
 clean:

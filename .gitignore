@@ -9,3 +9,4 @@
 tags
 resource/cid.h
 resource/cid.c
+version.h

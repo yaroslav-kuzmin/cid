@@ -48,6 +48,7 @@
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 
+#include "version.h"
 #include "total.h"
 #include "job.h"
 #include "video.h"
