@@ -54,6 +54,14 @@
 #define CONNECT          SUCCESS
 
 extern const char STR_NAME_PROGRAMM[];
+extern const char STR_COPYRIGHT[];
+extern const char STR_COMMENT[];
+extern const char STR_LICENSE[];
+extern const char STR_EMAIL[];
+extern const char STR_EMAIL_LABEL[];
+extern const char * STR_AUTHORS[];
+extern GdkPixbuf * default_icon;
+
 extern const char STR_LOGGING[];
 
 extern const char STR_KEY_FILE_NAME[];

@@ -315,21 +315,60 @@ static void destroy_window_main(GtkWidget * w,gpointer ud)
 	gtk_main_quit();
 }
 
+static gboolean key_press_event_window_main(GtkWidget * w,GdkEvent  *event,gpointer d)
+{
+
+
+	GtkWidget * dialog = gtk_about_dialog_new();
+	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog),STR_NAME_PROGRAMM);
+
+	g_string_printf(temp_string,"%d.%03d - %x",VERSION_MAJOR,VERSION_MINOR,VERSION_GIT);
+	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(dialog),temp_string->str);
+
+	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(dialog),STR_COPYRIGHT);
+
+	gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(dialog),STR_COMMENT);
+
+	gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(dialog),STR_LICENSE);
+
+	gtk_about_dialog_set_license_type(GTK_ABOUT_DIALOG(dialog),GTK_LICENSE_CUSTOM);
+
+	gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(dialog),NULL);
+
+	gtk_about_dialog_set_website_label(GTK_ABOUT_DIALOG(dialog),STR_EMAIL_LABEL);
+
+	gtk_about_dialog_set_authors(GTK_ABOUT_DIALOG(dialog),STR_AUTHORS);
+
+	gtk_about_dialog_set_artists(GTK_ABOUT_DIALOG(dialog),STR_AUTHORS);
+
+	gtk_about_dialog_set_documenters(GTK_ABOUT_DIALOG(dialog),NULL);
+
+	gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(dialog),NULL);
+
+	if(default_icon != NULL){
+		gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog),default_icon);
+	}
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
+
+	return FALSE;
+}
+
 #define MAIN_SPACING       3
 
 static char RESOURCE_DEFAULT_ICON[] = "/cid/resource/cid.png";
 
 static int create_window_main(void)
 {
-	GdkPixbuf * icon;
 	GtkWidget * vbox = NULL;
 	GtkWidget * wtemp;
 
 	accgro_main = gtk_accel_group_new();
-	icon = gdk_pixbuf_new_from_resource(RESOURCE_DEFAULT_ICON,NULL);
-	if(icon != NULL){
-		gtk_window_set_default_icon(icon);
+	default_icon = gdk_pixbuf_new_from_resource(RESOURCE_DEFAULT_ICON,NULL);
+	if(default_icon != NULL){
+		gtk_window_set_default_icon(default_icon);
 	}
+
 	win_main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width(GTK_CONTAINER(win_main),MAIN_SPACING);
 	gtk_window_set_title(GTK_WINDOW(win_main),STR_NAME_PROGRAMM);
@@ -337,7 +376,10 @@ static int create_window_main(void)
 	gtk_window_set_position (GTK_WINDOW(win_main),GTK_WIN_POS_CENTER);
 	g_signal_connect(win_main,"destroy",G_CALLBACK(destroy_window_main), NULL);
 	g_signal_connect(win_main,"unrealize",G_CALLBACK(unrealaze_window_main),NULL);
+	g_signal_connect(win_main,"key-press-event",G_CALLBACK(key_press_event_window_main),NULL);
 	gtk_window_add_accel_group(GTK_WINDOW(win_main),accgro_main);
+	gtk_widget_add_accelerator(win_main,"key-press-event",accgro_main
+	                          ,'V',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,MAIN_SPACING);
 	gtk_container_set_border_width(GTK_CONTAINER(vbox),MAIN_SPACING);

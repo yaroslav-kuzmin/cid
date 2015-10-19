@@ -49,6 +49,29 @@
 /*****************************************************************************/
 
 const char STR_NAME_PROGRAMM[] = "Управление Промышленым Оборудованием";
+const char STR_COPYRIGHT[] = "(C) <2015> <Кузьмин Ярослав>";
+const char STR_COMMENT[] = "Программа позволяет управлять установкой орошения";
+const char STR_LICENSE[] =
+"  Эта программа является свободным программным обеспечением:             \n"
+"  вы можете распространять и/или изменять это в соответствии с           \n"
+"  условиями в GNU General Public License, опубликованной                 \n"
+"  Фондом свободного программного обеспечения, как версии 3 лицензии,     \n"
+"  или (по вашему выбору) любой более поздней версии.                     \n"
+"                                                                         \n"
+"  Эта программа распространяется в надежде, что она будет полезной,      \n"
+"  но БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ; даже без подразумеваемой гарантии          \n"
+"  Или ПРИГОДНОСТИ ДЛЯ КОНКРЕТНЫХ ЦЕЛЕЙ. См GNU General Public License    \n"
+"  для более подробной информации.                                        \n"
+"                                                                         \n"
+"  Вы должны были получить копию GNU General Public License               \n"
+"  вместе с этой программой. Если нет, см <http://www.gnu.org/licenses/>  \n"
+"                                                                           ";
+
+const char STR_EMAIL[] = "kuzmin.yaroslav@gmail.com";
+const char STR_EMAIL_LABEL[] = "kuzmin.yaroslav@gmail.com";
+const char * STR_AUTHORS[] = {"Кузьмин Ярослав",NULL};
+GdkPixbuf * default_icon = NULL;
+
 const char STR_KEY_FILE_NAME[] = "cid.ini";
 GKeyFile * ini_file = NULL;
 const char STR_GLOBAL_KEY[] = "global";
