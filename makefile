@@ -72,7 +72,7 @@ $(OBJ_CATALOG)%.o:%.c
 	$(CXX) $(CFLAGS) -c $< -o $@
 
 $(DEPEND_CATALOG)%.d:%.c
-	$(CXX) -MM -I. -I$(MODBUS_CATALOG) $< | sed -e '1s/^/obj\//' > $@
+	$(CXX) -MM -I. -I$(MODBUS_CATALOG) $< | sed -e '1s/^/.obj\//' > $@
 
 include $(DEPEND)
 
