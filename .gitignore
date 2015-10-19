@@ -4,7 +4,6 @@
 *.exe
 *.a
 *.d
-*.png
 *.mp4
 *.db
 tags
