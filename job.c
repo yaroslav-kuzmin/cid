@@ -807,27 +807,41 @@ static GtkWidget * create_scale_vertical_speed(uint16_t speed)
 static int get_hour_in_second(unsigned int second)
 {
 	int hour;
+
 	if(second > MAX_TIME_SECOND){
 		second = MAX_TIME_SECOND;
 	}
 	hour = second / (60*60);
+
 	return hour;
 }
 
 static int get_minute_in_second(unsigned int second)
 {
-	int hour = get_hour_in_second(second);
-	int minute = second - (hour * (60*60));
+	int hour;
+	int minute;
 
+	if(second > MAX_TIME_SECOND){
+		second = MAX_TIME_SECOND;
+	}
+	hour = get_hour_in_second(second);
+	minute = second - (hour * (60*60));
 	minute /= 60;
 	return minute;
 }
 
 static int get_second_in_second(unsigned int second_all)
 {
-	int hour = get_hour_in_second(second_all);
-	int minute = get_minute_in_second(second_all);
-	int second = second_all - (hour*(60*60)) - (minute * 60);
+	int hour;
+	int minute;
+	int second;
+
+	if(second_all > MAX_TIME_SECOND){
+		second_all = MAX_TIME_SECOND;
+	}
+	hour = get_hour_in_second(second_all);
+	minute = get_minute_in_second(second_all);
+	second = second_all - (hour*(60*60)) - (minute * 60);
 	return second;
 }
 
