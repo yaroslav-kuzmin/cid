@@ -59,11 +59,17 @@ LDFLAGS=-g2 -L$(MODBUS_CATALOG)
 LIB=`pkg-config --libs gtk+-3.0` -lavformat -lavcodec -lswscale -lavutil -lsqlite3 
 
 
-RESOURCE=resource/
+RESOURCE_CATALOG=resource/
 RC=rcedit
-ICON=$(RESOURCE)cid.ico
+ICON=$(RESOURCE_CATALOG)cid.ico
 
-$(EXEC):$(OBJS) $(LIB_MODBUS)
+RESOURCE=$(RESOURCE_CATALOG)cid.gresource.xml
+SOURCE_RESOURCE=$(RESOURCE_CATALOG)cid.c
+HEADRE_RESOURCE=$(RESOURCE_CATALOG)cid.h
+OBJ_RESOURCE=$(RESOURCE_CATALOG)cid.o
+COMPILE_RESOURCE=glib-compile-resources 
+
+$(EXEC):$(OBJS) $(OBJ_RESOURCE) $(LIB_MODBUS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LIB)
 	$(RC) $(EXEC) --set-icon $(ICON)
 
@@ -78,7 +84,16 @@ $(DEPEND_CATALOG)%.d:%.c
 
 include $(DEPEND)
 
+$(OBJ_RESOURCE):$(SOURCE_RESOURCE) $(HEADRE_RESOURCE)
+	$(CXX) $(CFLAGS) -c $< -o $@
+	
+$(SOURCE_RESOURCE):$(RESOURCE)
+	$(COMPILE_RESOURCE) --target=$@ --generate-source $<
+	
+$(HEADRE_RESOURCE):$(RESOURCE)
+	$(COMPILE_RESOURCE) --target=$@ --generate-header $<
+	
 .PHONY:clean
 clean:
-	-rm -f $(EXEC) *~ $(OBJ_CATALOG)*.o $(DEPEND_CATALOG)*.d 
+	-rm -f $(EXEC) *~ $(OBJ_CATALOG)*.o $(DEPEND_CATALOG)*.d $(OBJ_RESOURCE) $(SOURCE_RESOURCE) $(HEADRE_RESOURCE)
 

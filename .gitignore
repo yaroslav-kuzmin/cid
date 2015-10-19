@@ -7,3 +7,5 @@
 *.mp4
 *.db
 tags
+resource/cid.h
+resource/cid.c

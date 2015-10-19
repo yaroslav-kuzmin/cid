@@ -316,13 +316,19 @@ static void destroy_window_main(GtkWidget * w,gpointer ud)
 
 #define MAIN_SPACING       3
 
+static char RESOURCE_DEFAULT_ICON[] = "/cid/resource/cid.png";
+
 static int create_window_main(void)
 {
+	GdkPixbuf * icon;
 	GtkWidget * vbox = NULL;
 	GtkWidget * wtemp;
 
 	accgro_main = gtk_accel_group_new();
-
+	icon = gdk_pixbuf_new_from_resource(RESOURCE_DEFAULT_ICON,NULL);
+	if(icon != NULL){
+		gtk_window_set_default_icon(icon);
+	}
 	win_main = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_container_set_border_width(GTK_CONTAINER(win_main),MAIN_SPACING);
 	gtk_window_set_title(GTK_WINDOW(win_main),STR_NAME_PROGRAMM);
@@ -351,6 +357,7 @@ static int create_window_main(void)
 
 	return SUCCESS;
 }
+
 /*****************************************************************************/
 int main(int argc,char * argv[])
 {
