@@ -198,7 +198,7 @@ static gpointer read_video_stream(gpointer args)
 #if !ALLOC_FRAME
 	uint8_t *buffer;
 #endif
-	int frameFinished = 0;
+	int frame_finish = 0;
 	int width;
 	int height;
 
@@ -244,8 +244,8 @@ static gpointer read_video_stream(gpointer args)
 			break;
 		}
 		if(packet.stream_index == vs->number) {
-			rc = avcodec_decode_video2(vs->codec_context, av_frame, &frameFinished,&packet);
-		if (frameFinished) {
+			rc = avcodec_decode_video2(vs->codec_context, av_frame, &frame_finish,&packet);
+		if (frame_finish) {
 				sws_scale(vs->sws_context,(uint8_t const * const *)av_frame->data, av_frame->linesize,0,vs->codec_context->height
 				                  ,picture_rgb->data,picture_rgb->linesize);
 
