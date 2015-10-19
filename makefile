@@ -58,8 +58,10 @@ CFLAGS=-g2 -Wall -I. -I$(MODBUS_CATALOG) `pkg-config --cflags gtk+-3.0`
 LDFLAGS=-g2 -L$(MODBUS_CATALOG) 
 LIB=`pkg-config --libs gtk+-3.0` -lavformat -lavcodec -lswscale -lavutil -lsqlite3 
 
+
+RESOURCE=resource/
 RC=rcedit
-ICON=cid.ico
+ICON=$(RESOURCE)cid.ico
 
 $(EXEC):$(OBJS) $(LIB_MODBUS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LIB)
