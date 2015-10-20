@@ -597,14 +597,14 @@ static GtkWidget * create_menu_mode(void)
 	menite_temp = gtk_menu_item_new_with_label(STR_AUTO_MODE);
 	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_auto_mode),NULL);
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
-	                          ,'A',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	                          ,GDK_KEY_A,GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_mode),menite_temp);
 	gtk_widget_show(menite_temp);
 
 	menite_temp = gtk_menu_item_new_with_label(STR_MANUAL_MODE);
 	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_manual_mode),NULL);
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
-	                          ,'M',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	                          ,GDK_KEY_M,GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_mode),menite_temp);
 	gtk_widget_show(menite_temp);
 
@@ -662,14 +662,14 @@ GtkWidget * create_menu_main(void)
 	menite_temp = gtk_menu_item_new_with_label(STR_LOAD_JOB);
 	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_load_job),NULL);
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
-	                          ,'L',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	                          ,GDK_KEY_L,GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_work),menite_temp);
 	gtk_widget_show(menite_temp);
 
 	menite_temp = gtk_menu_item_new_with_label(STR_CREATE_JOB);
 	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_save_job),NULL);
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
-	                          ,'C',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	                          ,GDK_KEY_C,GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_work),menite_temp);
 	gtk_widget_show(menite_temp);
 
@@ -680,7 +680,7 @@ GtkWidget * create_menu_main(void)
 	menite_temp = gtk_menu_item_new_with_label(STR_EXIT);
 	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_exit),NULL);
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
-	                          ,'Q',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	                          ,GDK_KEY_Q,GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_work),menite_temp);
 	gtk_widget_show(menite_temp);
 

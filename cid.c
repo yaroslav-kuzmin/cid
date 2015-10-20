@@ -315,42 +315,49 @@ static void destroy_window_main(GtkWidget * w,gpointer ud)
 	gtk_main_quit();
 }
 
-static gboolean key_press_event_window_main(GtkWidget * w,GdkEvent  *event,gpointer d)
+static GdkPixbuf * default_icon = NULL;
+
+static int about_programm(void)
 {
-
-
 	GtkWidget * dialog = gtk_about_dialog_new();
-	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog),STR_NAME_PROGRAMM);
 
+	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog),STR_NAME_PROGRAMM);
 	g_string_printf(temp_string,"%d.%03d - %x",VERSION_MAJOR,VERSION_MINOR,VERSION_GIT);
 	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(dialog),temp_string->str);
-
 	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(dialog),STR_COPYRIGHT);
-
 	gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(dialog),STR_COMMENT);
-
 	gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(dialog),STR_LICENSE);
-
 	gtk_about_dialog_set_license_type(GTK_ABOUT_DIALOG(dialog),GTK_LICENSE_CUSTOM);
-
 	gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(dialog),NULL);
-
 	gtk_about_dialog_set_website_label(GTK_ABOUT_DIALOG(dialog),STR_EMAIL_LABEL);
-
 	gtk_about_dialog_set_authors(GTK_ABOUT_DIALOG(dialog),STR_AUTHORS);
-
 	gtk_about_dialog_set_artists(GTK_ABOUT_DIALOG(dialog),STR_AUTHORS);
-
 	gtk_about_dialog_set_documenters(GTK_ABOUT_DIALOG(dialog),NULL);
-
 	gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(dialog),NULL);
-
 	if(default_icon != NULL){
 		gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog),default_icon);
 	}
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
 
+	return SUCCESS;
+}
+
+static gboolean key_press_event_window_main(GtkWidget * w,GdkEvent  *event,gpointer d)
+{
+
+	GdkEventType type = event->type;
+	gint state;
+
+	if(type == GDK_KEY_PRESS){
+		GdkEventKey * event_key = (GdkEventKey*)event;
+		state = event_key->state;
+		if( (state & GDK_SHIFT_MASK) && (state & GDK_CONTROL_MASK)){
+			if( event_key->keyval == GDK_KEY_Y){
+				about_programm();
+			}
+		}
+	}
 	return FALSE;
 }
 
@@ -378,8 +385,6 @@ static int create_window_main(void)
 	g_signal_connect(win_main,"unrealize",G_CALLBACK(unrealaze_window_main),NULL);
 	g_signal_connect(win_main,"key-press-event",G_CALLBACK(key_press_event_window_main),NULL);
 	gtk_window_add_accel_group(GTK_WINDOW(win_main),accgro_main);
-	gtk_widget_add_accelerator(win_main,"key-press-event",accgro_main
-	                          ,'V',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,MAIN_SPACING);
 	gtk_container_set_border_width(GTK_CONTAINER(vbox),MAIN_SPACING);

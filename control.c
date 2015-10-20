@@ -1050,7 +1050,7 @@ GtkWidget * create_menu_device(void)
 	menite_control_device = gtk_menu_item_new_with_label(STR_ON_DEVICE);
 	g_signal_connect(menite_control_device,"activate",G_CALLBACK(activate_menu_device),NULL);
 	gtk_widget_add_accelerator(menite_control_device,"activate",accgro_main
-	                          ,'P',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	                          ,GDK_KEY_P,GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_device),menite_control_device);
 	gtk_widget_show(menite_control_device);
 
@@ -1062,7 +1062,7 @@ GtkWidget * create_menu_device(void)
 	menite_temp = gtk_menu_item_new_with_label(STR_SETTING_DEVICE);
 	g_signal_connect(menite_temp,"activate",G_CALLBACK(activate_menu_setting),NULL);
 	gtk_widget_add_accelerator(menite_temp,"activate",accgro_main
-	                          ,'S',GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
+	                          ,GDK_KEY_S,GDK_CONTROL_MASK,GTK_ACCEL_VISIBLE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(men_device),menite_temp);
 	gtk_widget_show(menite_temp);
 */

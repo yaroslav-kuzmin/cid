@@ -60,7 +60,6 @@ extern const char STR_LICENSE[];
 extern const char STR_EMAIL[];
 extern const char STR_EMAIL_LABEL[];
 extern const char * STR_AUTHORS[];
-extern GdkPixbuf * default_icon;
 
 extern const char STR_LOGGING[];
 

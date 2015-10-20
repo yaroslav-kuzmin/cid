@@ -70,7 +70,6 @@ const char STR_LICENSE[] =
 const char STR_EMAIL[] = "kuzmin.yaroslav@gmail.com";
 const char STR_EMAIL_LABEL[] = "kuzmin.yaroslav@gmail.com";
 const char * STR_AUTHORS[] = {"Кузьмин Ярослав",NULL};
-GdkPixbuf * default_icon = NULL;
 
 const char STR_KEY_FILE_NAME[] = "cid.ini";
 GKeyFile * ini_file = NULL;
