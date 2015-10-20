@@ -119,6 +119,11 @@ static void destroy_job(gpointer job)
 	g_slice_free1(sizeof(job_s),j);
 }
 
+#define MAX_TIME_SECOND      359999
+/*максимально часов  99*/
+/*максимально минут  59*/
+/*максимально секунд 59*/
+
 static int fill_list_job_db(void)
 {
 	int rc;
@@ -187,8 +192,12 @@ static int fill_list_job_db(void)
 			job = g_slice_alloc0(sizeof(job_s));
 			str = (char *)sqlite3_column_text(query,NUMBER_NAME_COLUMN);
 			job->name = g_string_new(str);
+			/*TODO сделать проверку на корректные данные в базе данных*/
 			job->pressure = sqlite3_column_int64(query,NUMBER_PRESSURE_COLUMN);
 			job->time = sqlite3_column_int64(query,NUMBER_TIME_COLUMN);
+			if(job->time > MAX_TIME_SECOND){
+				job->time = MAX_TIME_SECOND;
+			}
 			job->uprise = sqlite3_column_int64(query,NUMBER_UPRISE_COLUMN);
 			job->lowering = sqlite3_column_int64(query,NUMBER_LOWERING_COLUMN);
 			g_hash_table_add(list_job,job);
@@ -216,14 +225,14 @@ static int str_to_time_second(const char * str)
 	hour = str[0] - '0';
 	hour *= 10;
 	hour += (str[1] - '0');
-	if( (hour < 0) || (hour > 24) ){
+	if( (hour < 0) || (hour > 99) ){
 		return amount;
 	}
 
 	minut = str[3] - '0';
 	minut *= 10;
 	minut += (str[4] - '0');
-	if((minut < 0)||(minut>59)){
+	if((minut < 0) || (minut > 59)){
 		return amount;
 	}
 	second = str[6] - '0';
@@ -269,7 +278,7 @@ static int insert_job_db(const char * name,const char *pressure,const char * tim
 	if( rc == TRUE){
 		return MATCH_NAME;
 	}
-
+	/*TODO сделать проверку на корректные данные*/
 	pj = g_slice_alloc0(sizeof(job_s));
 	pj->name = g_string_new(name);
 	pj->pressure = g_ascii_strtoll(pressure,NULL,10);
@@ -801,8 +810,6 @@ static GtkWidget * create_scale_vertical_speed(uint16_t speed)
 
 	return fra_speed;
 }
-
-#define MAX_TIME_SECOND      359999
 
 static int get_hour_in_second(unsigned int second)
 {
@@ -2260,7 +2267,7 @@ static int check_entry_angle(const char * uprise,const char * lowering)
 {
 	value_uprise = g_ascii_strtoll(uprise,NULL,ANGLE_BASE);
 	value_lowering = g_ascii_strtoll(lowering,NULL,ANGLE_BASE);
-
+	/*TODO  проверка на максимум*/
 	if(value_uprise <= value_lowering){
 		return FAILURE;
 	}
@@ -2272,6 +2279,7 @@ static void clicked_button_fix_uprise(GtkButton * b,gpointer d)
 	int rc;
 	uint16_t angle;
 
+	/*TODO  проверка на максимум*/
 	rc = command_angle(&angle);
 	if(rc != SUCCESS){
 		return ;
@@ -2285,6 +2293,7 @@ static void clicked_button_fix_lowering(GtkButton * b,gpointer d)
 	int rc;
 	uint16_t angle;
 
+	/*TODO  проверка на максимум*/
 	rc = command_angle(&angle);
 	if(rc != SUCCESS){
 		return ;
@@ -2346,7 +2355,6 @@ static void clicked_button_save_job(GtkButton * b,gpointer d)
 		gtk_widget_destroy(error);
 		return;
 	}
-
 
 	if(rc == FAILURE){
 		GtkWidget * error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
