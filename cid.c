@@ -317,7 +317,7 @@ static void destroy_window_main(GtkWidget * w,gpointer ud)
 
 static GdkPixbuf * default_icon = NULL;
 
-static int about_programm(void)
+static int about_programm(GdkPixbuf * icon)
 {
 	GtkWidget * dialog = gtk_about_dialog_new();
 
@@ -334,8 +334,8 @@ static int about_programm(void)
 	gtk_about_dialog_set_artists(GTK_ABOUT_DIALOG(dialog),STR_AUTHORS);
 	gtk_about_dialog_set_documenters(GTK_ABOUT_DIALOG(dialog),NULL);
 	gtk_about_dialog_set_logo_icon_name(GTK_ABOUT_DIALOG(dialog),NULL);
-	if(default_icon != NULL){
-		gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog),default_icon);
+	if(icon != NULL){
+		gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog),icon);
 	}
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
@@ -343,7 +343,7 @@ static int about_programm(void)
 	return SUCCESS;
 }
 
-static gboolean key_press_event_window_main(GtkWidget * w,GdkEvent  *event,gpointer d)
+static gboolean key_press_event_window_main(GtkWidget * w,GdkEvent  *event,gpointer ud)
 {
 
 	GdkEventType type = event->type;
@@ -354,7 +354,7 @@ static gboolean key_press_event_window_main(GtkWidget * w,GdkEvent  *event,gpoin
 		state = event_key->state;
 		if( (state & GDK_SHIFT_MASK) && (state & GDK_CONTROL_MASK)){
 			if( event_key->keyval == GDK_KEY_Y){
-				about_programm();
+				about_programm((GdkPixbuf*)ud);
 			}
 		}
 	}
@@ -383,7 +383,7 @@ static int create_window_main(void)
 	gtk_window_set_position (GTK_WINDOW(win_main),GTK_WIN_POS_CENTER);
 	g_signal_connect(win_main,"destroy",G_CALLBACK(destroy_window_main), NULL);
 	g_signal_connect(win_main,"unrealize",G_CALLBACK(unrealaze_window_main),NULL);
-	g_signal_connect(win_main,"key-press-event",G_CALLBACK(key_press_event_window_main),NULL);
+	g_signal_connect(win_main,"key-press-event",G_CALLBACK(key_press_event_window_main),default_icon);
 	gtk_window_add_accel_group(GTK_WINDOW(win_main),accgro_main);
 
 	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,MAIN_SPACING);
