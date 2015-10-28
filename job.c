@@ -713,9 +713,11 @@ GtkWidget * create_menu_main(void)
 /* Панели управления и информации                                            */
 /*****************************************************************************/
 /*****************************************************************************/
-
+#define ANGLE_RATE        0.126
+#define ANGLE_PRINTF(a)   ((double)(a)*ANGLE_RATE)
 #define ANGLE_BASE        10
-#define ANGLE_FORMAT      "%03d"
+#define ANGLE_FORMAT      "%02.1f"
+#define MAX_LEN_STR_ANGLE 4
 
 static int set_active_color(GtkButton * w)
 {
@@ -890,9 +892,10 @@ static int set_current_value_info(void)
 		               ,get_minute_in_second(current_job->time)
 		               ,get_second_in_second(current_job->time));
 		gtk_label_set_text(GTK_LABEL(lab_info_time),temp_string->str);
-		g_string_printf(temp_string,ANGLE_FORMAT,current_job->uprise);
+
+		g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(current_job->uprise));
 		gtk_label_set_text(GTK_LABEL(lab_info_uprise),temp_string->str);
-		g_string_printf(temp_string,ANGLE_FORMAT,current_job->lowering);
+		g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(current_job->lowering));
 		gtk_label_set_text(GTK_LABEL(lab_info_lowering),temp_string->str);
 	}
 	return SUCCESS;
@@ -1054,7 +1057,7 @@ static int check_registers_auto_mode(gpointer ud)
 	g_string_printf(temp_string,"%02d:%02d:%02d",hour,minut,second);
 	gtk_label_set_text(GTK_LABEL(label_auto_mode.time),temp_string->str);
 
-	g_string_printf(temp_string,ANGLE_FORMAT,angle);
+	g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(angle));
 	gtk_label_set_text(GTK_LABEL(label_auto_mode.uprise),temp_string->str);
 	gtk_label_set_text(GTK_LABEL(label_auto_mode.lowering),temp_string->str);
 
@@ -1154,9 +1157,9 @@ static int set_preset_value_auto_mode(void)
 	               ,get_minute_in_second(current_job->time)
 	               ,get_second_in_second(current_job->time));
 	gtk_label_set_text(GTK_LABEL(lab_auto_mode_time),temp_string->str);
-	g_string_printf(temp_string,ANGLE_FORMAT,current_job->uprise);
+	g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(current_job->uprise));
 	gtk_label_set_text(GTK_LABEL(lab_auto_mode_uprise),temp_string->str);
-	g_string_printf(temp_string,ANGLE_FORMAT,current_job->lowering);
+	g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(current_job->lowering));
 	gtk_label_set_text(GTK_LABEL(lab_auto_mode_lowering),temp_string->str);
 	return SUCCESS;
 }
@@ -1267,7 +1270,7 @@ static void show_frame_auto_mode(GtkWidget * w,gpointer ud)
 	if(rc == SUCCESS){
 		command_uprise_angle(current_job->uprise);
 		command_lowering_angle(current_job->lowering);
-		command_speed_vertical(DEFAULT_SPEED_VERTICAL_MANUAL_MODE);
+		command_speed_vertical(DEFAULT_SPEED_VERTICAL_AUTO_MODE);
 		command_horizontal(horizontal_offset);
 		auto_mode_start = NOT_OK;
 		auto_mode_pause = NOT_OK;
@@ -1541,7 +1544,7 @@ static int check_registers_manual_mode(gpointer ud)
 	g_string_printf(temp_string,"%02d:%02d:%02d",hour,minut,second);
 	gtk_label_set_text(GTK_LABEL(label_manual_mode.time),temp_string->str);
 
-	g_string_printf(temp_string,ANGLE_FORMAT,angle);
+	g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(angle));
 	gtk_label_set_text(GTK_LABEL(label_manual_mode.angle),temp_string->str);
 
 	/*TODO testing*/
@@ -2025,9 +2028,9 @@ static int set_current_value_tree(void)
 		               ,get_minute_in_second(current_job->time)
 		               ,get_second_in_second(current_job->time));
 		gtk_label_set_text(GTK_LABEL(lab_tree_time),temp_string->str);
-		g_string_printf(temp_string,ANGLE_FORMAT,current_job->uprise);
+		g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(current_job->uprise));
 		gtk_label_set_text(GTK_LABEL(lab_tree_uprise),temp_string->str);
-		g_string_printf(temp_string,ANGLE_FORMAT,current_job->lowering);
+		g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(current_job->lowering));
 		gtk_label_set_text(GTK_LABEL(lab_tree_lowering),temp_string->str);
 	}
 	return SUCCESS;
@@ -2265,8 +2268,8 @@ static long int value_lowering = ANGLE_NULL;
 
 static int check_entry_angle(const char * uprise,const char * lowering)
 {
-	value_uprise = g_ascii_strtoll(uprise,NULL,ANGLE_BASE);
-	value_lowering = g_ascii_strtoll(lowering,NULL,ANGLE_BASE);
+	/*value_uprise = g_ascii_strtoll(uprise,NULL,ANGLE_BASE);*/
+	/*value_lowering = g_ascii_strtoll(lowering,NULL,ANGLE_BASE);*/
 	/*TODO  проверка на максимум*/
 	if(value_uprise <= value_lowering){
 		return FAILURE;
@@ -2284,7 +2287,8 @@ static void clicked_button_fix_uprise(GtkButton * b,gpointer d)
 	if(rc != SUCCESS){
 		return ;
 	}
-	g_string_printf(temp_string,ANGLE_FORMAT,angle);
+	value_uprise = angle;
+	g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(angle));
 	gtk_entry_buffer_set_text(entbuff_uprise,temp_string->str,-1);
 }
 
@@ -2298,7 +2302,8 @@ static void clicked_button_fix_lowering(GtkButton * b,gpointer d)
 	if(rc != SUCCESS){
 		return ;
 	}
-	g_string_printf(temp_string,ANGLE_FORMAT,angle);
+	value_lowering = angle;
+	g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(angle));
 	gtk_entry_buffer_set_text(entbuff_lowering,temp_string->str,-1);
 }
 
@@ -2450,7 +2455,7 @@ static GtkWidget * create_entry_job_save(void)
 	gtk_widget_set_valign(ent_time,GTK_ALIGN_START);
 
 	entbuff_uprise = gtk_entry_buffer_new(STR_ANGLE_DEFAULT,-1);
-	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_uprise),3);
+	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_uprise),MAX_LEN_STR_ANGLE);
 	ent_uprise = gtk_entry_new_with_buffer(entbuff_uprise);
 	gtk_entry_set_width_chars(GTK_ENTRY(ent_uprise),3);
 	gtk_widget_set_hexpand(ent_uprise,FALSE);
@@ -2459,7 +2464,7 @@ static GtkWidget * create_entry_job_save(void)
 	gtk_widget_set_valign(ent_uprise,GTK_ALIGN_START);
 
 	entbuff_lowering = gtk_entry_buffer_new(STR_ANGLE_DEFAULT,-1);
-	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_lowering),3);
+	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_lowering),MAX_LEN_STR_ANGLE);
 	ent_lowering = gtk_entry_new_with_buffer(entbuff_lowering);
 	gtk_entry_set_width_chars(GTK_ENTRY(ent_lowering),3);
 	gtk_widget_set_hexpand(ent_lowering,FALSE);
@@ -2514,7 +2519,7 @@ static GtkWidget * create_entry_job_save(void)
 	gtk_widget_show(lab_pressure);
 	gtk_widget_show(lab_name);
 	gtk_widget_show(gri_entry);
-	return gri_entry;
+ 	return gri_entry;
 }
 
 static GtkWidget * lab_angle_save_job;
@@ -2601,7 +2606,7 @@ static int check_registers_config_mode(gpointer ud)
 		return FALSE;
 	}
 
-	g_string_printf(temp_string,ANGLE_FORMAT,angle);
+	g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(angle));
 	gtk_label_set_text(GTK_LABEL(lab_angle_save_job),temp_string->str);
 	return TRUE;
 }
