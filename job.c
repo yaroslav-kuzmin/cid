@@ -773,10 +773,7 @@ static GtkWidget * create_scale_vertical_speed(uint16_t speed)
 	gdouble speed_d = (gdouble)speed / SPEED_VERTICAL_RATE;
 
 	fra_speed = gtk_frame_new(NULL);
-	gtk_widget_set_vexpand(fra_speed,TRUE);
-	gtk_widget_set_hexpand(fra_speed,TRUE);
-	gtk_widget_set_halign(fra_speed,GTK_ALIGN_FILL);
-	gtk_widget_set_valign(fra_speed,GTK_ALIGN_FILL);
+	layout_widget(fra_speed,GTK_ALIGN_FILL,GTK_ALIGN_FILL,TRUE,TRUE);
 
 	box_speed = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 	gtk_widget_set_vexpand(box_speed,TRUE);
@@ -2675,8 +2672,9 @@ static GtkWidget * create_job_save(void)
 
 
 	fra_job_save = gtk_frame_new(NULL);
-	gtk_widget_set_hexpand(fra_job_save,TRUE);
-	gtk_widget_set_vexpand(fra_job_save,TRUE);
+	layout_widget(fra_job_save,GTK_ALIGN_FILL,GTK_ALIGN_FILL,TRUE,TRUE);
+	/*gtk_widget_set_hexpand(fra_job_save,TRUE);*/
+	/*gtk_widget_set_vexpand(fra_job_save,TRUE);*/
 	gtk_frame_set_label_align(GTK_FRAME(fra_job_save),0.5,0.5);
 	g_signal_connect(fra_job_save,"show",G_CALLBACK(show_frame_save_job),NULL);
 	g_signal_connect(fra_job_save,"hide",G_CALLBACK(hide_frame_save_job),NULL);
@@ -2741,8 +2739,9 @@ GtkWidget * create_control_panel(void)
 
 	gri_control = gtk_grid_new();
 	gtk_container_set_border_width(GTK_CONTAINER(gri_control),10);
-	gtk_widget_set_halign(gri_control,GTK_ALIGN_FILL);
-	gtk_widget_set_valign(gri_control,GTK_ALIGN_FILL);
+	layout_widget(gri_control,GTK_ALIGN_FILL,GTK_ALIGN_FILL,TRUE,TRUE);
+	/*gtk_widget_set_halign(gri_control,GTK_ALIGN_FILL);*/
+	/*gtk_widget_set_valign(gri_control,GTK_ALIGN_FILL);*/
 	gtk_widget_set_size_request(gri_control,-1,300);
 
 	fra_info = create_info();
