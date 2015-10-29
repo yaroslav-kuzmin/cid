@@ -713,11 +713,11 @@ GtkWidget * create_menu_main(void)
 /* Панели управления и информации                                            */
 /*****************************************************************************/
 /*****************************************************************************/
-#define ANGLE_RATE        0.126
-#define ANGLE_PRINTF(a)   ((double)(a)*ANGLE_RATE)
-#define ANGLE_BASE        10
-#define ANGLE_FORMAT      "%02.1f"
-#define MAX_LEN_STR_ANGLE 4
+#define ANGLE_RATE         0.126
+#define ANGLE_PRINTF(a)    ((double)(a)*ANGLE_RATE)
+#define ANGLE_BASE         10
+#define ANGLE_FORMAT       "%.1f"
+#define MAX_LEN_STR_ANGLE  5
 
 static int set_active_color(GtkButton * w)
 {
@@ -866,7 +866,7 @@ static char STR_TIME_JOB[] =         "Время работы";
 static char STR_TIME_JOB_DEFAULT[] = "00:00:00";
 static char STR_UPRISE_ANGEL[] =     "Угол подъема,  градусов";
 static char STR_LOWERING_ANGEL[] =   "Угол опускания,  градусов";
-static char STR_ANGLE_DEFAULT[] =    "000";
+static char STR_ANGLE_DEFAULT[] =    "0,0";
 
 static GtkWidget * lab_info_name_job = NULL;
 static GtkWidget * lab_info_pressure = NULL;
@@ -892,7 +892,6 @@ static int set_current_value_info(void)
 		               ,get_minute_in_second(current_job->time)
 		               ,get_second_in_second(current_job->time));
 		gtk_label_set_text(GTK_LABEL(lab_info_time),temp_string->str);
-
 		g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(current_job->uprise));
 		gtk_label_set_text(GTK_LABEL(lab_info_uprise),temp_string->str);
 		g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(current_job->lowering));
@@ -1136,10 +1135,10 @@ static GtkWidget * lab_auto_mode_lowering;
 
 static int set_current_value_auto_mode(void)
 {
-	gtk_label_set_text(GTK_LABEL(label_auto_mode.pressure),"0");
-	gtk_label_set_text(GTK_LABEL(label_auto_mode.time),"00:00:00");
-	gtk_label_set_text(GTK_LABEL(label_auto_mode.uprise),"00");
-	gtk_label_set_text(GTK_LABEL(label_auto_mode.lowering),"00");
+	gtk_label_set_text(GTK_LABEL(label_auto_mode.pressure),STR_PRESSURE_DEFAULT);
+	gtk_label_set_text(GTK_LABEL(label_auto_mode.time),STR_TIME_JOB_DEFAULT);
+	gtk_label_set_text(GTK_LABEL(label_auto_mode.uprise),STR_ANGLE_DEFAULT);
+	gtk_label_set_text(GTK_LABEL(label_auto_mode.lowering),STR_ANGLE_DEFAULT);
 	return SUCCESS;
 }
 
@@ -2262,16 +2261,47 @@ static int check_entry_pressure(const char * pressure)
 }
 
 #define ANGLE_NULL        -1
+#define MAX_ANGLE         88.0
+#define MIN_ANGLE          0.0
+#define MAX_ANGLE_IN_TIC   700
+#define MIN_ANGLE_IN_TIC   0
 
 static long int value_uprise = ANGLE_NULL;
 static long int value_lowering = ANGLE_NULL;
 
 static int check_entry_angle(const char * uprise,const char * lowering)
 {
-	/*value_uprise = g_ascii_strtoll(uprise,NULL,ANGLE_BASE);*/
-	/*value_lowering = g_ascii_strtoll(lowering,NULL,ANGLE_BASE);*/
-	/*TODO  проверка на максимум*/
+	double vu = g_strtod(uprise,NULL);
+	double vl = g_strtod(lowering,NULL);
+
+	if((vu < MIN_ANGLE) || (vu > MAX_ANGLE) ){
+		vu = MAX_ANGLE;
+	}
+	if((vl < MIN_ANGLE) || (vl > MAX_ANGLE) ){
+		vl = MIN_ANGLE;
+	}
+
+	if(value_uprise == ANGLE_NULL){
+		vu /= ANGLE_RATE;
+		value_uprise = vu;
+	}
+
+	if(value_lowering == ANGLE_NULL){
+		vl /= ANGLE_RATE;
+		value_lowering = vl;
+	}
+
+	if( (value_uprise < MIN_ANGLE_IN_TIC) || (value_uprise > MAX_ANGLE_IN_TIC)){
+		value_uprise = MAX_ANGLE_IN_TIC;
+	}
+
+	if((value_lowering < MIN_ANGLE_IN_TIC) || (value_lowering > MAX_ANGLE_IN_TIC)){
+		value_lowering = MIN_ANGLE_IN_TIC;
+	}
+
 	if(value_uprise <= value_lowering){
+		value_uprise = ANGLE_NULL;
+		value_lowering = ANGLE_NULL;
 		return FAILURE;
 	}
 	return SUCCESS;
@@ -2282,12 +2312,14 @@ static void clicked_button_fix_uprise(GtkButton * b,gpointer d)
 	int rc;
 	uint16_t angle;
 
-	/*TODO  проверка на максимум*/
 	rc = command_angle(&angle);
 	if(rc != SUCCESS){
 		return ;
 	}
 	value_uprise = angle;
+	if( (value_uprise < MIN_ANGLE_IN_TIC) || (value_uprise > MAX_ANGLE_IN_TIC)){
+		value_uprise = MAX_ANGLE_IN_TIC;
+	}
 	g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(angle));
 	gtk_entry_buffer_set_text(entbuff_uprise,temp_string->str,-1);
 }
@@ -2297,12 +2329,14 @@ static void clicked_button_fix_lowering(GtkButton * b,gpointer d)
 	int rc;
 	uint16_t angle;
 
-	/*TODO  проверка на максимум*/
 	rc = command_angle(&angle);
 	if(rc != SUCCESS){
 		return ;
 	}
 	value_lowering = angle;
+	if((value_lowering < MIN_ANGLE_IN_TIC) || (value_lowering > MAX_ANGLE_IN_TIC)){
+		value_lowering = MIN_ANGLE_IN_TIC;
+	}
 	g_string_printf(temp_string,ANGLE_FORMAT,ANGLE_PRINTF(angle));
 	gtk_entry_buffer_set_text(entbuff_lowering,temp_string->str,-1);
 }
@@ -2457,7 +2491,7 @@ static GtkWidget * create_entry_job_save(void)
 	entbuff_uprise = gtk_entry_buffer_new(STR_ANGLE_DEFAULT,-1);
 	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_uprise),MAX_LEN_STR_ANGLE);
 	ent_uprise = gtk_entry_new_with_buffer(entbuff_uprise);
-	gtk_entry_set_width_chars(GTK_ENTRY(ent_uprise),3);
+	gtk_entry_set_width_chars(GTK_ENTRY(ent_uprise),MAX_LEN_STR_ANGLE);
 	gtk_widget_set_hexpand(ent_uprise,FALSE);
 	gtk_widget_set_vexpand(ent_uprise,TRUE);
 	gtk_widget_set_halign(ent_uprise,GTK_ALIGN_START);
@@ -2466,7 +2500,7 @@ static GtkWidget * create_entry_job_save(void)
 	entbuff_lowering = gtk_entry_buffer_new(STR_ANGLE_DEFAULT,-1);
 	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_lowering),MAX_LEN_STR_ANGLE);
 	ent_lowering = gtk_entry_new_with_buffer(entbuff_lowering);
-	gtk_entry_set_width_chars(GTK_ENTRY(ent_lowering),3);
+	gtk_entry_set_width_chars(GTK_ENTRY(ent_lowering),MAX_LEN_STR_ANGLE);
 	gtk_widget_set_hexpand(ent_lowering,FALSE);
 	gtk_widget_set_vexpand(ent_lowering,TRUE);
 	gtk_widget_set_halign(ent_lowering,GTK_ALIGN_START);
