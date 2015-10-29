@@ -345,7 +345,6 @@ static int about_programm(GdkPixbuf * icon)
 
 static gboolean key_press_event_window_main(GtkWidget * w,GdkEvent  *event,gpointer ud)
 {
-
 	GdkEventType type = event->type;
 	gint state;
 
@@ -353,7 +352,7 @@ static gboolean key_press_event_window_main(GtkWidget * w,GdkEvent  *event,gpoin
 		GdkEventKey * event_key = (GdkEventKey*)event;
 		state = event_key->state;
 		if( (state & GDK_SHIFT_MASK) && (state & GDK_CONTROL_MASK)){
-			if( event_key->keyval == GDK_KEY_Y){
+			if( event_key->keyval == GDK_KEY_H){
 				about_programm((GdkPixbuf*)ud);
 			}
 		}
