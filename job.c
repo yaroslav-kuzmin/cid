@@ -65,7 +65,6 @@
 
 #define RATE_ANGLE                     0.126
 #define PRINTF_ANGLE(a)                ((double)(a)*RATE_ANGLE)
-/*#define ANGLE_BASE                   10*/
 #define FORMAT_ANGLE                   "%.1f"
 #define MAX_LEN_STR_ANGLE              5
 

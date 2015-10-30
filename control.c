@@ -810,7 +810,6 @@ static int check_connect_timeout(gpointer ud)
 
 	check_connect_device(&status_sensors);
 	if(ctx == NULL){
-
 		set_status_device(DEVICE_CRASH);
 		set_status_limit_vertical(DEVICE_LIMIT_VERTICAL);
 		set_status_limit_horizontal(DEVICE_LIMIT_HORIZONTAL);
