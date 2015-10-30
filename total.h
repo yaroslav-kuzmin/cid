@@ -90,5 +90,26 @@ extern GString * temp_string;
 
 #define MILLISECOND      1000
 
+#define MIN_SPEED_VERTICAL_IN_TIC                  0
+#define MAX_SPEED_VERTICAL_IN_TIC                  4000
+
+#define MIN_VALVE_IN_TIC                           0
+#define MAX_VALVE_IN_TIC                           4000
+#define STEP_VALVE_IN_TIC                          200
+
+#define MIN_HORIZONTAL_OFFSET_IN_TIC               0
+#define MAX_HORIZONTAL_OFFSET_IN_TIC               60
+
+#define MIN_ANGLE_IN_TIC                           0
+#define MAX_ANGLE_IN_TIC                           700
+
+#define DEFAULT_TIMEOUT_CHECK     1000
+#define MIN_TIMEOUT_CHECK         50
+#define MAX_TIMEOUT_CHECK         3000
+
+#define DEFAULT_TIMEOU_CHECK_PORT    3
+#define MIN_TIMEOUT_CHECK_PORT       1
+#define MAX_TIMEOUT_CHECK_PORT       60
+
 #endif
 

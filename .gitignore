@@ -6,6 +6,8 @@
 *.d
 *.mp4
 *.db
+*.dia
+*.ods
 tags
 resource/cid.h
 resource/cid.c

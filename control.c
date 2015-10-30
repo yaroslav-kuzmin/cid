@@ -56,7 +56,7 @@
 /*  взаимодействие с контролером                                             */
 /*****************************************************************************/
 
-#define TEST_INTERFACE              FALSE
+#define TEST_INTERFACE              TRUE
 
 #define PROTOCOL_RTU     1
 #define PROTOCOL_ASCII   0
@@ -455,16 +455,22 @@ int command_manual_laser_off(void)
 
 static int reg_D103 = 0x1067;
 
-int command_uprise_angle(int value)
+int command_uprise_angle(uint16_t angle)
 {
-	return write_register(reg_D103,value);
+	if( (angle < MIN_ANGLE_IN_TIC) || (angle > MAX_ANGLE_IN_TIC)){
+		angle = MAX_ANGLE_IN_TIC;
+	}
+	return write_register(reg_D103,angle);
 }
 
 static int reg_D104 = 0x1068;
 
-int command_lowering_angle(int value)
+int command_lowering_angle(uint16_t angle)
 {
-	return write_register(reg_D104,value);
+	if( (angle < MIN_ANGLE_IN_TIC) || (angle > MAX_ANGLE_IN_TIC)){
+		angle = MIN_ANGLE_IN_TIC;
+	}
+	return write_register(reg_D104,angle);
 }
 
 static int reg_D110 = 0x106E;
@@ -528,36 +534,33 @@ int command_console(uint16_t * val)
 }
 
 static int reg_D115 = 0x1073;
-static uint16_t max_speed_vertical = 4000;
 
 int command_speed_vertical(uint16_t speed)
 {
-	if(speed > max_speed_vertical){
-		speed = max_speed_vertical;
+	if(speed > MAX_SPEED_VERTICAL_IN_TIC){
+		speed = MAX_SPEED_VERTICAL_IN_TIC;
 	}
 	return write_register(reg_D115,speed);
 }
 
 static int reg_D116 = 0x1074;
-static uint16_t max_valve = 4000;
 
 int command_valve(uint16_t value)
 {
-	if(value > max_valve){
-		value = max_valve;
+	if(value > MAX_VALVE_IN_TIC){
+		value = MAX_VALVE_IN_TIC;
 	}
 	return write_register(reg_D116,value);
 }
 
 static int reg_D117 = 0x1075;
-static uint16_t max_horizontal = 60;
 
-int command_horizontal(uint16_t value)
+int command_horizontal(uint16_t horizontal_offset)
 {
-	if(value > max_horizontal){
-		return FAILURE;
+	if(horizontal_offset > MAX_HORIZONTAL_OFFSET_IN_TIC){
+		horizontal_offset = MAX_HORIZONTAL_OFFSET_IN_TIC;
 	}
-	return write_register(reg_D117,value);
+	return write_register(reg_D117,horizontal_offset);
 }
 
 int command_null_mode(void)
@@ -901,10 +904,6 @@ static int check_connect_timeout(gpointer ud)
 
 	return TRUE;
 }
-
-#define DEFAULT_TIMEOU_CHECK_PORT    3
-#define MIN_TIMEOUT_CHECK_PORT       1
-#define MAX_TIMEOUT_CHECK_PORT       60
 
 static int time_check_connect_device = DEFAULT_TIMEOU_CHECK_PORT * MILLISECOND;
 
