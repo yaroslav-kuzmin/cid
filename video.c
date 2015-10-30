@@ -54,7 +54,7 @@
 
 /*****************************************************************************/
 #define TEST_VIDEO              FALSE
-#define ALLOC_FRAME             FALSE
+#define ALLOC_FRAME             TRUE
 
 static char STR_RTSP[] = "rtsp://";
 #define SIZE_STR_RTSP     7
