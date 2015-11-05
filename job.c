@@ -1054,9 +1054,18 @@ static int check_registers_auto_mode(gpointer ud)
 
 	amount_auto_mode += timeout_auto_mode;
 	rc = amount_auto_mode / MILLISECOND;
+
+	if(rc >= current_job->time){
+		auto_mode_start = NOT_OK;
+		command_auto_stop();
+		set_notactive_color(GTK_BUTTON(ud));
+		return FALSE;
+	}
+
 	if(rc >= MAX_TIME_SECOND){
 		amount_auto_mode = 0;
 	}
+
 	hour = (rc / (60*60));
 	minut = (rc - (hour*60*60))/60;
 	second = (rc - (hour*60*60) - (minut*60));
@@ -1070,13 +1079,6 @@ static int check_registers_auto_mode(gpointer ud)
 	g_string_printf(temp_string,FORMAT_ANGLE,PRINTF_ANGLE(angle));
 	gtk_label_set_text(GTK_LABEL(label_auto_mode.uprise),temp_string->str);
 	gtk_label_set_text(GTK_LABEL(label_auto_mode.lowering),temp_string->str);
-
-	if(amount_auto_mode == current_job->time){
-		auto_mode_start = NOT_OK;
-		command_auto_stop();
-		set_notactive_color(GTK_BUTTON(ud));
-		return FALSE;
-	}
 
 	return TRUE;
 }
