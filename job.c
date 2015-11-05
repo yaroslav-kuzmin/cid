@@ -482,10 +482,10 @@ static GtkWidget * fra_mode_manual = NULL;
 static GtkWidget * fra_job_load = NULL;
 static GtkWidget * fra_job_save = NULL;
 
-static char STR_MODE_AUTO[] = "Автоматическое управление";
+static char STR_MODE_AUTO[] =   "Автоматическое управление";
 static char STR_MODE_MANUAL[] = "Ручное Управление";
-static char STR_JOB_LOAD[] = "Загрузить работу";
-static char STR_JOB_SAVE[] = "Новая работа";
+static char STR_JOB_LOAD[] =    "Загрузить работу";
+static char STR_JOB_SAVE[] =    "Новая работа";
 
 /*****************************************************************************/
 /* Общие функции                                                             */
@@ -739,8 +739,8 @@ static void activate_menu_manual_mode(GtkMenuItem * im,gpointer d)
 	g_message("%s.",STR_MODE_MANUAL);
 }
 
-static char STR_MODE[] = "Режим";
-static char STR_AUTO_MODE[] = "автоматический";
+static char STR_MODE[] =        "Режим";
+static char STR_AUTO_MODE[] =   "автоматический";
 static char STR_MANUAL_MODE[] = "ручной";
 
 static GtkWidget * create_menu_mode(void)
@@ -1060,10 +1060,6 @@ static int check_registers_auto_mode(gpointer ud)
 		command_auto_stop();
 		set_notactive_color(GTK_BUTTON(ud));
 		return FALSE;
-	}
-
-	if(rc >= MAX_TIME_SECOND){
-		amount_auto_mode = 0;
 	}
 
 	hour = (rc / (60*60));
@@ -2578,8 +2574,8 @@ static GtkWidget * create_job_save(void)
 /* основное окно                                                             */
 /*****************************************************************************/
 
-static char STR_HORIZONTAL_OFFSET[] = "horizontal";
-static char STR_TIMEOUT_AUTO_MODE[] = "timeout_auto_mode";
+static char STR_HORIZONTAL_OFFSET[] =   "horizontal";
+static char STR_TIMEOUT_AUTO_MODE[] =   "timeout_auto_mode";
 static char STR_TIMEOUT_MANUAL_MODE[] = "timeout_manual_mode";
 static char STR_TIMEOUT_CONFIG_MODE[] = "timeout_config_mode";
 

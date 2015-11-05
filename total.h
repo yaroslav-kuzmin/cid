@@ -79,37 +79,37 @@ extern GdkRGBA color_lite_blue;
 extern GdkRGBA color_lite_red;
 extern GdkRGBA color_lite_green;
 
-#define SIZE_FONT_EXTRA_LARGE      40000
-#define SIZE_FONT_LARGE            30000
-#define SIZE_FONT_EXTRA_MEDIUM     20000
-#define SIZE_FONT_MEDIUM           15000
-#define SIZE_FONT_SMALL            10000
-#define SIZE_FONT_MINI             9000
+#define SIZE_FONT_EXTRA_LARGE              40000
+#define SIZE_FONT_LARGE                    30000
+#define SIZE_FONT_EXTRA_MEDIUM             20000
+#define SIZE_FONT_MEDIUM                   15000
+#define SIZE_FONT_SMALL                    10000
+#define SIZE_FONT_MINI                     9000
 
 extern GString * temp_string;
 
-#define MILLISECOND      1000
+#define MILLISECOND                        1000
 
-#define MIN_SPEED_VERTICAL_IN_TIC                  0
-#define MAX_SPEED_VERTICAL_IN_TIC                  4000
+#define MIN_SPEED_VERTICAL_IN_TIC          0
+#define MAX_SPEED_VERTICAL_IN_TIC          4000
 
-#define MIN_VALVE_IN_TIC                           0
-#define MAX_VALVE_IN_TIC                           4000
-#define STEP_VALVE_IN_TIC                          200
+#define MIN_VALVE_IN_TIC                   0
+#define MAX_VALVE_IN_TIC                   4000
+#define STEP_VALVE_IN_TIC                  200
 
-#define MIN_HORIZONTAL_OFFSET_IN_TIC               0
-#define MAX_HORIZONTAL_OFFSET_IN_TIC               60
+#define MIN_HORIZONTAL_OFFSET_IN_TIC       0
+#define MAX_HORIZONTAL_OFFSET_IN_TIC       60
 
-#define MIN_ANGLE_IN_TIC                           0
-#define MAX_ANGLE_IN_TIC                           700
+#define MIN_ANGLE_IN_TIC                   0
+#define MAX_ANGLE_IN_TIC                   700
 
-#define DEFAULT_TIMEOUT_CHECK     1000
-#define MIN_TIMEOUT_CHECK         50
-#define MAX_TIMEOUT_CHECK         3000
+#define DEFAULT_TIMEOUT_CHECK              1000
+#define MIN_TIMEOUT_CHECK                  50
+#define MAX_TIMEOUT_CHECK                  3000
 
-#define DEFAULT_TIMEOU_CHECK_PORT    3
-#define MIN_TIMEOUT_CHECK_PORT       1
-#define MAX_TIMEOUT_CHECK_PORT       60
+#define DEFAULT_TIMEOU_CHECK_PORT          3
+#define MIN_TIMEOUT_CHECK_PORT             1
+#define MAX_TIMEOUT_CHECK_PORT             60
 
 #endif
 
