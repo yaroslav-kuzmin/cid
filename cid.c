@@ -352,7 +352,7 @@ static gboolean key_press_event_window_main(GtkWidget * w,GdkEvent  *event,gpoin
 		GdkEventKey * event_key = (GdkEventKey*)event;
 		state = event_key->state;
 		if( (state & GDK_SHIFT_MASK) && (state & GDK_CONTROL_MASK)){
-			if( event_key->keyval == GDK_KEY_H){
+			if( event_key->keyval == GDK_KEY_A){
 				about_programm((GdkPixbuf*)ud);
 			}
 		}
