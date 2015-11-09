@@ -49,6 +49,7 @@ int deinit_db(void);
 GtkWidget * create_menu_main(void);
 GtkWidget * create_control_panel(void);
 int check_auto_mode(void);
+int deinit_job(void);
 
 #endif
 

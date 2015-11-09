@@ -363,7 +363,7 @@ static void unrealaze_window_main(GtkWidget * w,gpointer ud)
 
 static void destroy_window_main(GtkWidget * w,gpointer ud)
 {
-
+	deinit_job();
 	deinit_control_device();
 	deinit_video();
 	deinit_db();

@@ -799,7 +799,6 @@ static void unrealize_menubar_main(GtkWidget * w,gpointer ud)
 
 static void activate_menu_exit(GtkMenuItem * im,gpointer d)
 {
-
 	select_frame(INFO_FRAME);
 	gtk_widget_destroy(win_main);
 }
@@ -1555,16 +1554,23 @@ static void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 
 static char STR_VALVE_TIC[] = "valve";
 
+static int deini_manual_mode(void)
+{
+	if(valve_ui != valve_ui_old){
+		g_key_file_set_integer(ini_file,STR_GLOBAL_KEY,STR_VALVE_TIC,valve_ui);
+		set_flag_save_config();
+		valve_ui_old = valve_ui;
+	}
+	return SUCCESS;
+}
+
 static void hide_frame_manual_mode(GtkWidget * w,gpointer ud)
 {
  	manual_mode_start = NOT_OK;
 	command_manual_null();
 	command_null_mode();
 	command_valve(MIN_VALVE_IN_TIC);
-	if(valve_ui != valve_ui_old){
-		g_key_file_set_integer(ini_file,STR_GLOBAL_KEY,STR_VALVE_TIC,valve_ui);
-		set_flag_save_config();
-	}
+	deini_manual_mode();
 }
 
 static GtkWidget * create_scale_valve(void)
@@ -2697,5 +2703,11 @@ GtkWidget * create_control_panel(void)
 	gtk_widget_show(gri_control);
 	gtk_widget_show(fra_control);
 	return fra_control;
+}
+
+int deinit_job(void)
+{
+	deini_manual_mode();
+	return SUCCESS;
 }
 /*****************************************************************************/
