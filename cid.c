@@ -59,28 +59,74 @@
 /*****************************************************************************/
 /*  конфиурирование системы                                                  */
 /*****************************************************************************/
-#if 0
+static int save_config_file(char * buff,gsize len)
+{
+	GIOChannel * channel;
+	GError * err = NULL;
+	GtkWidget * md_err;
+	int rc;
+	gsize bw;
+
+	channel = g_io_channel_new_file(STR_KEY_FILE_NAME,"w",&err);
+	if(channel == NULL){
+		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
+		                               ,"Несмог открыть для записи файл настроек!\n%s",err->message);
+		gtk_dialog_run(GTK_DIALOG(md_err));
+		gtk_widget_destroy (md_err);
+		g_critical("%s!",err->message);
+		return FAILURE;
+	}
+	err = NULL;
+	rc = g_io_channel_write_chars(channel,buff,len,&bw,&err);
+	if(rc != G_IO_STATUS_NORMAL){
+		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
+		                               ,"Несмог записать файл настроек!\n%s",err->message);
+		gtk_dialog_run(GTK_DIALOG(md_err));
+		gtk_widget_destroy (md_err);
+		g_critical("%s!",err->message);
+		return FAILURE;
+	}
+	err = NULL;
+	rc = g_io_channel_shutdown(channel,TRUE,&err);
+	if(rc != G_IO_STATUS_NORMAL){
+		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
+		                               ,"Несмог закрыть файл настроек!\n%s",err->message);
+		gtk_dialog_run(GTK_DIALOG(md_err));
+		gtk_widget_destroy (md_err);
+		g_critical("%s!",err->message);
+		return FAILURE;
+	}
+	g_io_channel_unref(channel);
+	return SUCCESS;
+}
+
 static int save_config(void)
 {
-	in version 2.40
-	GtkWidget * md_err;
 	GError * err = NULL;
-	int rc;
+	gsize size;
+	gchar * buf = NULL;
 
+#if 0
 	rc = g_key_file_save_to_file(ini_file,STR_KEY_FILE_NAME,&err);
-	if(rc != TRUE){
-		md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE,"Несмог сохранить файл конфигурации : %s",err->message);
+#endif
+
+	buf = g_key_file_to_data(ini_file,&size,&err);
+	if(err != NULL){
+		GtkWidget * md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_CLOSE
+		                                           ,"Несмог создать дамп файла конфигурации!\n%s",err->message);
 		gtk_dialog_run(GTK_DIALOG(md_err));
 		gtk_widget_destroy(md_err);
 		g_error_free(err);
+		g_critical("%s",err->message);
 		return FAILURE;
 	}
-	/*TODO сделать запись в файл*/
-	err = NULL;
-	g_key_file_to_data (ini_file,&size,&err);/*записывает Ini файл в буффер*/
+
+	save_config_file(buf,size);
+
+	g_free(buf);
+
 	return SUCCESS;
 }
-#endif
 
 static int init_config(void)
 {
@@ -88,7 +134,7 @@ static int init_config(void)
 	GError * err = NULL;
 
 	ini_file = g_key_file_new();
-	rc = g_key_file_load_from_file(ini_file,STR_KEY_FILE_NAME,G_KEY_FILE_NONE,&err);
+	rc = g_key_file_load_from_file(ini_file,STR_KEY_FILE_NAME,G_KEY_FILE_KEEP_COMMENTS,&err);
 	if(rc == FALSE){
 		GtkWidget * md_err = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_OK
 		                                           ,"Нет файла конфигурации %s \n %s",STR_KEY_FILE_NAME,err->message);
@@ -100,8 +146,19 @@ static int init_config(void)
 	return SUCCESS;
 }
 
+static int flag_save_config = NOT_OK;
+
+int set_flag_save_config(void)
+{
+	flag_save_config = OK;
+	return flag_save_config;
+}
+
 static int deinit_config(void)
 {
+	if(flag_save_config == OK){
+		save_config();
+	}
 	g_key_file_free(ini_file);
 	ini_file = NULL;
 	return SUCCESS;
@@ -209,7 +266,7 @@ static int flush_logging(gpointer ud)
 		g_io_channel_unref(logging_channel);
 		logging_channel = NULL;
 	}
-	return TRUE;
+ 	return TRUE;
 }
 
 #define MAX_LOGGING_FILE        0x800000
@@ -306,6 +363,7 @@ static void unrealaze_window_main(GtkWidget * w,gpointer ud)
 
 static void destroy_window_main(GtkWidget * w,gpointer ud)
 {
+
 	deinit_control_device();
 	deinit_video();
 	deinit_db();

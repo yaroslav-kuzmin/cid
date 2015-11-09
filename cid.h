@@ -44,6 +44,8 @@
 #ifndef CID_H
 #define CID_H
 
+int set_flag_save_config(void);
+
 extern GtkWidget * win_main;
 extern GtkAccelGroup * accgro_main;
 

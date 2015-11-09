@@ -642,7 +642,7 @@ static int load_config(void)
 	err = NULL;
 	video_stream_0.name = g_key_file_get_string (ini_file,STR_VIDEO_KEY,STR_STREAM_0_KEY,&err);
 	if(video_stream_0.name == NULL){
-		g_critical("В секции %s нет ключа %s : %s!",STR_VIDEO_KEY,STR_STREAM_0_KEY,err->message);
+		g_critical("В секции %s нет ключа %s!",STR_VIDEO_KEY,STR_STREAM_0_KEY);
 		g_error_free(err);
 	}
 	else{
@@ -651,7 +651,7 @@ static int load_config(void)
 	err = NULL;
 	video_stream_1.name = g_key_file_get_string (ini_file,STR_VIDEO_KEY,STR_STREAM_1_KEY,&err);
 	if(video_stream_1.name == NULL){
-		g_critical("В секции %s нет ключа %s : %s!",STR_VIDEO_KEY,STR_STREAM_1_KEY,err->message);
+		g_critical("В секции %s нет ключа %s!",STR_VIDEO_KEY,STR_STREAM_1_KEY);
 		g_error_free(err);
 	}
 	else{
@@ -661,7 +661,7 @@ static int load_config(void)
 	err = NULL;
 	FPS = g_key_file_get_integer(ini_file,STR_VIDEO_KEY,STR_FPS_KEY,&err);
 	if(FPS == 0){
-		g_critical("В секции %s нет ключа %s : %s!",STR_VIDEO_KEY,STR_FPS_KEY,err->message);
+		g_critical("В секции %s нет ключа %s!",STR_VIDEO_KEY,STR_FPS_KEY);
 		g_error_free(err);
 	}
 	else{

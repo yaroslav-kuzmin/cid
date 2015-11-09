@@ -935,14 +935,12 @@ static int load_config(void)
 {
 	int rc;
 	GError * err = NULL;
-
 	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_TIMEOUT_CHECK_PORT,&err);
 	if(err != NULL){
-		g_critical("В секции %s нет ключа %s : %s!",STR_GLOBAL_KEY,STR_TIMEOUT_CHECK_PORT,err->message);
+		g_critical("В секции %s нет ключа %s",STR_GLOBAL_KEY,STR_TIMEOUT_CHECK_PORT);
 		g_error_free(err);
 		return FAILURE;
 	}
-
 	if( ((rc < MIN_TIMEOUT_CHECK_PORT) || (rc > MAX_TIMEOUT_CHECK_PORT)) ){
 		rc = DEFAULT_TIMEOU_CHECK_PORT;
 	}

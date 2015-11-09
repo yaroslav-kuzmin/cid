@@ -799,6 +799,8 @@ static void unrealize_menubar_main(GtkWidget * w,gpointer ud)
 
 static void activate_menu_exit(GtkMenuItem * im,gpointer d)
 {
+
+	select_frame(INFO_FRAME);
 	gtk_widget_destroy(win_main);
 }
 
@@ -1441,10 +1443,11 @@ static void clicked_button_manual_laser(GtkButton * b,gpointer d)
 	}
 }
 
+static uint16_t valve_ui = MIN_VALVE_IN_TIC;
+
 static gboolean change_value_scale_valve(GtkRange * r,GtkScrollType s,gdouble v,gpointer ud)
 {
 	double valve_d = v;
-	uint16_t valve_ui;
 
 	valve_d = v / STEP_VALVE_IN_TIC;
 	valve_d = (int)valve_d;
@@ -1534,6 +1537,7 @@ static int check_registers_manual_mode(gpointer ud)
 	return TRUE;
 }
 
+static uint16_t valve_ui_old = MIN_VALVE_IN_TIC;
 static void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 {
 	int rc;
@@ -1541,17 +1545,26 @@ static void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 	if(rc == SUCCESS){
 		command_manual_null();
 		command_speed_vertical(DEFAULT_SPEED_VERTICAL_MANUAL_MODE);
+		valve_ui_old = valve_ui;
+		command_valve(valve_ui);
 		amount_manual_mode = 0;
 		manual_mode_start = OK;
 		g_timeout_add(timeout_manual_mode,check_registers_manual_mode,NULL);
 	}
 }
 
+static char STR_VALVE_TIC[] = "valve";
+
 static void hide_frame_manual_mode(GtkWidget * w,gpointer ud)
 {
-	manual_mode_start = NOT_OK;
+ 	manual_mode_start = NOT_OK;
 	command_manual_null();
 	command_null_mode();
+	command_valve(MIN_VALVE_IN_TIC);
+	if(valve_ui != valve_ui_old){
+		g_key_file_set_integer(ini_file,STR_GLOBAL_KEY,STR_VALVE_TIC,valve_ui);
+		set_flag_save_config();
+	}
 }
 
 static GtkWidget * create_scale_valve(void)
@@ -1573,13 +1586,12 @@ static GtkWidget * create_scale_valve(void)
 	set_size_font(lab_valve,SIZE_FONT_MINI);
 
 	sca_valve = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL
-	                                    ,MIN_ANGLE_IN_TIC,MAX_VALVE_IN_TIC,STEP_VALVE_IN_TIC);
+	                                    ,MIN_VALVE_IN_TIC,MAX_VALVE_IN_TIC,STEP_VALVE_IN_TIC);
 	gtk_scale_set_digits(GTK_SCALE(sca_valve),0); /*колличество знаков после запятой*/
 	gtk_scale_set_value_pos(GTK_SCALE(sca_valve),GTK_POS_RIGHT);
 	layout_widget(sca_valve,GTK_ALIGN_FILL,GTK_ALIGN_FILL,FALSE,TRUE);
 	gtk_range_set_inverted(GTK_RANGE(sca_valve),TRUE);
-	/*gtk_widget_override_background_color(sca_valve,GTK_STATE_FLAG_NORMAL,&color_red);*/
-	/*gtk_widget_override_color(sca_valve,GTK_STATE_FLAG_NORMAL,&color_green);*/
+	gtk_range_set_value(GTK_RANGE(sca_valve),valve_ui);
 	g_signal_connect(sca_valve,"change-value",G_CALLBACK(change_value_scale_valve),NULL);
 
 	gtk_container_add(GTK_CONTAINER(fra_valve),box_valve);
@@ -1593,6 +1605,7 @@ static GtkWidget * create_scale_valve(void)
 
 	return fra_valve;
 }
+
 static GtkWidget * create_button_mode_manual(void)
 {
 	GtkWidget * fra_mode;
@@ -2586,7 +2599,7 @@ static int load_config(void)
 
 	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,&err);
 	if(err != NULL){
-		g_critical("В секции %s нет ключа %s : %s!",STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,err->message);
+		g_critical("В секции %s нет ключа %s!",STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET);
 		g_error_free(err);
 	}
 	else{
@@ -2599,7 +2612,7 @@ static int load_config(void)
 	err = NULL;
 	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_TIMEOUT_AUTO_MODE,&err);
 	if(err != NULL){
-		g_critical("В секции %s нет ключа %s : %s!",STR_GLOBAL_KEY,STR_TIMEOUT_AUTO_MODE,err->message);
+		g_critical("В секции %s нет ключа %s!",STR_GLOBAL_KEY,STR_TIMEOUT_AUTO_MODE);
 		g_error_free(err);
 	}
 	else{
@@ -2612,7 +2625,7 @@ static int load_config(void)
 	err = NULL;
 	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_TIMEOUT_MANUAL_MODE,&err);
 	if(err != NULL){
-		g_critical("В секции %s нет ключа %s : %s!",STR_GLOBAL_KEY,STR_TIMEOUT_MANUAL_MODE,err->message);
+		g_critical("В секции %s нет ключа %s!",STR_GLOBAL_KEY,STR_TIMEOUT_MANUAL_MODE);
 		g_error_free(err);
 	}
 	else{
@@ -2625,7 +2638,7 @@ static int load_config(void)
 	err = NULL;
 	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_TIMEOUT_CONFIG_MODE,&err);
 	if(err != NULL){
-		g_critical("В секции %s нет ключа %s : %s!",STR_GLOBAL_KEY,STR_TIMEOUT_CONFIG_MODE,err->message);
+		g_critical("В секции %s нет ключа %s!",STR_GLOBAL_KEY,STR_TIMEOUT_CONFIG_MODE);
 		g_error_free(err);
 	}
 	else{
@@ -2633,6 +2646,19 @@ static int load_config(void)
 			rc = DEFAULT_TIMEOUT_CHECK;
 		}
 		timeout_config_mode = rc;
+	}
+
+	err = NULL;
+	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_VALVE_TIC,&err);
+	if(err != NULL){
+		g_critical("В секции %s нет ключа %s!",STR_GLOBAL_KEY,STR_VALVE_TIC);
+		g_error_free(err);
+	}
+	else{
+		if( ((rc < MIN_VALVE_IN_TIC) || (rc > MAX_VALVE_IN_TIC)) ){
+			rc = MIN_VALVE_IN_TIC;
+		}
+		valve_ui = rc;
 	}
 
 	return SUCCESS;
