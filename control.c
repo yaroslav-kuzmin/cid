@@ -544,11 +544,11 @@ typedef union _status_console_u status_console_u;
 
 static status_console_u status_console = {0};
 
-static int command_console(uint16_t * val)
+int command_console(void)
 {
 	uint16_t * rc = read_register(reg_D114,1);
 	if(rc != NULL){
-		*val = rc[0];
+		status_console.value = rc[0];
 		return SUCCESS;
 	}
 	return FAILURE;
@@ -556,73 +556,41 @@ static int command_console(uint16_t * val)
 
 int command_console_up(void)
 {
-	int rc = command_console(&status_console.value);
-	if(rc == FAILURE){
-		return -1;
-	}
 	return status_console.bit.up;
 }
 
 int command_console_down(void)
 {
-	int rc = command_console(&status_console.value);
-	if(rc == FAILURE){
-		return -1;
-	}
 	return status_console.bit.down;
 }
 
 int command_console_left(void)
 {
-	int rc = command_console(&status_console.value);
-	if(rc == FAILURE){
-		return -1;
-	}
 	return status_console.bit.left;
 }
 
 int command_console_right(void)
 {
-	int rc = command_console(&status_console.value);
-	if(rc == FAILURE){
-		return -1;
-	}
 	return status_console.bit.right;
 }
 
 int command_console_pause(void)
 {
-	int rc = command_console(&status_console.value);
-	if(rc == FAILURE){
-		return -1;
-	}
 	return status_console.bit.pause;
 }
 
 int command_console_stop(void)
 {
-	int rc = command_console(&status_console.value);
-	if(rc == FAILURE){
-		return -1;
-	}
 	return status_console.bit.stop;
 }
 
 int command_console_on_valve(void)
 {
-	int rc = command_console(&status_console.value);
-	if(rc == FAILURE){
-		return -1;
-	}
 	return status_console.bit.on_valve;
 }
 
 int command_console_off_valve(void)
 {
-	int rc = command_console(&status_console.value);
-	if(rc == FAILURE){
-		return -1;
-	}
 	return status_console.bit.off_valve;
 }
 

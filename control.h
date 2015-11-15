@@ -77,6 +77,7 @@ int command_angle(uint16_t * val);
 int command_pressure(uint16_t * val);
 int command_sensors(uint16_t * val);
 int command_input(uint16_t * val);
+int command_console(void);
 int command_console_up(void);
 int command_console_down(void);
 int command_console_left(void);

@@ -1047,6 +1047,10 @@ static int check_registers_auto_mode(gpointer ud)
 	if(rc != SUCCESS){
 		return FALSE;
 	}
+	rc = command_console();
+	if(rc != SUCCESS){
+		return FALSE;
+	}
 
 	amount_auto_mode += timeout_auto_mode;
 	rc = amount_auto_mode / MILLISECOND;
@@ -1501,6 +1505,10 @@ static int check_registers_manual_mode(gpointer ud)
 		return FALSE;
 	}
 	rc = command_input(&input);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
+	rc = command_console();
 	if(rc != SUCCESS){
 		return FALSE;
 	}
@@ -2513,8 +2521,11 @@ static int check_registers_config_mode(gpointer ud)
 	if(config_mode != OK){
 		return FALSE;
 	}
-
 	rc = command_angle(&angle);
+	if(rc != SUCCESS){
+		return FALSE;
+	}
+	rc = command_console();
 	if(rc != SUCCESS){
 		return FALSE;
 	}
