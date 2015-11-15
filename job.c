@@ -1021,7 +1021,6 @@ static int check_registers_auto_mode(gpointer ud)
 	uint16_t pressure;
 	uint16_t sensors;
 	uint16_t input;
-	uint16_t console;
 	int hour;
 	int minut;
 	int second;
@@ -1045,10 +1044,6 @@ static int check_registers_auto_mode(gpointer ud)
 		return FALSE;
 	}
 	rc = command_input(&input);
-	if(rc != SUCCESS){
-		return FALSE;
-	}
-	rc = command_console(&console);
 	if(rc != SUCCESS){
 		return FALSE;
 	}
@@ -1486,7 +1481,6 @@ static int check_registers_manual_mode(gpointer ud)
 	uint16_t pressure;
 	uint16_t sensors;
 	uint16_t input;
-	uint16_t console;
 	int hour;
 	int minut;
 	int second;
@@ -1507,10 +1501,6 @@ static int check_registers_manual_mode(gpointer ud)
 		return FALSE;
 	}
 	rc = command_input(&input);
-	if(rc != SUCCESS){
-		return FALSE;
-	}
-	rc = command_console(&console);
 	if(rc != SUCCESS){
 		return FALSE;
 	}

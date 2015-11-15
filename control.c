@@ -522,8 +522,29 @@ int command_input(uint16_t * val)
 }
 
 static int reg_D114 = 0x1072;
+struct _status_console_s
+{
+	uint16_t up:1;
+	uint16_t down:1;
+	uint16_t left:1;
+	uint16_t right:1;
+	uint16_t pause:1;
+	uint16_t stop:1;
+	uint16_t on_valve:1;
+	uint16_t off_valve:1;
+};
+typedef struct _status_console_s status_console_s;
 
-int command_console(uint16_t * val)
+union _status_console_u
+{
+	uint16_t value;
+	status_console_s bit;
+};
+typedef union _status_console_u status_console_u;
+
+static status_console_u status_console = {0};
+
+static int command_console(uint16_t * val)
 {
 	uint16_t * rc = read_register(reg_D114,1);
 	if(rc != NULL){
@@ -531,6 +552,78 @@ int command_console(uint16_t * val)
 		return SUCCESS;
 	}
 	return FAILURE;
+}
+
+int command_console_up(void)
+{
+	int rc = command_console(&status_console.value);
+	if(rc == FAILURE){
+		return -1;
+	}
+	return status_console.bit.up;
+}
+
+int command_console_down(void)
+{
+	int rc = command_console(&status_console.value);
+	if(rc == FAILURE){
+		return -1;
+	}
+	return status_console.bit.down;
+}
+
+int command_console_left(void)
+{
+	int rc = command_console(&status_console.value);
+	if(rc == FAILURE){
+		return -1;
+	}
+	return status_console.bit.left;
+}
+
+int command_console_right(void)
+{
+	int rc = command_console(&status_console.value);
+	if(rc == FAILURE){
+		return -1;
+	}
+	return status_console.bit.right;
+}
+
+int command_console_pause(void)
+{
+	int rc = command_console(&status_console.value);
+	if(rc == FAILURE){
+		return -1;
+	}
+	return status_console.bit.pause;
+}
+
+int command_console_stop(void)
+{
+	int rc = command_console(&status_console.value);
+	if(rc == FAILURE){
+		return -1;
+	}
+	return status_console.bit.stop;
+}
+
+int command_console_on_valve(void)
+{
+	int rc = command_console(&status_console.value);
+	if(rc == FAILURE){
+		return -1;
+	}
+	return status_console.bit.on_valve;
+}
+
+int command_console_off_valve(void)
+{
+	int rc = command_console(&status_console.value);
+	if(rc == FAILURE){
+		return -1;
+	}
+	return status_console.bit.off_valve;
 }
 
 static int reg_D115 = 0x1073;
