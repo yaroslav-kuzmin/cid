@@ -1515,12 +1515,12 @@ static GtkWidget * but_manual_mode_pump;
 static unsigned long int amount_manual_mode = 0;
 static unsigned long int timeout_manual_mode = DEFAULT_TIMEOUT_CHECK;
 
-static console_up_old = 0;
-static console_down_old = 0;
-static console_left_old = 0;
-static console_right_old = 0;
-static console_on_valve_old = 0;
-static console_off_valve_old = 0;
+static int console_up_old = 0;
+static int console_down_old = 0;
+static int console_left_old = 0;
+static int console_right_old = 0;
+static int console_on_valve_old = 0;
+static int console_off_valve_old = 0;
 
 static int check_registers_manual_mode(gpointer ud)
 {
@@ -1556,7 +1556,8 @@ static int check_registers_manual_mode(gpointer ud)
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	if(console_up_old != command_console_up()){
+
+	if( console_up_old != command_console_up()){
 		console_up_old = command_console_up();
 		if(console_up_old){
 			press_button_manual_up(GTK_BUTTON(but_manual_mode_up),NULL,NULL);
@@ -1592,20 +1593,22 @@ static int check_registers_manual_mode(gpointer ud)
 			release_button_manual_right(GTK_BUTTON(but_manual_mode_right),NULL,NULL);
 		}
 	}
-#if 0
+
 	if(console_on_valve_old != command_console_on_valve()){
 		console_on_valve_old = command_console_on_valve();
 		if(console_on_valve_old){
-			clicked_button_manual_pump(GTK_BUTTON(but_manual_mode_pump),&console_on_valve_old);
+			int bit = 1;
+			clicked_button_manual_pump(GTK_BUTTON(but_manual_mode_pump),&bit);
 		}
 	}
 	if(console_off_valve_old != command_console_off_valve()){
 		console_off_valve_old = command_console_off_valve();
 		if(console_off_valve_old){
-			clicked_button_manual_pump(GTK_BUTTON(but_manual_mode_pump),&console_on_valve_old);
+			int bit = 0;
+			clicked_button_manual_pump(GTK_BUTTON(but_manual_mode_pump),&bit);
 		}
 	}
-#endif
+
 	amount_manual_mode += timeout_manual_mode;
 	rc = amount_manual_mode / MILLISECOND;
 	if(rc >= MAX_TIME_SECOND){
@@ -1639,6 +1642,12 @@ static void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 		command_valve(valve_ui);
 		amount_manual_mode = 0;
 		manual_mode_start = OK;
+		console_up_old = 0;
+		console_down_old = 0;
+		console_left_old = 0;
+		console_right_old = 0;
+		console_on_valve_old = 0;
+		console_off_valve_old = 0;
 		g_timeout_add(timeout_manual_mode,check_registers_manual_mode,NULL);
 	}
 }
@@ -2541,12 +2550,13 @@ static GtkWidget * create_entry_job_save(void)
 
 static GtkWidget * lab_angle_save_job;
 
+static GtkWidget * but_save_job_up;
+static GtkWidget * but_save_job_down;
+
 static GtkWidget * create_button_job_save(void)
 {
 	GtkWidget * fra_button;
 	GtkWidget * gri_button;
-	GtkWidget * but_up;
-	GtkWidget * but_down;
 	GtkWidget * lab_angle;
 	GtkWidget * fra_scale;
 
@@ -2560,19 +2570,19 @@ static GtkWidget * create_button_job_save(void)
 	gtk_grid_set_row_spacing(GTK_GRID(gri_button),10);
 	gtk_grid_set_column_spacing(GTK_GRID(gri_button),10);
 
-	but_up = gtk_button_new_with_label(STR_BUTTON_MANUAL_UP);
-	layout_widget(but_up,GTK_ALIGN_CENTER,GTK_ALIGN_CENTER,TRUE,TRUE);
-	set_size_font(gtk_bin_get_child(GTK_BIN(but_up)),SIZE_FONT_MEDIUM);
-	set_notactive_color(GTK_BUTTON(but_up));
-	g_signal_connect(but_up,"button-press-event",G_CALLBACK(press_button_manual_up),NULL);
-	g_signal_connect(but_up,"button-release-event",G_CALLBACK(release_button_manual_up),NULL);
+	but_save_job_up = gtk_button_new_with_label(STR_BUTTON_MANUAL_UP);
+	layout_widget(but_save_job_up,GTK_ALIGN_CENTER,GTK_ALIGN_CENTER,TRUE,TRUE);
+	set_size_font(gtk_bin_get_child(GTK_BIN(but_save_job_up)),SIZE_FONT_MEDIUM);
+	set_notactive_color(GTK_BUTTON(but_save_job_up));
+	g_signal_connect(but_save_job_up,"button-press-event",G_CALLBACK(press_button_manual_up),NULL);
+	g_signal_connect(but_save_job_up,"button-release-event",G_CALLBACK(release_button_manual_up),NULL);
 
-	but_down = gtk_button_new_with_label(STR_BUTTON_MANUAL_DOWN);
-	layout_widget(but_down,GTK_ALIGN_CENTER,GTK_ALIGN_CENTER,TRUE,TRUE);
-	set_size_font(gtk_bin_get_child(GTK_BIN(but_down)),SIZE_FONT_MEDIUM);
-	set_notactive_color(GTK_BUTTON(but_down));
-	g_signal_connect(but_down,"button-press-event",G_CALLBACK(press_button_manual_down),NULL);
-	g_signal_connect(but_down,"button-release-event",G_CALLBACK(release_button_manual_down),NULL);
+	but_save_job_down = gtk_button_new_with_label(STR_BUTTON_MANUAL_DOWN);
+	layout_widget(but_save_job_down,GTK_ALIGN_CENTER,GTK_ALIGN_CENTER,TRUE,TRUE);
+	set_size_font(gtk_bin_get_child(GTK_BIN(but_save_job_down)),SIZE_FONT_MEDIUM);
+	set_notactive_color(GTK_BUTTON(but_save_job_down));
+	g_signal_connect(but_save_job_down,"button-press-event",G_CALLBACK(press_button_manual_down),NULL);
+	g_signal_connect(but_save_job_down,"button-release-event",G_CALLBACK(release_button_manual_down),NULL);
 
 	lab_angle = gtk_label_new(STR_ANGLE);
 	set_size_font(lab_angle,SIZE_FONT_SMALL);
@@ -2583,8 +2593,8 @@ static GtkWidget * create_button_job_save(void)
 	fra_scale = create_scale_vertical_speed(DEFAULT_SPEED_VERTICAL_SAVE_JOB);
 
 	gtk_container_add(GTK_CONTAINER(fra_button),gri_button);
-	gtk_grid_attach(GTK_GRID(gri_button),but_up            ,1,0,1,1);
-	gtk_grid_attach(GTK_GRID(gri_button),but_down          ,1,1,1,1);
+	gtk_grid_attach(GTK_GRID(gri_button),but_save_job_up   ,1,0,1,1);
+	gtk_grid_attach(GTK_GRID(gri_button),but_save_job_down ,1,1,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),lab_angle         ,0,2,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),lab_angle_save_job,1,2,1,1);
 	gtk_grid_attach(GTK_GRID(gri_button),fra_scale         ,2,0,1,3);
@@ -2592,8 +2602,8 @@ static GtkWidget * create_button_job_save(void)
 	gtk_widget_show(fra_scale);
 	gtk_widget_show(lab_angle_save_job);
 	gtk_widget_show(lab_angle);
-	gtk_widget_show(but_down);
-	gtk_widget_show(but_up);
+	gtk_widget_show(but_save_job_down);
+	gtk_widget_show(but_save_job_up);
 	gtk_widget_show(gri_button);
 	gtk_widget_show(fra_button);
 	return fra_button;
@@ -2618,6 +2628,24 @@ static int check_registers_config_mode(gpointer ud)
 		return FALSE;
 	}
 
+	if( console_up_old != command_console_up()){
+		console_up_old = command_console_up();
+		if(console_up_old){
+			press_button_manual_up(GTK_BUTTON(but_save_job_up),NULL,NULL);
+		}
+		else{
+			release_button_manual_up(GTK_BUTTON(but_save_job_up),NULL,NULL);
+		}
+	}
+	if(console_down_old != command_console_down()){
+		console_down_old = command_console_down();
+		if(console_down_old){
+			press_button_manual_down(GTK_BUTTON(but_save_job_down),NULL,NULL);
+		}
+		else{
+			release_button_manual_down(GTK_BUTTON(but_save_job_down),NULL,NULL);
+		}
+	}
 	g_string_printf(temp_string,FORMAT_ANGLE,PRINTF_ANGLE(angle));
 	gtk_label_set_text(GTK_LABEL(lab_angle_save_job),temp_string->str);
 	return TRUE;
@@ -2635,6 +2663,8 @@ static void show_frame_save_job(GtkWidget * w,gpointer ud)
 		value_uprise = ANGLE_NULL;
 		value_lowering = ANGLE_NULL;
 		config_mode = OK;
+		console_up_old = 0;
+		console_down_old = 0;
 		g_timeout_add(timeout_config_mode,check_registers_config_mode,NULL);
 	}
 }

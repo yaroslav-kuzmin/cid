@@ -549,6 +549,20 @@ int command_console(void)
 	uint16_t * rc = read_register(reg_D114,1);
 	if(rc != NULL){
 		status_console.value = rc[0];
+		if( (status_console.bit.up) && (status_console.bit.down) ){
+			status_console.bit.up = 0;
+			status_console.bit.down = 0;
+		}
+		if( (status_console.bit.left) && (status_console.bit.right)){
+			status_console.bit.left = 0;
+			status_console.bit.right = 0;
+		}
+		if( (status_console.bit.pause) && (status_console.bit.stop)){
+			status_console.bit.pause = 0;
+		}
+		if( (status_console.bit.on_valve) && (status_console.bit.off_valve)){
+			status_console.bit.on_valve = 0;
+		}
 		return SUCCESS;
 	}
 	return FAILURE;
