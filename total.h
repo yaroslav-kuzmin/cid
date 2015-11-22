@@ -103,6 +103,10 @@ extern GString * temp_string;
 #define MIN_ANGLE_IN_TIC                   0
 #define MAX_ANGLE_IN_TIC                   700
 
+#define DEFAULT_PRESSURE_IN_TIC            322
+#define MIN_PRESSURE_IN_TIC                0
+#define MAX_PRESSURE_IN_TIC                1000
+
 #define DEFAULT_TIMEOUT_CHECK              1000
 #define MIN_TIMEOUT_CHECK                  50
 #define MAX_TIMEOUT_CHECK                  3000

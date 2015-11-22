@@ -56,7 +56,12 @@
 /*****************************************************************************/
 /* Общие переменые                                                           */
 /*****************************************************************************/
-#define DEFAULT_PRESSURE               2
+#define MIN_RATE_PRESSURE              0.005
+#define MAX_RATE_PRESSURE              0.007
+#define DEFAULT_RATE_PRESSURE          0.0062
+double rate_pressure = DEFAULT_RATE_PRESSURE;
+#define PRINTF_PRESSURE(p)             ((double)(p)*rate_pressure)
+#define FORMAT_PRESSURE                "%.1f"
 
 #define MAX_TIME_SECOND                359999
 /*максимально часов  99*/
@@ -120,7 +125,7 @@ typedef struct _job_s job_s;
 struct _job_s
 {
 	GString * name;
-	int pressure;
+	uint16_t pressure;
 	unsigned int time;
 	int uprise;
 	int lowering;
@@ -218,8 +223,8 @@ static int fill_list_job_db(void)
 			str = (char *)sqlite3_column_text(query,NUMBER_NAME_COLUMN);
 			job->name = g_string_new(str);
 			job->pressure = sqlite3_column_int64(query,NUMBER_PRESSURE_COLUMN);
-			if(job->pressure != DEFAULT_PRESSURE){
-				job->pressure = DEFAULT_PRESSURE;
+			if( (job->pressure < MIN_PRESSURE_IN_TIC) || (job->pressure > MAX_PRESSURE_IN_TIC)){
+				job->pressure = DEFAULT_PRESSURE_IN_TIC;
 			}
 			job->time = sqlite3_column_int64(query,NUMBER_TIME_COLUMN);
 			if(job->time > MAX_TIME_SECOND){
@@ -294,6 +299,7 @@ static int insert_job_db(const char * name,const char *pressure,const char * tim
 	job_s * pj;
 	char * sql_error;
 	int rc;
+	double d;
 
 #if 0
 	char * str = NULL;
@@ -313,7 +319,11 @@ static int insert_job_db(const char * name,const char *pressure,const char * tim
 	}
 	pj = g_slice_alloc0(sizeof(job_s));
 	pj->name = g_string_new(name);
-	pj->pressure = g_ascii_strtoll(pressure,NULL,10);
+
+	d = g_strtod(pressure,NULL);
+	d /= rate_pressure;
+	pj->pressure = (uint16_t)d;
+
 	pj->time = str_to_time_second(time);
 	pj->uprise = uprise;
 	pj->lowering = lowering;
@@ -873,7 +883,7 @@ GtkWidget * create_menu_main(void)
 static char STR_INFO[] = "РАБОТА";
 static char STR_NOT_DEVICE[] = "Загрузите информацию о работе";
 static char STR_PRESSURE[] =         "Рабочие давление,  атм";
-static char STR_PRESSURE_DEFAULT[] = "0";
+static char STR_PRESSURE_DEFAULT[] = "0,0";
 static char STR_TIME_JOB[] =         "Время работы";
 static char STR_TIME_JOB_DEFAULT[] = "00:00:00";
 static char STR_UPRISE_ANGEL[] =     "Угол подъема,  градусов";
@@ -897,7 +907,7 @@ static int set_current_value_info(void)
 	}
 	else{
 		gtk_label_set_text(GTK_LABEL(lab_info_name_job),current_job->name->str);
-		g_string_printf(temp_string,"%d",current_job->pressure);
+		g_string_printf(temp_string,FORMAT_PRESSURE,PRINTF_PRESSURE(current_job->pressure));
 		gtk_label_set_text(GTK_LABEL(lab_info_pressure),temp_string->str);
 		g_string_printf(temp_string,"%02d:%02d:%02d"
 		               ,get_hour_in_second(current_job->time)
@@ -1038,35 +1048,35 @@ static int check_registers_auto_mode(gpointer ud)
 	if(auto_mode_pause == OK){
 		return FALSE;
 	}
-	rc = command_angle(&angle);
+	rc = info_angle(&angle);
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = command_pressure(&pressure);
+	rc = info_pressure(&pressure);
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = command_sensors(&sensors);
+	rc = info_sensors(&sensors);
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = command_input(&input);
+	rc = info_input(&input);
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = command_console();
+	rc = info_console();
 	if(rc != SUCCESS){
 		return FALSE;
 	}
 
-	if(console_pause_old !=  command_console_pause()){
+	if(console_pause_old !=  info_console_pause()){
 		clicked_button_auto_pause(GTK_BUTTON(but_auto_mode_pause),NULL);
-		console_pause_old = command_console_pause();
+		console_pause_old = info_console_pause();
 	}
 
-	if(console_stop_old != command_console_stop()){
+	if(console_stop_old != info_console_stop()){
 		clicked_button_auto_stop(GTK_BUTTON(but_auto_mode_stop),NULL);
-		console_stop_old = command_console_stop();
+		console_stop_old = info_console_stop();
 	}
 
 	amount_auto_mode += timeout_auto_mode;
@@ -1083,7 +1093,7 @@ static int check_registers_auto_mode(gpointer ud)
 	minut = (rc - (hour*60*60))/60;
 	second = (rc - (hour*60*60) - (minut*60));
 
-	g_string_printf(temp_string,"%d",pressure);
+	g_string_printf(temp_string,FORMAT_PRESSURE,PRINTF_PRESSURE(pressure));
 	gtk_label_set_text(GTK_LABEL(label_auto_mode.pressure),temp_string->str);
 
 	g_string_printf(temp_string,"%02d:%02d:%02d",hour,minut,second);
@@ -1161,7 +1171,7 @@ static int set_preset_value_auto_mode(void)
 		return FAILURE;
 	}
 	gtk_label_set_text(GTK_LABEL(lab_auto_mode_name_job),current_job->name->str);
-	g_string_printf(temp_string,"%d",current_job->pressure);
+	g_string_printf(temp_string,FORMAT_PRESSURE,PRINTF_PRESSURE(current_job->pressure));
 	gtk_label_set_text(GTK_LABEL(lab_auto_mode_pressure),temp_string->str);
 	g_string_printf(temp_string,"%02d:%02d:%02d"
 	               ,get_hour_in_second(current_job->time)
@@ -1277,6 +1287,7 @@ static void show_frame_auto_mode(GtkWidget * w,gpointer ud)
 
 	rc = command_auto_mode();
 	if(rc == SUCCESS){
+		command_pressure(current_job->pressure);
 		command_uprise_angle(current_job->uprise);
 		command_lowering_angle(current_job->lowering);
 		command_speed_vertical(DEFAULT_SPEED_VERTICAL_AUTO_MODE);
@@ -1536,29 +1547,29 @@ static int check_registers_manual_mode(gpointer ud)
 	if(manual_mode_start != OK){
 		return FALSE;
 	}
-	rc = command_angle(&angle);
+	rc = info_angle(&angle);
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = command_pressure(&pressure);
+	rc = info_pressure(&pressure);
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = command_sensors(&sensors);
+	rc = info_sensors(&sensors);
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = command_input(&input);
+	rc = info_input(&input);
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = command_console();
+	rc = info_console();
 	if(rc != SUCCESS){
 		return FALSE;
 	}
 
-	if( console_up_old != command_console_up()){
-		console_up_old = command_console_up();
+	if( console_up_old != info_console_up()){
+		console_up_old = info_console_up();
 		if(console_up_old){
 			press_button_manual_up(GTK_BUTTON(but_manual_mode_up),NULL,NULL);
 		}
@@ -1566,8 +1577,8 @@ static int check_registers_manual_mode(gpointer ud)
 			release_button_manual_up(GTK_BUTTON(but_manual_mode_up),NULL,NULL);
 		}
 	}
-	if(console_down_old != command_console_down()){
-		console_down_old = command_console_down();
+	if(console_down_old != info_console_down()){
+		console_down_old = info_console_down();
 		if(console_down_old){
 			press_button_manual_down(GTK_BUTTON(but_manual_mode_down),NULL,NULL);
 		}
@@ -1575,8 +1586,8 @@ static int check_registers_manual_mode(gpointer ud)
 			release_button_manual_down(GTK_BUTTON(but_manual_mode_down),NULL,NULL);
 		}
 	}
-	if(console_left_old != command_console_left()){
-		console_left_old = command_console_left();
+	if(console_left_old != info_console_left()){
+		console_left_old = info_console_left();
 		if(console_left_old){
 			press_button_manual_left(GTK_BUTTON(but_manual_mode_left),NULL,NULL);
 		}
@@ -1584,8 +1595,8 @@ static int check_registers_manual_mode(gpointer ud)
 			release_button_manual_left(GTK_BUTTON(but_manual_mode_left),NULL,NULL);
 		}
 	}
-	if(console_right_old != command_console_right()){
-		console_right_old = command_console_right();
+	if(console_right_old != info_console_right()){
+		console_right_old = info_console_right();
 		if(console_right_old){
 			press_button_manual_right(GTK_BUTTON(but_manual_mode_right),NULL,NULL);
 		}
@@ -1594,15 +1605,15 @@ static int check_registers_manual_mode(gpointer ud)
 		}
 	}
 
-	if(console_on_valve_old != command_console_on_valve()){
-		console_on_valve_old = command_console_on_valve();
+	if(console_on_valve_old != info_console_on_valve()){
+		console_on_valve_old = info_console_on_valve();
 		if(console_on_valve_old){
 			int bit = 1;
 			clicked_button_manual_pump(GTK_BUTTON(but_manual_mode_pump),&bit);
 		}
 	}
-	if(console_off_valve_old != command_console_off_valve()){
-		console_off_valve_old = command_console_off_valve();
+	if(console_off_valve_old != info_console_off_valve()){
+		console_off_valve_old = info_console_off_valve();
 		if(console_off_valve_old){
 			int bit = 0;
 			clicked_button_manual_pump(GTK_BUTTON(but_manual_mode_pump),&bit);
@@ -1618,7 +1629,7 @@ static int check_registers_manual_mode(gpointer ud)
 	minut = (rc - (hour*60*60))/60;
 	second = (rc - (hour*60*60) - (minut*60));
 
-	g_string_printf(temp_string,"%d",pressure);
+	g_string_printf(temp_string,FORMAT_PRESSURE,PRINTF_PRESSURE(pressure));
 	gtk_label_set_text(GTK_LABEL(label_manual_mode.pressure),temp_string->str);
 
 	g_string_printf(temp_string,"%02d:%02d:%02d",hour,minut,second);
@@ -1640,6 +1651,7 @@ static void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 		command_speed_vertical(DEFAULT_SPEED_VERTICAL_MANUAL_MODE);
 		valve_ui_old = valve_ui;
 		command_valve(valve_ui);
+		command_pressure(current_job->pressure);
 		amount_manual_mode = 0;
 		manual_mode_start = OK;
 		console_up_old = 0;
@@ -2061,7 +2073,7 @@ static int set_current_value_tree(void)
 		gtk_label_set_text(GTK_LABEL(lab_tree_lowering),STR_ANGLE_DEFAULT);
 	}
 	else{
-		g_string_printf(temp_string,"%d",current_job->pressure);
+		g_string_printf(temp_string,FORMAT_PRESSURE,PRINTF_PRESSURE(current_job->pressure));
 		gtk_label_set_text(GTK_LABEL(lab_tree_pressure),temp_string->str);
 		g_string_printf(temp_string,"%02d:%02d:%02d"
 		               ,get_hour_in_second(current_job->time)
@@ -2126,8 +2138,6 @@ static GtkWidget * create_info_load_tree(void)
 	gtk_grid_set_column_spacing(GTK_GRID(gri_info),10);
 	gtk_grid_set_column_homogeneous(GTK_GRID(gri_info),TRUE);
 	gtk_container_set_border_width(GTK_CONTAINER(gri_info),5);
-
-	/*gtk_grid_set_row_spacing(gri_info,10);*/
 
 	lab_pressure = gtk_label_new(STR_PRESSURE);
 	lab_tree_pressure = gtk_label_new(STR_PRESSURE_DEFAULT);
@@ -2266,11 +2276,13 @@ static GtkEntryBuffer * entbuff_time;
 static GtkEntryBuffer * entbuff_uprise;
 static GtkEntryBuffer * entbuff_lowering;
 
-static int check_entry_pressure(const char * pressure)
+static uint16_t check_entry_pressure(const char * pressure)
 {
 	double d;
 	d = g_strtod(pressure,NULL);
-	if(d != DEFAULT_PRESSURE){
+	d /= rate_pressure;
+
+	if( (d < MIN_PRESSURE_IN_TIC) || (d > MAX_PRESSURE_IN_TIC) ){
 		return FAILURE;
 	}
 	return SUCCESS;
@@ -2322,7 +2334,7 @@ static void clicked_button_fix_uprise(GtkButton * b,gpointer d)
 	int rc;
 	uint16_t angle;
 
-	rc = command_angle(&angle);
+	rc = info_angle(&angle);
 	if(rc != SUCCESS){
 		return ;
 	}
@@ -2339,7 +2351,7 @@ static void clicked_button_fix_lowering(GtkButton * b,gpointer d)
 	int rc;
 	uint16_t angle;
 
-	rc = command_angle(&angle);
+	rc = info_angle(&angle);
 	if(rc != SUCCESS){
 		return ;
 	}
@@ -2478,12 +2490,12 @@ static GtkWidget * create_entry_job_save(void)
 	gtk_widget_set_hexpand(ent_name,TRUE);
 	gtk_widget_set_vexpand(ent_name,FALSE);
 
-	g_string_printf(temp_string,"%d",DEFAULT_PRESSURE);
+	g_string_printf(temp_string,FORMAT_PRESSURE,PRINTF_PRESSURE(DEFAULT_PRESSURE_IN_TIC));
 	entbuff_pressure = gtk_entry_buffer_new(temp_string->str,-1);
-	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_pressure),1);
+	gtk_entry_buffer_set_max_length(GTK_ENTRY_BUFFER(entbuff_pressure),3);
 	ent_pressure = gtk_entry_new_with_buffer(entbuff_pressure);
 	layout_widget(ent_pressure,GTK_ALIGN_START,GTK_ALIGN_START,FALSE,TRUE);
-	gtk_entry_set_width_chars(GTK_ENTRY(ent_pressure),1);
+	gtk_entry_set_width_chars(GTK_ENTRY(ent_pressure),3);
 
 
 	entbuff_time = gtk_entry_buffer_new(STR_TIME_JOB_DEFAULT,-1);
@@ -2619,17 +2631,17 @@ static int check_registers_config_mode(gpointer ud)
 	if(config_mode != OK){
 		return FALSE;
 	}
-	rc = command_angle(&angle);
+	rc = info_angle(&angle);
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = command_console();
+	rc = info_console();
 	if(rc != SUCCESS){
 		return FALSE;
 	}
 
-	if( console_up_old != command_console_up()){
-		console_up_old = command_console_up();
+	if( console_up_old != info_console_up()){
+		console_up_old = info_console_up();
 		if(console_up_old){
 			press_button_manual_up(GTK_BUTTON(but_save_job_up),NULL,NULL);
 		}
@@ -2637,8 +2649,8 @@ static int check_registers_config_mode(gpointer ud)
 			release_button_manual_up(GTK_BUTTON(but_save_job_up),NULL,NULL);
 		}
 	}
-	if(console_down_old != command_console_down()){
-		console_down_old = command_console_down();
+	if(console_down_old != info_console_down()){
+		console_down_old = info_console_down();
 		if(console_down_old){
 			press_button_manual_down(GTK_BUTTON(but_save_job_down),NULL,NULL);
 		}
@@ -2716,10 +2728,12 @@ static char STR_HORIZONTAL_OFFSET[] =   "horizontal";
 static char STR_TIMEOUT_AUTO_MODE[] =   "timeout_auto_mode";
 static char STR_TIMEOUT_MANUAL_MODE[] = "timeout_manual_mode";
 static char STR_TIMEOUT_CONFIG_MODE[] = "timeout_config_mode";
+static char STR_RATE_PRESSURE[] = "rate_pressure";
 
 static int load_config(void)
 {
 	int rc;
+	double d;
 	GError * err = NULL;
 
 	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,&err);
@@ -2784,6 +2798,19 @@ static int load_config(void)
 			rc = MIN_VALVE_IN_TIC;
 		}
 		valve_ui = rc;
+	}
+
+	err = NULL;
+	d = g_key_file_get_double(ini_file,STR_GLOBAL_KEY,STR_RATE_PRESSURE,&err);
+	if(err != NULL){
+		g_critical("В секции %s нет ключа %s!",STR_GLOBAL_KEY,STR_RATE_PRESSURE);
+		g_error_free(err);
+	}
+	else{
+		if( ((d < MIN_RATE_PRESSURE) || (d > MAX_RATE_PRESSURE)) ){
+			d = DEFAULT_RATE_PRESSURE;
+		}
+		rate_pressure = d;
 	}
 
 	return SUCCESS;

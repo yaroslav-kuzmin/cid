@@ -473,139 +473,14 @@ int command_lowering_angle(uint16_t angle)
 	return write_register(reg_D104,angle);
 }
 
-static int reg_D110 = 0x106E;
+static int reg_D105 = 0x1069;
 
-int command_angle(uint16_t * val)
+int command_pressure(uint16_t pressure)
 {
-	uint16_t * rc = read_register(reg_D110,1);
-	if(rc != NULL){
-		*val = rc[0];
-		return SUCCESS;
+	if( (pressure < MIN_PRESSURE_IN_TIC) || (pressure > MAX_PRESSURE_IN_TIC)){
+		pressure = DEFAULT_PRESSURE_IN_TIC;
 	}
-	return FAILURE;
-}
-
-static int reg_D111 = 0x106F;
-
-int command_pressure(uint16_t * val)
-{
-	uint16_t * rc = read_register(reg_D111,1);
-	if(rc != NULL){
-		*val = rc[0];
-		return SUCCESS;
-	}
-	return FAILURE;
-}
-
-static int reg_D112 = 0x1070;
-
-int command_sensors(uint16_t * val)
-{
-	uint16_t * rc = read_register(reg_D112,1);
-	if(rc != NULL){
-		*val = rc[0];
-		return SUCCESS;
-	}
-	return FAILURE;
-}
-
-static int reg_D113 = 0x1071;
-
-int command_input(uint16_t * val)
-{
-	uint16_t * rc = read_register(reg_D113,1);
-	if(rc != NULL){
-		*val = rc[0];
-		return SUCCESS;
-	}
-	return FAILURE;
-}
-
-static int reg_D114 = 0x1072;
-struct _status_console_s
-{
-	uint16_t up:1;
-	uint16_t down:1;
-	uint16_t left:1;
-	uint16_t right:1;
-	uint16_t pause:1;
-	uint16_t stop:1;
-	uint16_t on_valve:1;
-	uint16_t off_valve:1;
-};
-typedef struct _status_console_s status_console_s;
-
-union _status_console_u
-{
-	uint16_t value;
-	status_console_s bit;
-};
-typedef union _status_console_u status_console_u;
-
-static status_console_u status_console = {0};
-
-int command_console(void)
-{
-	uint16_t * rc = read_register(reg_D114,1);
-	if(rc != NULL){
-		status_console.value = rc[0];
-		if( (status_console.bit.up) && (status_console.bit.down) ){
-			status_console.bit.up = 0;
-			status_console.bit.down = 0;
-		}
-		if( (status_console.bit.left) && (status_console.bit.right)){
-			status_console.bit.left = 0;
-			status_console.bit.right = 0;
-		}
-		if( (status_console.bit.pause) && (status_console.bit.stop)){
-			status_console.bit.pause = 0;
-		}
-		if( (status_console.bit.on_valve) && (status_console.bit.off_valve)){
-			status_console.bit.on_valve = 0;
-		}
-		return SUCCESS;
-	}
-	return FAILURE;
-}
-
-int command_console_up(void)
-{
-	return status_console.bit.up;
-}
-
-int command_console_down(void)
-{
-	return status_console.bit.down;
-}
-
-int command_console_left(void)
-{
-	return status_console.bit.left;
-}
-
-int command_console_right(void)
-{
-	return status_console.bit.right;
-}
-
-int command_console_pause(void)
-{
-	return status_console.bit.pause;
-}
-
-int command_console_stop(void)
-{
-	return status_console.bit.stop;
-}
-
-int command_console_on_valve(void)
-{
-	return status_console.bit.on_valve;
-}
-
-int command_console_off_valve(void)
-{
-	return status_console.bit.off_valve;
+	return write_register(reg_D105,pressure);
 }
 
 static int reg_D115 = 0x1073;
@@ -650,6 +525,141 @@ int command_null_mode(void)
 	return SUCCESS;
 }
 
+static int reg_D110 = 0x106E;
+
+int info_angle(uint16_t * val)
+{
+	uint16_t * rc = read_register(reg_D110,1);
+	if(rc != NULL){
+		*val = rc[0];
+		return SUCCESS;
+	}
+	return FAILURE;
+}
+
+static int reg_D111 = 0x106F;
+
+int info_pressure(uint16_t * val)
+{
+	uint16_t * rc = read_register(reg_D111,1);
+	if(rc != NULL){
+		*val = rc[0];
+		return SUCCESS;
+	}
+	return FAILURE;
+}
+
+static int reg_D112 = 0x1070;
+
+int info_sensors(uint16_t * val)
+{
+	uint16_t * rc = read_register(reg_D112,1);
+	if(rc != NULL){
+		*val = rc[0];
+		return SUCCESS;
+	}
+	return FAILURE;
+}
+
+static int reg_D113 = 0x1071;
+
+int info_input(uint16_t * val)
+{
+	uint16_t * rc = read_register(reg_D113,1);
+	if(rc != NULL){
+		*val = rc[0];
+		return SUCCESS;
+	}
+	return FAILURE;
+}
+
+static int reg_D114 = 0x1072;
+struct _status_console_s
+{
+	uint16_t up:1;
+	uint16_t down:1;
+	uint16_t left:1;
+	uint16_t right:1;
+	uint16_t pause:1;
+	uint16_t stop:1;
+	uint16_t on_valve:1;
+	uint16_t off_valve:1;
+};
+typedef struct _status_console_s status_console_s;
+
+union _status_console_u
+{
+	uint16_t value;
+	status_console_s bit;
+};
+typedef union _status_console_u status_console_u;
+
+static status_console_u status_console = {0};
+
+int info_console(void)
+{
+	uint16_t * rc = read_register(reg_D114,1);
+	if(rc != NULL){
+		status_console.value = rc[0];
+		if( (status_console.bit.up) && (status_console.bit.down) ){
+			status_console.bit.up = 0;
+			status_console.bit.down = 0;
+		}
+		if( (status_console.bit.left) && (status_console.bit.right)){
+			status_console.bit.left = 0;
+			status_console.bit.right = 0;
+		}
+		if( (status_console.bit.pause) && (status_console.bit.stop)){
+			status_console.bit.pause = 0;
+		}
+		if( (status_console.bit.on_valve) && (status_console.bit.off_valve)){
+			status_console.bit.on_valve = 0;
+		}
+		return SUCCESS;
+	}
+	return FAILURE;
+}
+
+int info_console_up(void)
+{
+	return status_console.bit.up;
+}
+
+int info_console_down(void)
+{
+	return status_console.bit.down;
+}
+
+int info_console_left(void)
+{
+	return status_console.bit.left;
+}
+
+int info_console_right(void)
+{
+	return status_console.bit.right;
+}
+
+int info_console_pause(void)
+{
+	return status_console.bit.pause;
+}
+
+int info_console_stop(void)
+{
+	return status_console.bit.stop;
+}
+
+int info_console_on_valve(void)
+{
+	return status_console.bit.on_valve;
+}
+
+int info_console_off_valve(void)
+{
+	return status_console.bit.off_valve;
+}
+
 int check_connect_device(uint16_t * status)
 {
 	int rc;
@@ -660,10 +670,10 @@ int check_connect_device(uint16_t * status)
 	}
 
 	if(status == NULL){
-		rc = command_sensors(&temp);
+		rc = info_sensors(&temp);
 	}
 	else{
-		rc = command_sensors(status);
+		rc = info_sensors(status);
 	}
 	if(rc != SUCCESS){
 		return FAILURE;

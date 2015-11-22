@@ -73,23 +73,26 @@ int command_manual_laser_on(void);
 int command_manual_laser_off(void);
 int command_uprise_angle(int value);
 int command_lowering_angle(int value);
-int command_angle(uint16_t * val);
-int command_pressure(uint16_t * val);
-int command_sensors(uint16_t * val);
-int command_input(uint16_t * val);
-int command_console(void);
-int command_console_up(void);
-int command_console_down(void);
-int command_console_left(void);
-int command_console_right(void);
-int command_console_pause(void);
-int command_console_stop(void);
-int command_console_on_valve(void);
-int command_console_off_valve(void);
+int command_pressure(uint16_t pressure);
 int command_speed_vertical(uint16_t speed);
 int command_valve(uint16_t value);
 int command_horizontal(uint16_t value);
 int command_null_mode(void);
+
+int info_angle(uint16_t * val);
+int info_pressure(uint16_t * val);
+int info_sensors(uint16_t * val);
+int info_input(uint16_t * val);
+int info_console(void);
+int info_console_up(void);
+int info_console_down(void);
+int info_console_left(void);
+int info_console_right(void);
+int info_console_pause(void);
+int info_console_stop(void);
+int info_console_on_valve(void);
+int info_console_off_valve(void);
+
 
 #endif
 
