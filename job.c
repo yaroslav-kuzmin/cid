@@ -1284,7 +1284,10 @@ static uint16_t horizontal_offset = DEFAULT_HORIZONTAL_OFFSET;
 static void show_frame_auto_mode(GtkWidget * w,gpointer ud)
 {
 	int rc;
-
+	if(current_job == NULL){
+		g_critical("Не выбрана работа!");
+		return;
+	}
 	rc = command_auto_mode();
 	if(rc == SUCCESS){
 		command_pressure(current_job->pressure);
@@ -1294,6 +1297,8 @@ static void show_frame_auto_mode(GtkWidget * w,gpointer ud)
 		command_horizontal(horizontal_offset);
 		auto_mode_start = NOT_OK;
 		auto_mode_pause = NOT_OK;
+		console_pause_old = 0;
+		console_stop_old = 0;
 		set_preset_value_auto_mode();
 		set_current_value_auto_mode();
 	}
@@ -1645,6 +1650,7 @@ static uint16_t valve_ui_old = MIN_VALVE_IN_TIC;
 static void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 {
 	int rc;
+
 	rc = command_manual_mode();
 
 	if(rc == SUCCESS){
