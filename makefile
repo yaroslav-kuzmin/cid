@@ -55,8 +55,9 @@ DEPEND=$(patsubst %.c,$(DEPEND_CATALOG)%.d,$(SOURCE))
 
 CXX=gcc
 CFLAGS=-O -Wall -I. -I$(MODBUS_CATALOG) `pkg-config --cflags gtk+-3.0`
-LDFLAGS=-O -L$(MODBUS_CATALOG) -mwindows
-LIB=`pkg-config --libs gtk+-3.0` -lavformat -lavcodec -lswscale -lavutil -lsqlite3 
+LDFLAGS=-O -L$(MODBUS_CATALOG) -LC:\bin\lib -mwindows -static
+LIB=`pkg-config --libs gtk+-3.0` -lavformat -lavcodec -lswscale -lavutil 
+#-lsqlite3 
 
 RESOURCE_CATALOG=resource/
 RC=rcedit
