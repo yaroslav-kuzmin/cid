@@ -1646,12 +1646,12 @@ static void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 {
 	int rc;
 	rc = command_manual_mode();
+
 	if(rc == SUCCESS){
 		command_manual_null();
 		command_speed_vertical(DEFAULT_SPEED_VERTICAL_MANUAL_MODE);
 		valve_ui_old = valve_ui;
 		command_valve(valve_ui);
-		command_pressure(current_job->pressure);
 		amount_manual_mode = 0;
 		manual_mode_start = OK;
 		console_up_old = 0;
