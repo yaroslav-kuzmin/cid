@@ -79,10 +79,11 @@ int command_valve(uint16_t value);
 int command_horizontal(uint16_t value);
 int command_null_mode(void);
 
-int info_angle(uint16_t * val);
-int info_pressure(uint16_t * val);
-int info_sensors(uint16_t * val);
-int info_input(uint16_t * val);
+int command_info(void);
+uint16_t info_angle(void);
+uint16_t info_pressure(void);
+uint16_t info_sensors(void);
+uint16_t info_input(void);
 int info_console(void);
 int info_console_up(void);
 int info_console_down(void);

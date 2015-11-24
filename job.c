@@ -56,8 +56,8 @@
 /*****************************************************************************/
 /* Общие переменые                                                           */
 /*****************************************************************************/
-#define MIN_RATE_PRESSURE              0.005
-#define MAX_RATE_PRESSURE              0.007
+#define MIN_RATE_PRESSURE              0.0059
+#define MAX_RATE_PRESSURE              0.0069
 #define DEFAULT_RATE_PRESSURE          0.0062
 double rate_pressure = DEFAULT_RATE_PRESSURE;
 #define PRINTF_PRESSURE(p)             ((double)(p)*rate_pressure)
@@ -1036,8 +1036,8 @@ static int check_registers_auto_mode(gpointer ud)
 	long int rc;
 	uint16_t angle;
 	uint16_t pressure;
-	uint16_t sensors;
-	uint16_t input;
+	/*uint16_t sensors;*/
+	/*uint16_t input;*/
 	int hour;
 	int minut;
 	int second;
@@ -1048,26 +1048,15 @@ static int check_registers_auto_mode(gpointer ud)
 	if(auto_mode_pause == OK){
 		return FALSE;
 	}
-	rc = info_angle(&angle);
+	rc = command_info();
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = info_pressure(&pressure);
-	if(rc != SUCCESS){
-		return FALSE;
-	}
-	rc = info_sensors(&sensors);
-	if(rc != SUCCESS){
-		return FALSE;
-	}
-	rc = info_input(&input);
-	if(rc != SUCCESS){
-		return FALSE;
-	}
-	rc = info_console();
-	if(rc != SUCCESS){
-		return FALSE;
-	}
+
+	angle = info_angle();
+	pressure = info_pressure();
+	/*sensors = info_sensors();*/
+	/*input = info_input();*/
 
 	if(console_pause_old !=  info_console_pause()){
 		clicked_button_auto_pause(GTK_BUTTON(but_auto_mode_pause),NULL);
@@ -1543,8 +1532,8 @@ static int check_registers_manual_mode(gpointer ud)
 	long int rc;
 	uint16_t angle;
 	uint16_t pressure;
-	uint16_t sensors;
-	uint16_t input;
+	/*uint16_t sensors;*/
+	/*uint16_t input;*/
 	int hour;
 	int minut;
 	int second;
@@ -1552,26 +1541,16 @@ static int check_registers_manual_mode(gpointer ud)
 	if(manual_mode_start != OK){
 		return FALSE;
 	}
-	rc = info_angle(&angle);
+
+	rc = command_info();
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = info_pressure(&pressure);
-	if(rc != SUCCESS){
-		return FALSE;
-	}
-	rc = info_sensors(&sensors);
-	if(rc != SUCCESS){
-		return FALSE;
-	}
-	rc = info_input(&input);
-	if(rc != SUCCESS){
-		return FALSE;
-	}
-	rc = info_console();
-	if(rc != SUCCESS){
-		return FALSE;
-	}
+
+	angle = info_angle();
+	pressure = info_pressure();
+	/*sensors = info_sensors();*/
+	/*input = info_input();*/
 
 	if( console_up_old != info_console_up()){
 		console_up_old = info_console_up();
@@ -2340,10 +2319,12 @@ static void clicked_button_fix_uprise(GtkButton * b,gpointer d)
 	int rc;
 	uint16_t angle;
 
-	rc = info_angle(&angle);
+	rc = command_info();
 	if(rc != SUCCESS){
 		return ;
 	}
+	angle = info_angle();
+
 	value_uprise = angle;
 	if( (value_uprise < MIN_ANGLE_IN_TIC) || (value_uprise > MAX_ANGLE_IN_TIC)){
 		value_uprise = MAX_ANGLE_IN_TIC;
@@ -2357,10 +2338,12 @@ static void clicked_button_fix_lowering(GtkButton * b,gpointer d)
 	int rc;
 	uint16_t angle;
 
-	rc = info_angle(&angle);
+	rc = command_info();
 	if(rc != SUCCESS){
 		return ;
 	}
+	angle = info_angle();
+
 	value_lowering = angle;
 	if((value_lowering < MIN_ANGLE_IN_TIC) || (value_lowering > MAX_ANGLE_IN_TIC)){
 		value_lowering = MIN_ANGLE_IN_TIC;
@@ -2637,14 +2620,12 @@ static int check_registers_config_mode(gpointer ud)
 	if(config_mode != OK){
 		return FALSE;
 	}
-	rc = info_angle(&angle);
+	rc = command_info();
 	if(rc != SUCCESS){
 		return FALSE;
 	}
-	rc = info_console();
-	if(rc != SUCCESS){
-		return FALSE;
-	}
+
+	angle = info_angle();
 
 	if( console_up_old != info_console_up()){
 		console_up_old = info_console_up();

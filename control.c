@@ -281,13 +281,13 @@ static int write_register(int reg,int value)
 
 static uint16_t * dest = NULL;
 
-static const int amoun_dest = (260/2) + 1;  /*максимальная длина в протоколе modbus RS232/RS485 256 байт TCP = 260 */
+static const int amount_dest = (260/2) + 1;  /*максимальная длина в протоколе modbus RS232/RS485 256 байт TCP = 260 */
 
 static uint16_t * read_register(int reg,int amount)
 {
 	int rc = 0;
 
-	if(amoun_dest < amount){
+	if(amount_dest < amount){
 		return NULL;
 	}
 
@@ -295,7 +295,7 @@ static uint16_t * read_register(int reg,int amount)
 		g_critical("Нет соединения с портом : %s!",device_name);
 		return NULL;
 	}
-	memset(dest,0,(amoun_dest*sizeof(uint16_t)));
+	memset(dest,0,(amount * sizeof(uint16_t)));
 #if !TEST_INTERFACE
 	rc = modbus_read_registers(ctx,reg,amount,dest);
 #endif
@@ -520,61 +520,22 @@ int command_null_mode(void)
 	command_manual_null();
 	command_uprise_angle(0);
 	command_lowering_angle(0);
+	command_pressure(0);
 	command_speed_vertical(0);
 	command_valve(0);
 	command_pressure(0);
+	command_horizontal(0);
 	return SUCCESS;
 }
 
+
 static int reg_D110 = 0x106E;
+/*static int reg_D111 = 0x106F;*/
+/*static int reg_D112 = 0x1070;*/
+/*static int reg_D113 = 0x1071;*/
+/*static int reg_D114 = 0x1072;*/
+#define AMOUNT_INFO_REGISTR    5
 
-int info_angle(uint16_t * val)
-{
-	uint16_t * rc = read_register(reg_D110,1);
-	if(rc != NULL){
-		*val = rc[0];
-		return SUCCESS;
-	}
-	return FAILURE;
-}
-
-static int reg_D111 = 0x106F;
-
-int info_pressure(uint16_t * val)
-{
-	uint16_t * rc = read_register(reg_D111,1);
-	if(rc != NULL){
-		*val = rc[0];
-		return SUCCESS;
-	}
-	return FAILURE;
-}
-
-static int reg_D112 = 0x1070;
-
-int info_sensors(uint16_t * val)
-{
-	uint16_t * rc = read_register(reg_D112,1);
-	if(rc != NULL){
-		*val = rc[0];
-		return SUCCESS;
-	}
-	return FAILURE;
-}
-
-static int reg_D113 = 0x1071;
-
-int info_input(uint16_t * val)
-{
-	uint16_t * rc = read_register(reg_D113,1);
-	if(rc != NULL){
-		*val = rc[0];
-		return SUCCESS;
-	}
-	return FAILURE;
-}
-
-static int reg_D114 = 0x1072;
 struct _status_console_s
 {
 	uint16_t up:1;
@@ -585,99 +546,102 @@ struct _status_console_s
 	uint16_t stop:1;
 	uint16_t on_valve:1;
 	uint16_t off_valve:1;
-};
+	uint16_t reserv:8;
+}__attribute__((packed));
 typedef struct _status_console_s status_console_s;
-
-union _status_console_u
+struct _info_s
 {
-	uint16_t value;
-	status_console_s bit;
-};
-typedef union _status_console_u status_console_u;
+	uint16_t angle;
+	uint16_t pressure;
+	uint16_t sensors;
+	uint16_t input;
+	status_console_s console;
+}__attribute__((packed));
+typedef struct _info_s info_s;
 
-static status_console_u status_console = {0};
+info_s * info = NULL;
 
-int info_console(void)
+int command_info(void)
 {
-	uint16_t * rc = read_register(reg_D114,1);
+	uint16_t * rc = read_register(reg_D110,AMOUNT_INFO_REGISTR);
 	if(rc != NULL){
-		status_console.value = rc[0];
-		if( (status_console.bit.up) && (status_console.bit.down) ){
-			status_console.bit.up = 0;
-			status_console.bit.down = 0;
-		}
-		if( (status_console.bit.left) && (status_console.bit.right)){
-			status_console.bit.left = 0;
-			status_console.bit.right = 0;
-		}
-		if( (status_console.bit.pause) && (status_console.bit.stop)){
-			status_console.bit.pause = 0;
-		}
-		if( (status_console.bit.on_valve) && (status_console.bit.off_valve)){
-			status_console.bit.on_valve = 0;
-		}
 		return SUCCESS;
 	}
 	return FAILURE;
 }
 
+uint16_t info_angle(void)
+{
+	return info->angle;
+}
+
+uint16_t info_pressure(void)
+{
+	return info->pressure;
+}
+uint16_t info_sensors(void)
+{
+	return info->sensors;
+}
+uint16_t info_input(void)
+{
+	return info->input;
+}
+
 int info_console_up(void)
 {
-	return status_console.bit.up;
+	return info->console.up;
 }
 
 int info_console_down(void)
 {
-	return status_console.bit.down;
+	return info->console.down;
 }
 
 int info_console_left(void)
 {
-	return status_console.bit.left;
+	return info->console.left;
 }
 
 int info_console_right(void)
 {
-	return status_console.bit.right;
+	return info->console.right;
 }
 
 int info_console_pause(void)
 {
-	return status_console.bit.pause;
+	return info->console.pause;
 }
 
 int info_console_stop(void)
 {
-	return status_console.bit.stop;
+	return info->console.stop;
 }
 
 int info_console_on_valve(void)
 {
-	return status_console.bit.on_valve;
+	return info->console.on_valve;
 }
 
 int info_console_off_valve(void)
 {
-	return status_console.bit.off_valve;
+	return info->console.off_valve;
 }
 
 int check_connect_device(uint16_t * status)
 {
 	int rc;
-	uint16_t temp;
 
 	if(ctx == NULL){
 		return FAILURE;
 	}
 
-	if(status == NULL){
-		rc = info_sensors(&temp);
-	}
-	else{
-		rc = info_sensors(status);
-	}
-	if(rc != SUCCESS){
+	rc = command_info();
+	if( rc != SUCCESS){
 		return FAILURE;
+	}
+	if(status != NULL){
+		*status = info_sensors();
 	}
 	return SUCCESS;
 }
@@ -686,7 +650,8 @@ static int init_control_device(void)
 {
 	int rc;
 	if(dest == NULL){
-		dest = g_malloc0(amoun_dest * sizeof(uint16_t));
+		dest = g_malloc0(amount_dest * sizeof(uint16_t));
+		info = (info_s*)dest;
 	}
 	rc = connect_device();
 	if(rc == DISCONNECT){
@@ -710,6 +675,7 @@ int deinit_control_device(void)
 	if(dest != NULL){
 		g_free(dest);
 		dest = NULL;
+		info = NULL;
 	}
 	return SUCCESS;
 }
