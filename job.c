@@ -56,8 +56,8 @@
 /*****************************************************************************/
 /* Общие переменые                                                           */
 /*****************************************************************************/
-#define MIN_RATE_PRESSURE              0.005
-#define MAX_RATE_PRESSURE              0.007
+#define MIN_RATE_PRESSURE              0.0059
+#define MAX_RATE_PRESSURE              0.0069
 #define DEFAULT_RATE_PRESSURE          0.0062
 double rate_pressure = DEFAULT_RATE_PRESSURE;
 #define PRINTF_PRESSURE(p)             ((double)(p)*rate_pressure)
@@ -1630,7 +1630,6 @@ static void show_frame_manual_mode(GtkWidget * w,gpointer ud)
 		command_speed_vertical(DEFAULT_SPEED_VERTICAL_MANUAL_MODE);
 		valve_ui_old = valve_ui;
 		command_valve(valve_ui);
-		command_pressure(current_job->pressure);
 		amount_manual_mode = 0;
 		manual_mode_start = OK;
 		console_up_old = 0;

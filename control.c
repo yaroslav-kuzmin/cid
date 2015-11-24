@@ -520,8 +520,10 @@ int command_null_mode(void)
 	command_manual_null();
 	command_uprise_angle(0);
 	command_lowering_angle(0);
+	command_pressure(0);
 	command_speed_vertical(0);
 	command_valve(0);
+	command_horizontal(0);
 	return SUCCESS;
 }
 
