@@ -185,7 +185,7 @@ static void save_logging(const gchar *log_domain,GLogLevelFlags log_level,
 	GIOStatus rc;
 	gsize bw;
 	GError * err;
-	char * str_level;
+	char * str_level = STR_DEBUG;
 
 	if(logging_channel != NULL){
 		if(log_level != G_LOG_LEVEL_DEBUG){
@@ -224,7 +224,7 @@ set_str_level:
 			g_date_time_unref(p_dt);
 		}
 		else{
-			g_string_printf(logging,"\n%s%s",STR_DEBUG,message);
+			g_string_printf(logging,"\n%s%s",str_level,message);
 		}
 
 		err = NULL;

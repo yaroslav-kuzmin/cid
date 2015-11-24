@@ -54,8 +54,8 @@ OBJS=$(patsubst %.c,$(OBJ_CATALOG)%.o,$(SOURCE))
 DEPEND=$(patsubst %.c,$(DEPEND_CATALOG)%.d,$(SOURCE))
 
 CXX=gcc
-CFLAGS=-g2 -Wall -I. -I$(MODBUS_CATALOG) `pkg-config --cflags gtk+-3.0`
-LDFLAGS=-g2 -L$(MODBUS_CATALOG) 
+CFLAGS=-O -Wall -I. -I$(MODBUS_CATALOG) `pkg-config --cflags gtk+-3.0`
+LDFLAGS=-O -L$(MODBUS_CATALOG) -mwindows
 LIB=`pkg-config --libs gtk+-3.0` -lavformat -lavcodec -lswscale -lavutil -lsqlite3 
 
 RESOURCE_CATALOG=resource/

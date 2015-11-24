@@ -1059,7 +1059,9 @@ static int check_registers_auto_mode(gpointer ud)
 	/*input = info_input();*/
 
 	if(console_pause_old !=  info_console_pause()){
-		clicked_button_auto_pause(GTK_BUTTON(but_auto_mode_pause),NULL);
+		if(info_console_pause()){
+			clicked_button_auto_pause(GTK_BUTTON(but_auto_mode_pause),NULL);
+		}
 		console_pause_old = info_console_pause();
 	}
 
