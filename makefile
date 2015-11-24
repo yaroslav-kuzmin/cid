@@ -63,6 +63,8 @@ RESOURCE_CATALOG=resource/
 RC=rcedit
 ICON=$(RESOURCE_CATALOG)cid.ico
 
+STRIP=strip
+
 RESOURCE=$(RESOURCE_CATALOG)cid.gresource.xml
 SOURCE_RESOURCE=$(RESOURCE_CATALOG)cid.c
 HEADRE_RESOURCE=$(RESOURCE_CATALOG)cid.h
@@ -76,6 +78,7 @@ GIT_VERSION=./git_version.sh
 $(EXEC):$(OBJS) $(OBJ_RESOURCE) $(LIB_MODBUS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LIB)
 	$(RC) $(EXEC) --set-icon $(ICON)
+	$(STRIP) -s $(EXEC)
 
 $(LIB_MODBUS):$(MODBUS_CATALOG)
 	make -C $<
