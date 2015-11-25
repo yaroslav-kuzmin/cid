@@ -164,7 +164,8 @@ static int read_config_device(void)
 	}
 	else{
 		if(!g_strcmp0(str,"TRUE")){
-			modbus_debug = TRUE;
+			/*TODO debug only modbus_debug = TRUE;*/
+			modbus_debug = FALSE;
 		}
 		else{
 			modbus_debug = FALSE;
@@ -226,6 +227,7 @@ static int connect_device(void)
 	}
 
 	modbus_set_debug(ctx,modbus_debug);
+
 	/*MODBUS_ERROR_RECOVERY_NONE
 	  MODBUS_ERROR_RECOVERY_LINK
 	  MODBUS_ERROR_RECOVERY_PROTOCOL*/
@@ -290,12 +292,10 @@ static uint16_t * read_register(int reg,int amount)
 	if(amount_dest < amount){
 		return NULL;
 	}
-
 	if(ctx == NULL){
 		g_critical("Нет соединения с портом : %s!",device_name);
 		return NULL;
 	}
-	memset(dest,0,(amount * sizeof(uint16_t)));
 #if !TEST_INTERFACE
 	rc = modbus_read_registers(ctx,reg,amount,dest);
 #endif
@@ -574,7 +574,6 @@ uint16_t info_angle(void)
 {
 	return info->angle;
 }
-
 uint16_t info_pressure(void)
 {
 	return info->pressure;
@@ -587,42 +586,34 @@ uint16_t info_input(void)
 {
 	return info->input;
 }
-
 int info_console_up(void)
 {
 	return info->console.up;
 }
-
 int info_console_down(void)
 {
 	return info->console.down;
 }
-
 int info_console_left(void)
 {
 	return info->console.left;
 }
-
 int info_console_right(void)
 {
 	return info->console.right;
 }
-
 int info_console_pause(void)
 {
 	return info->console.pause;
 }
-
 int info_console_stop(void)
 {
 	return info->console.stop;
 }
-
 int info_console_on_valve(void)
 {
 	return info->console.on_valve;
 }
-
 int info_console_off_valve(void)
 {
 	return info->console.off_valve;

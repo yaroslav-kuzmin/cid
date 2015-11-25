@@ -42,7 +42,7 @@
 /*****************************************************************************/
 
 /*****************************************************************************/
-/*#include <glib/gprintf.h> TODO test only*/
+
 #include <gtk/gtk.h>
 #include <sqlite3.h>
 
@@ -51,7 +51,6 @@
 #include "cid.h"
 #include "video.h"
 #include "control.h"
-
 
 /*****************************************************************************/
 /* Общие переменые                                                           */
@@ -1020,6 +1019,7 @@ static char STR_BUTTON_AUTO_PAUSE[] = "ПАУЗА";
 static char STR_SET_VALUE[] = "Установленое значение";
 static char STR_CURRENT_VALUE[] = "Текущее значение";
 
+static GtkWidget * but_auto_mode_start;
 static GtkWidget * but_auto_mode_stop;
 static GtkWidget * but_auto_mode_pause;
 static void clicked_button_auto_stop(GtkButton * b,gpointer d);
@@ -1045,12 +1045,24 @@ static int check_registers_auto_mode(gpointer ud)
 	if(auto_mode_start != OK){
 		return FALSE;
 	}
-	if(auto_mode_pause == OK){
-		return FALSE;
-	}
+
 	rc = command_info();
 	if(rc != SUCCESS){
 		return FALSE;
+	}
+
+	rc = info_console_pause();
+	if( rc != console_pause_old ){
+		console_pause_old = rc;
+		if(console_pause_old){
+			clicked_button_auto_pause(GTK_BUTTON(but_auto_mode_pause),NULL);
+		}
+	}
+
+	rc = info_console_stop();
+	if( rc != console_stop_old ){
+		console_stop_old = rc;
+		clicked_button_auto_stop(GTK_BUTTON(but_auto_mode_stop),NULL);
 	}
 
 	angle = info_angle();
@@ -1058,19 +1070,9 @@ static int check_registers_auto_mode(gpointer ud)
 	/*sensors = info_sensors();*/
 	/*input = info_input();*/
 
-	if(console_pause_old !=  info_console_pause()){
-		if(info_console_pause()){
-			clicked_button_auto_pause(GTK_BUTTON(but_auto_mode_pause),NULL);
-		}
-		console_pause_old = info_console_pause();
+	if(auto_mode_pause != OK){
+		amount_auto_mode += timeout_auto_mode;
 	}
-
-	if(console_stop_old != info_console_stop()){
-		clicked_button_auto_stop(GTK_BUTTON(but_auto_mode_stop),NULL);
-		console_stop_old = info_console_stop();
-	}
-
-	amount_auto_mode += timeout_auto_mode;
 	rc = amount_auto_mode / MILLISECOND;
 
 	if(rc >= current_job->time){
@@ -1120,15 +1122,14 @@ static void clicked_button_auto_stop(GtkButton * b,gpointer d)
 	auto_mode_start = NOT_OK;
 	auto_mode_pause = NOT_OK;
 	command_auto_stop();
-	set_notactive_color(GTK_BUTTON(d));
 	set_notactive_color(GTK_BUTTON(but_auto_mode_pause));
+	set_notactive_color(GTK_BUTTON(but_auto_mode_start));
 }
 
 static void clicked_button_auto_pause(GtkButton * b,gpointer d)
 {
 	if(auto_mode_pause == OK){
 		command_auto_start();
-		g_timeout_add(timeout_auto_mode,check_registers_auto_mode,&label_auto_mode);
 		set_notactive_color(b);
 		auto_mode_pause = NOT_OK;
 		return;
@@ -1305,7 +1306,6 @@ static GtkWidget * create_mode_auto(void)
 	GtkWidget * lab_fra_mode_auto;
 	GtkWidget * box_hor_main;
 	GtkWidget * box_hor_but;
-	GtkWidget * but_start;
 	GtkWidget * fra_scale;
 	GtkWidget * gri_auto;
 
@@ -1325,23 +1325,23 @@ static GtkWidget * create_mode_auto(void)
 	box_hor_but = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,5);
 	gtk_widget_set_vexpand(box_hor_but,TRUE);
 
-	but_start = gtk_button_new_with_label(STR_BUTTON_AUTO_START);
-	layout_widget(but_start,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
-	set_size_font(gtk_bin_get_child(GTK_BIN(but_start)),SIZE_FONT_MEDIUM);
-	set_notactive_color(GTK_BUTTON(but_start));
-	g_signal_connect(but_start,"clicked",G_CALLBACK(clicked_button_auto_start),NULL);
+	but_auto_mode_start = gtk_button_new_with_label(STR_BUTTON_AUTO_START);
+	layout_widget(but_auto_mode_start,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
+	set_size_font(gtk_bin_get_child(GTK_BIN(but_auto_mode_start)),SIZE_FONT_MEDIUM);
+	set_notactive_color(GTK_BUTTON(but_auto_mode_start));
+	g_signal_connect(but_auto_mode_start,"clicked",G_CALLBACK(clicked_button_auto_start),NULL);
 
 	but_auto_mode_stop = gtk_button_new_with_label(STR_BUTTON_AUTO_STOP);
 	layout_widget(but_auto_mode_stop,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
 	set_size_font(gtk_bin_get_child(GTK_BIN(but_auto_mode_stop)),SIZE_FONT_MEDIUM);
 	set_notactive_color(GTK_BUTTON(but_auto_mode_stop));
-	g_signal_connect(but_auto_mode_stop,"clicked",G_CALLBACK(clicked_button_auto_stop),but_start);
+	g_signal_connect(but_auto_mode_stop,"clicked",G_CALLBACK(clicked_button_auto_stop),NULL);
 
 	but_auto_mode_pause = gtk_button_new_with_label(STR_BUTTON_AUTO_PAUSE);
 	layout_widget(but_auto_mode_pause,GTK_ALIGN_FILL,GTK_ALIGN_CENTER,TRUE,TRUE);
 	set_size_font(gtk_bin_get_child(GTK_BIN(but_auto_mode_pause)),SIZE_FONT_MEDIUM);
 	set_notactive_color(GTK_BUTTON(but_auto_mode_pause));
-	g_signal_connect(but_auto_mode_pause,"clicked",G_CALLBACK(clicked_button_auto_pause),but_start);
+	g_signal_connect(but_auto_mode_pause,"clicked",G_CALLBACK(clicked_button_auto_pause),NULL);
 
 	fra_scale = create_scale_vertical_speed(DEFAULT_SPEED_VERTICAL_AUTO_MODE);
 
@@ -1350,7 +1350,7 @@ static GtkWidget * create_mode_auto(void)
 	gtk_frame_set_label_widget(GTK_FRAME(fra_mode_auto),lab_fra_mode_auto);
 	gtk_container_add(GTK_CONTAINER(fra_mode_auto),box_hor_main);
 	gtk_box_pack_start(GTK_BOX(box_hor_main),box_hor_but,TRUE,TRUE,5);
-	gtk_box_pack_start(GTK_BOX(box_hor_but),but_start,TRUE,TRUE,5);
+	gtk_box_pack_start(GTK_BOX(box_hor_but),but_auto_mode_start,TRUE,TRUE,5);
 	gtk_box_pack_start(GTK_BOX(box_hor_but),but_auto_mode_stop,TRUE,TRUE,5);
 	gtk_box_pack_start(GTK_BOX(box_hor_but),but_auto_mode_pause,TRUE,TRUE,5);
 	gtk_box_pack_start(GTK_BOX(box_hor_but),fra_scale,TRUE,TRUE,5);
@@ -1359,7 +1359,7 @@ static GtkWidget * create_mode_auto(void)
 	gtk_widget_show(fra_scale);
 	gtk_widget_show(but_auto_mode_pause);
 	gtk_widget_show(but_auto_mode_stop);
-	gtk_widget_show(but_start);
+	gtk_widget_show(but_auto_mode_start);
 	gtk_widget_show(box_hor_but);
 	gtk_widget_show(box_hor_main);
 	gtk_widget_show(lab_fra_mode_auto);
