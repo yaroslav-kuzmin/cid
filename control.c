@@ -691,9 +691,9 @@ static char STR_LIMIT_HORIZONTAL[] =       "Предел по горизонта
 static char STR_LIMIT_HORIZONTAL_LEFT[] =  "Предел ЛЕВО!";
 static char STR_LIMIT_HORIZONTAL_RIGHT[] = "Предел ПРАВО!";
 static char STR_DEVICE_CRASH[] = "Установка - АВАРИЯ!";
-static char STR_DEVICE_NORM[] =  "Установка - НОРМА!";
+static char STR_DEVICE_NORM[] =  "Установка - норма!";
 static char STR_PRESSURE_CRASH[] = "Давление - АВАРИЯ!";
-static char STR_PRESSURE_NORM[] = "Давление - НОРМА!";
+static char STR_PRESSURE_NORM[] = "Давление - норма!";
 
 static GtkWidget * menite_control_device;
 static char STR_DEVICE[] = "Порт";
