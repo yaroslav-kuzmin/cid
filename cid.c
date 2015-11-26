@@ -380,7 +380,7 @@ static int about_programm(GdkPixbuf * icon)
 	GtkWidget * dialog = gtk_about_dialog_new();
 
 	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog),STR_NAME_PROGRAMM);
-	g_string_printf(temp_string,"%d.%03d - %x",VERSION_MAJOR,VERSION_MINOR,VERSION_GIT);
+	g_string_printf(temp_string,"%d.%03d - %07x",VERSION_MAJOR,VERSION_MINOR,VERSION_GIT);
 	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(dialog),temp_string->str);
 	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(dialog),STR_COPYRIGHT);
 	gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(dialog),STR_COMMENT);
