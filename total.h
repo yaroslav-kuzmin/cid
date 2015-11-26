@@ -84,6 +84,7 @@ extern GdkRGBA color_lite_green;
 #define SIZE_FONT_EXTRA_MEDIUM             20000
 #define SIZE_FONT_MEDIUM                   15000
 #define SIZE_FONT_SMALL                    10000
+#define SIZE_FONT_STATUS_DEVICE            12000
 #define SIZE_FONT_MINI                     9000
 
 extern GString * temp_string;
