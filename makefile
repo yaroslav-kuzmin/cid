@@ -55,7 +55,8 @@ DEPEND=$(patsubst %.c,$(DEPEND_CATALOG)%.d,$(SOURCE))
 
 CXX=gcc
 CFLAGS=-O -Wall -I. -I$(MODBUS_CATALOG) `pkg-config --cflags gtk+-3.0`
-LDFLAGS=-O -L$(MODBUS_CATALOG) -mwindows   
+#LDFLAGS=-O -L$(MODBUS_CATALOG) -mwindows
+LDFLAGS=-O -L$(MODBUS_CATALOG) 
 LIB=`pkg-config --libs gtk+-3.0` -lavformat -lavcodec -lswscale -lavutil -lsqlite3 
 
 RESOURCE_CATALOG=resource/
@@ -77,7 +78,7 @@ GIT_VERSION=./git_version.sh
 $(EXEC):$(OBJS) $(OBJ_RESOURCE) $(LIB_MODBUS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LIB)
 	$(RC) $(EXEC) --set-icon $(ICON)
-	$(STRIP) -s $(EXEC)
+#	$(STRIP) -s $(EXEC)
 
 $(LIB_MODBUS):$(MODBUS_CATALOG)
 	make -C $<

@@ -111,6 +111,7 @@ static int check_name_stream(char * name)
 	int rc;
 
 	rc = check_access(name);
+#if 0
 	if(rc != SUCCESS){
 		GtkWidget * error;
 		if(name == NULL){
@@ -125,6 +126,7 @@ static int check_name_stream(char * name)
 		gtk_widget_destroy(error);
 		return FAILURE;
 	}
+#endif
 	return SUCCESS;
 }
 
@@ -149,8 +151,8 @@ struct _video_stream_s{
 	char * name;
 
 	int open;
-	GThread * tid;
-	GMutex mutex;
+	GThread * t_video;
+	GMutex m_video;
 
 	int number;
 	AVFormatContext * format_context;
@@ -173,6 +175,13 @@ struct _video_stream_s{
 
 	GdkPixbuf * screen;
 	int draw;
+
+	/*connect*/
+	GtkWidget * check_connect;
+	int connect;
+	GThread * t_connect;
+	GMutex m_connect;
+
 };
 typedef struct _video_stream_s video_stream_s;
 
@@ -249,7 +258,7 @@ static gpointer read_video_stream(gpointer args)
 				sws_scale(vs->sws_context,(uint8_t const * const *)av_frame->data, av_frame->linesize,0,vs->codec_context->height
 				                  ,picture_rgb->data,picture_rgb->linesize);
 
-				g_mutex_lock(&(vs->mutex));
+				g_mutex_lock(&(vs->m_video));
 				if(vs->draw == OK){
 					vs->screen = gdk_pixbuf_new_from_data(picture_rgb->data[0],GDK_COLORSPACE_RGB
 					                                     ,0,8
@@ -271,10 +280,10 @@ static gpointer read_video_stream(gpointer args)
 					if(vs->draw != OK){
 						vs->draw = OK;
 					}
-					g_mutex_unlock(&(vs->mutex));
+					g_mutex_unlock(&(vs->m_video));
 					g_thread_exit(0);
 				}
-				g_mutex_unlock(&(vs->mutex));
+				g_mutex_unlock(&(vs->m_video));
 			}
 		}
 		av_free_packet(&packet);
@@ -308,34 +317,34 @@ static gboolean write_screen(gpointer ud)
 
 	if(s->inversion != OK){
 		if(vs0->draw != OK){
-			g_mutex_lock(&(vs0->mutex));
+			g_mutex_lock(&(vs0->m_video));
 			vs0->draw = OK;
 			gdk_pixbuf_copy_area(vs0->screen,0,0,vs0->width,vs0->height,s->image,vs0->x,vs0->y);
 			g_object_unref(vs0->screen);
-			g_mutex_unlock(&(vs0->mutex));
+			g_mutex_unlock(&(vs0->m_video));
 		}
 		if(vs1->draw != OK){
-			g_mutex_lock(&(vs1->mutex));
+			g_mutex_lock(&(vs1->m_video));
 			vs1->draw = OK;
 			gdk_pixbuf_copy_area(vs1->screen,0,0,vs1->width,vs1->height,s->image,vs1->x,vs1->y);
 			g_object_unref(vs1->screen);
-			g_mutex_unlock(&(vs1->mutex));
+			g_mutex_unlock(&(vs1->m_video));
 		}
 	}
 	else{
 		if(vs1->draw != OK){
-			g_mutex_lock(&(vs1->mutex));
+			g_mutex_lock(&(vs1->m_video));
 			vs1->draw = OK;
 			gdk_pixbuf_copy_area(vs1->screen,0,0,vs1->width_i,vs1->height_i,s->image,vs1->x_i,vs1->y_i);
 			g_object_unref(vs1->screen);
-			g_mutex_unlock(&(vs1->mutex));
+			g_mutex_unlock(&(vs1->m_video));
 		}
 		if(vs0->draw != OK){
-			g_mutex_lock(&(vs0->mutex));
+			g_mutex_lock(&(vs0->m_video));
 			vs0->draw = OK;
 			gdk_pixbuf_copy_area(vs0->screen,0,0,vs0->width_i,vs0->height_i,s->image,vs0->x_i,vs0->y_i);
 			g_object_unref(vs0->screen);
-			g_mutex_unlock(&(vs0->mutex));
+			g_mutex_unlock(&(vs0->m_video));
 		}
 	}
 	gtk_image_set_from_pixbuf(GTK_IMAGE(s->main),s->image);
@@ -421,9 +430,140 @@ static int deinit_rtsp(video_stream_s * vs)
 int FPS = DEFAULT_FPS;
 int timeot_fps = MILLISECOND/DEFAULT_FPS; /*40 милесекунд == 25 кадров/с */
 
+static void clicked_button_stop_connect(GtkButton * b,gpointer ud)
+{
+	video_stream_s * vs = (video_stream_s*)ud;
+	GtkWidget * w = vs->check_connect;
+	if(w != NULL)
+		gtk_widget_destroy(w);
+	vs->check_connect = NULL;
+}
+
+enum
+{
+	CONNECT_IP_SUCCES = 1,
+	CONNECT_IP_FAILURE,
+	CONNECT_IP_WAIT
+};
+/*отдельный поток подключения*/
+static gpointer connect_ip(gpointer args)
+{
+	int rc;
+	video_stream_s * vs = (video_stream_s*)args;
+
+	rc = check_access(vs->name);
+	if(rc == FAILURE){
+		rc = CONNECT_IP_FAILURE;
+	}
+	else{
+		rc = CONNECT_IP_SUCCES;
+	}
+
+	g_mutex_lock(&(vs->m_connect));
+	vs->connect = rc;
+	g_mutex_unlock(&(vs->m_connect));
+
+	return NULL;
+}
+#define DEFAULT_TIMEOUT_CHECK_CONNECT_IP    500    /*0,5 секунды */
+static unsigned long int timeout_check_connect_ip = DEFAULT_TIMEOUT_CHECK_CONNECT_IP;
+static int check_connect_ip(gpointer ud)
+{
+	video_stream_s * vs = (video_stream_s*)ud;
+	GtkWidget * w;
+	int connect;
+
+	g_mutex_lock(&(vs->m_connect));
+	connect = vs->connect;
+	g_mutex_unlock(&(vs->m_connect));
+
+	if(connect == CONNECT_IP_SUCCES){
+		g_message("Подключение есть!");
+		w = vs->check_connect;
+		gtk_widget_destroy(w);
+		/*TODO подключаем rtsp*/
+		return FALSE;
+	}
+
+	if(connect == CONNECT_IP_FAILURE){
+		g_message("Подключение нет!");
+		/*TODO сообщение об ошибке*/
+		w = vs->check_connect;
+		gtk_widget_destroy(w);
+		{
+		GtkWidget * error;
+		if(vs->name == NULL){
+			error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+			                              ,GTK_BUTTONS_CLOSE,"%s",STR_NOT_NAME_STREAM);
+		}
+		else{
+			error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
+			                              ,GTK_BUTTONS_CLOSE,STR_NOT_ACCESS_STREAM,vs->name);
+		}
+		gtk_dialog_run(GTK_DIALOG(error));
+		gtk_widget_destroy(error);
+		}
+		return FALSE;
+	}
+	return TRUE;
+}
 
 static int init_video_stream(video_stream_s * vs)
 {
+	GtkWidget * dialog;
+	GtkWidget * box;
+	GtkWidget * label;
+	GtkWidget * spinner;
+	GtkWidget * button;
+
+	if(vs->check_connect != NULL){
+		g_warning("Подключение уже идет!");
+		return FAILURE;
+	}
+
+	dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title(GTK_WINDOW(dialog),STR_NAME_PROGRAMM);
+	gtk_window_set_resizable(GTK_WINDOW(dialog),FALSE);
+	gtk_window_set_position (GTK_WINDOW(dialog),GTK_WIN_POS_CENTER);
+	gtk_container_set_border_width(GTK_CONTAINER(dialog),5);
+
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL,5);
+	layout_widget(box,GTK_ALIGN_FILL,GTK_ALIGN_FILL,TRUE,TRUE);
+	gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
+
+	g_string_printf(temp_string,"Подключение к %s",vs->name);
+	label = gtk_label_new(temp_string->str);
+	set_size_font(label,SIZE_FONT_MEDIUM);
+	layout_widget(label,GTK_ALIGN_CENTER,GTK_ALIGN_CENTER,FALSE,FALSE);
+
+	spinner = gtk_spinner_new();
+	layout_widget(spinner,GTK_ALIGN_CENTER,GTK_ALIGN_CENTER,FALSE,FALSE);
+	gtk_widget_set_size_request(spinner,20,20);
+
+	button = gtk_button_new_with_label("Завершить подключение");
+	g_signal_connect(button,"clicked",G_CALLBACK(clicked_button_stop_connect),vs);
+	layout_widget(button,GTK_ALIGN_CENTER,GTK_ALIGN_CENTER,FALSE,FALSE);
+
+	gtk_container_add(GTK_CONTAINER(dialog),box);
+	gtk_box_pack_start(GTK_BOX(box),label,FALSE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(box),spinner,FALSE,TRUE,0);
+	gtk_box_pack_start(GTK_BOX(box),button,FALSE,TRUE,0);
+
+	gtk_widget_show(dialog);
+	gtk_widget_show(box);
+	gtk_widget_show(label);
+	gtk_widget_show(spinner);
+	gtk_widget_show(button);
+	vs->check_connect = dialog;
+	vs->connect = CONNECT_IP_WAIT;
+	/*запустить функцию проверки */
+	g_mutex_init(&(vs->m_connect));
+	vs->t_connect = g_thread_new("connect_ip",connect_ip,vs);
+	/*запустить функцию опроса */
+	g_timeout_add(timeout_check_connect_ip,check_connect_ip,vs);
+
+	gtk_spinner_start(GTK_SPINNER(spinner));
+#if 0
 	int rc;
 
 	rc = check_name_stream(vs->name);
@@ -438,10 +578,11 @@ static int init_video_stream(video_stream_s * vs)
 	if(vs->open == OK){
 		vs->draw = OK;
 		vs->exit = NOT_OK;
-		g_mutex_init(&(vs->mutex));
-		vs->tid = g_thread_new("video",read_video_stream,vs);
+		g_mutex_init(&(vs->m_video));
+		vs->t_video = g_thread_new("video",read_video_stream,vs);
 		g_message("Камера %s включена.",vs->name);
 	}
+#endif
 	return SUCCESS;
 }
 
@@ -449,8 +590,8 @@ static int deinit_video_stream(video_stream_s * vs)
 {
 	if(vs->open == OK){
 		vs->exit = OK;
-		g_thread_join(vs->tid);
-		g_mutex_clear(&(vs->mutex));
+		g_thread_join(vs->t_video);
+		g_mutex_clear(&(vs->m_video));
 		vs->draw = OK;
 		vs->open = NOT_OK;
 		deinit_rtsp(vs);
@@ -515,7 +656,7 @@ static void activate_menu_inversion(GtkMenuItem * mi,gpointer ud)
 {
 	int old_open_vs0 = video_stream_0.open;
 	int old_open_vs1 = video_stream_1.open;
-
+#if 0
 	deinit_video_stream(&video_stream_0);
 	deinit_video_stream(&video_stream_1);
 
@@ -533,7 +674,7 @@ static void activate_menu_inversion(GtkMenuItem * mi,gpointer ud)
 	if(old_open_vs1 == OK){
 		init_video_stream(&video_stream_1);
 	}
-
+#endif
 	g_message("Инвертировать видео.");
 }
 /*
@@ -605,6 +746,8 @@ static void realize_main_screen(GtkWidget *widget, gpointer data)
 	video_stream_0.width_i = DEFAULT_VIDEO_0_I_WIDTH;
 	video_stream_0.height_i = DEFAULT_VIDEO_0_I_HEIGHT;
 	video_stream_0.format_rgb = PIX_FMT_RGB24;
+	video_stream_0.check_connect = NULL;
+	video_stream_0.connect = CONNECT_IP_FAILURE;
 
 	video_stream_1.open = NOT_OK;
 	video_stream_1.draw = OK;
@@ -618,6 +761,8 @@ static void realize_main_screen(GtkWidget *widget, gpointer data)
 	video_stream_1.width_i = DEFAULT_VIDEO_1_I_WIDTH;
 	video_stream_1.height_i = DEFAULT_VIDEO_1_I_HEIGHT;
 	video_stream_1.format_rgb = PIX_FMT_RGB24;
+	video_stream_1.check_connect = NULL;
+	video_stream_1.connect = CONNECT_IP_FAILURE;
 
 	screen.vs0 = &video_stream_0;
 	screen.vs1 = &video_stream_1;
