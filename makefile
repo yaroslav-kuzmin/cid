@@ -78,7 +78,7 @@ GIT_VERSION=./git_version.sh
 $(EXEC):$(OBJS) $(OBJ_RESOURCE) $(LIB_MODBUS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LIB)
 	$(RC) $(EXEC) --set-icon $(ICON)
-#	$(STRIP) -s $(EXEC)
+	$(STRIP) -s $(EXEC)
 
 $(LIB_MODBUS):$(MODBUS_CATALOG)
 	make -C $<
