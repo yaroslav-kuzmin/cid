@@ -56,80 +56,6 @@
 #define TEST_VIDEO              FALSE
 #define ALLOC_FRAME             TRUE
 
-static char STR_RTSP[] = "rtsp://";
-#define SIZE_STR_RTSP     7
-#define DEFAULT_PORT_VIDEO_STREAM   554
-
-static int check_access(char * name)
-{
-	GSocketConnection	* stream_connect;
-	GSocketClient * stream;
-	GError * err = NULL;
-	char * str = NULL;
-
-	if(name == NULL){
-		return FAILURE;
-	}
-
-	str = g_strstr_len(name,-1,STR_RTSP);
-	if(str == NULL){
-#if TEST_VIDEO
-		return SUCCESS;
-#else
-		return FAILURE;
-#endif
-	}
-	str += SIZE_STR_RTSP;
-
-	g_string_printf(temp_string,"%s",str);
-
-	str = g_strstr_len(temp_string->str,-1,"/");
-	if(str == NULL){
-		return FAILURE;
-	}
-	*str = 0;
-
-	stream = g_socket_client_new();
-
-	stream_connect = g_socket_client_connect_to_host(stream,temp_string->str
-	                                                ,DEFAULT_PORT_VIDEO_STREAM,NULL,&err);
-	if(stream_connect == NULL){
-		g_critical("Доступ по адресу %s : %s!",temp_string->str,err->message);
-		g_error_free(err);
-		return FAILURE;
-	}
-
-	g_object_unref(stream);
-	return SUCCESS;
-}
-
-static char STR_NOT_NAME_STREAM[] = "Нет имени потока в файле конфигурации!";
-static char STR_NOT_ACCESS_STREAM[] = "Нет доступа к видео потоку : %s";
-
-static int check_name_stream(char * name)
-{
-	int rc;
-
-	rc = check_access(name);
-#if 0
-	if(rc != SUCCESS){
-		GtkWidget * error;
-		if(name == NULL){
-			error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
-			                              ,GTK_BUTTONS_CLOSE,"%s",STR_NOT_NAME_STREAM);
-		}
-		else{
-			error = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR
-			                              ,GTK_BUTTONS_CLOSE,STR_NOT_ACCESS_STREAM,name);
-		}
-		gtk_dialog_run(GTK_DIALOG(error));
-		gtk_widget_destroy(error);
-		return FAILURE;
-	}
-#endif
-	return SUCCESS;
-}
-
 /*формат видео 16:9 */
 /*640*/ /*848*/ /*960*/ /*1280*/ /*1600*/ /*1920*/
 /*360*/ /*480*/ /*540*/ /*768 */ /*900 */ /*1080*/
@@ -197,6 +123,9 @@ typedef struct _screen_s screen_s;
 
 static int deinit_rtsp(video_stream_s * vs);
 
+/*****************************************************************************/
+/*  чтение Видео потока                                                      */
+/*****************************************************************************/
 static gpointer read_video_stream(gpointer args)
 {
 	int rc;
@@ -424,6 +353,64 @@ static int deinit_rtsp(video_stream_s * vs)
 	return SUCCESS;
 }
 
+/*****************************************************************************/
+/* проверка подсоединения                                                    */
+/*****************************************************************************/
+
+static char STR_RTSP[] = "rtsp://";
+#define SIZE_STR_RTSP     7
+#define DEFAULT_PORT_VIDEO_STREAM   554
+
+static int check_access(char * name)
+{
+	GSocketConnection	* stream_connect;
+	GSocketClient * stream;
+	GError * err = NULL;
+	char * str = NULL;
+
+	if(name == NULL){
+		return FAILURE;
+	}
+
+	str = g_strstr_len(name,-1,STR_RTSP);
+	if(str == NULL){
+#if TEST_VIDEO
+		return SUCCESS;
+#else
+		return FAILURE;
+#endif
+	}
+	str += SIZE_STR_RTSP;
+
+	g_string_printf(temp_string,"%s",str);
+
+	str = g_strstr_len(temp_string->str,-1,"/");
+	if(str == NULL){
+		return FAILURE;
+	}
+	*str = 0;
+
+	stream = g_socket_client_new();
+
+	stream_connect = g_socket_client_connect_to_host(stream,temp_string->str
+	                                                ,DEFAULT_PORT_VIDEO_STREAM,NULL,&err);
+	if(stream_connect == NULL){
+		g_critical("Доступ по адресу %s : %s!",temp_string->str,err->message);
+		g_error_free(err);
+		return FAILURE;
+	}
+
+	g_object_unref(stream);
+	return SUCCESS;
+}
+
+enum
+{
+	CONNECT_IP_SUCCES = 1,
+	CONNECT_IP_FAILURE,
+	CONNECT_IP_WAIT
+};
+
 #define MAX_FPS          100
 #define MIN_FPS          1
 #define DEFAULT_FPS      25
@@ -434,19 +421,15 @@ static void clicked_button_stop_connect(GtkButton * b,gpointer ud)
 {
 	video_stream_s * vs = (video_stream_s*)ud;
 	GtkWidget * w = vs->check_connect;
-	if(w != NULL)
+	if(w != NULL){
 		gtk_widget_destroy(w);
-	vs->check_connect = NULL;
+		vs->check_connect = NULL;
+	}	
+	vs->connect = CONNECT_IP_FAILURE;
 }
 
-enum
-{
-	CONNECT_IP_SUCCES = 1,
-	CONNECT_IP_FAILURE,
-	CONNECT_IP_WAIT
-};
 /*отдельный поток подключения*/
-static gpointer connect_ip(gpointer args)
+static gpointer connect_rtsp(gpointer args)
 {
 	int rc;
 	video_stream_s * vs = (video_stream_s*)args;
@@ -465,12 +448,15 @@ static gpointer connect_ip(gpointer args)
 
 	return NULL;
 }
-#define DEFAULT_TIMEOUT_CHECK_CONNECT_IP    500    /*0,5 секунды */
-static unsigned long int timeout_check_connect_ip = DEFAULT_TIMEOUT_CHECK_CONNECT_IP;
-static int check_connect_ip(gpointer ud)
+
+static char STR_NOT_NAME_STREAM[] = "Нет имени потока в файле конфигурации!";
+static char STR_NOT_ACCESS_STREAM[] = "Нет доступа к видео потоку : %s";
+
+static int check_connect_rtsp(gpointer ud)
 {
+	int rc;
 	video_stream_s * vs = (video_stream_s*)ud;
-	GtkWidget * w;
+	GtkWidget * w = vs->check_connect;
 	int connect;
 
 	g_mutex_lock(&(vs->m_connect));
@@ -478,18 +464,35 @@ static int check_connect_ip(gpointer ud)
 	g_mutex_unlock(&(vs->m_connect));
 
 	if(connect == CONNECT_IP_SUCCES){
-		g_message("Подключение есть!");
-		w = vs->check_connect;
-		gtk_widget_destroy(w);
-		/*TODO подключаем rtsp*/
+		g_message("Доступ к %s есть!",vs->name);
+		if(w != NULL){
+			gtk_widget_destroy(w);
+			vs->check_connect = NULL;
+			g_mutex_clear(&(vs->m_connect));
+		}
+		/* подключаем rtsp*/
+		rc = init_rtsp(vs);
+		if(rc == SUCCESS){
+			vs->open = OK;
+		}
+		if(vs->open == OK){
+			vs->draw = OK;
+			vs->exit = NOT_OK;
+			g_mutex_init(&(vs->m_video));
+			vs->t_video = g_thread_new("video",read_video_stream,vs);
+			g_message("Камера %s включена.",vs->name);
+		}
 		return FALSE;
 	}
 
 	if(connect == CONNECT_IP_FAILURE){
-		g_message("Подключение нет!");
-		/*TODO сообщение об ошибке*/
-		w = vs->check_connect;
-		gtk_widget_destroy(w);
+		g_message("Нет доступа к %s!",vs->name);
+		/*сообщение об ошибке*/
+		if(w != NULL){
+			gtk_widget_destroy(w);
+			vs->check_connect = NULL;
+			g_mutex_clear(&(vs->m_connect));
+		}
 		{
 		GtkWidget * error;
 		if(vs->name == NULL){
@@ -508,18 +511,13 @@ static int check_connect_ip(gpointer ud)
 	return TRUE;
 }
 
-static int init_video_stream(video_stream_s * vs)
+static GtkWidget * create_window_connect(video_stream_s * vs)
 {
 	GtkWidget * dialog;
 	GtkWidget * box;
 	GtkWidget * label;
 	GtkWidget * spinner;
 	GtkWidget * button;
-
-	if(vs->check_connect != NULL){
-		g_warning("Подключение уже идет!");
-		return FAILURE;
-	}
 
 	dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(dialog),STR_NAME_PROGRAMM);
@@ -539,6 +537,7 @@ static int init_video_stream(video_stream_s * vs)
 	spinner = gtk_spinner_new();
 	layout_widget(spinner,GTK_ALIGN_CENTER,GTK_ALIGN_CENTER,FALSE,FALSE);
 	gtk_widget_set_size_request(spinner,20,20);
+	gtk_spinner_start(GTK_SPINNER(spinner));
 
 	button = gtk_button_new_with_label("Завершить подключение");
 	g_signal_connect(button,"clicked",G_CALLBACK(clicked_button_stop_connect),vs);
@@ -554,35 +553,31 @@ static int init_video_stream(video_stream_s * vs)
 	gtk_widget_show(label);
 	gtk_widget_show(spinner);
 	gtk_widget_show(button);
-	vs->check_connect = dialog;
+
+	return dialog;
+}
+
+#define DEFAULT_TIMEOUT_CHECK_CONNECT_RTSP    500    /*0,5 секунды */
+static unsigned long int timeout_check_connect_rtsp = DEFAULT_TIMEOUT_CHECK_CONNECT_RTSP;
+static int init_video_stream(video_stream_s * vs)
+{
+
+	if(vs->check_connect != NULL){
+		g_warning("Подключение уже идет!");
+		return FAILURE;
+	}
+
+	vs->check_connect = create_window_connect(vs);
+
 	vs->connect = CONNECT_IP_WAIT;
-	/*запустить функцию проверки */
+
+	/* запустить функцию  проверки соединения и настройки видео потока*/
 	g_mutex_init(&(vs->m_connect));
-	vs->t_connect = g_thread_new("connect_ip",connect_ip,vs);
+	vs->t_connect = g_thread_new("connect_rtsp",connect_rtsp,vs);
+
 	/*запустить функцию опроса */
-	g_timeout_add(timeout_check_connect_ip,check_connect_ip,vs);
+	g_timeout_add(timeout_check_connect_rtsp,check_connect_rtsp,vs);
 
-	gtk_spinner_start(GTK_SPINNER(spinner));
-#if 0
-	int rc;
-
-	rc = check_name_stream(vs->name);
-	if(rc == FAILURE){
-		return rc;
-	}
-
-	rc = init_rtsp(vs);
-	if(rc == SUCCESS){
-		vs->open = OK;
-	}
-	if(vs->open == OK){
-		vs->draw = OK;
-		vs->exit = NOT_OK;
-		g_mutex_init(&(vs->m_video));
-		vs->t_video = g_thread_new("video",read_video_stream,vs);
-		g_message("Камера %s включена.",vs->name);
-	}
-#endif
 	return SUCCESS;
 }
 
@@ -600,6 +595,8 @@ static int deinit_video_stream(video_stream_s * vs)
 	return SUCCESS;
 }
 
+/*****************************************************************************/
+/* отображение экрана                                                        */
 /*****************************************************************************/
 static char STR_VIDEO[] = "Камеры";
 static char STR_ON_VIDEO_0[]  = "Включить Камеру 0";
@@ -654,9 +651,9 @@ static void activate_menu_video_1(GtkMenuItem * mi,gpointer ud)
 
 static void activate_menu_inversion(GtkMenuItem * mi,gpointer ud)
 {
+#if 0
 	int old_open_vs0 = video_stream_0.open;
 	int old_open_vs1 = video_stream_1.open;
-#if 0
 	deinit_video_stream(&video_stream_0);
 	deinit_video_stream(&video_stream_1);
 
