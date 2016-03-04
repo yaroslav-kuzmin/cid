@@ -53,7 +53,7 @@
 
 
 /*****************************************************************************/
-#define TEST_VIDEO              TRUE
+#define TEST_VIDEO              FALSE
 #define ALLOC_FRAME             TRUE
 
 /*формат видео 16:9 */
@@ -121,7 +121,8 @@ static int deinit_rtsp(video_stream_s * vs);
 /*****************************************************************************/
 /*  Обработка Видео потока                                                   */
 /*****************************************************************************/
-/* отдельный поток чтения видео*/
+
+/******** отдельный поток чтения видео *******/
 static gpointer read_video_stream(gpointer args)
 {
 	int rc;
@@ -224,7 +225,7 @@ static gpointer read_video_stream(gpointer args)
 	return NULL;
 }
 
-/******  функция запуска по таймеру прорисовки экрана  */
+/******  функция запуска по таймеру прорисовки экрана  ******/
 static gboolean write_screen(gpointer ud)
 {
 	screen_s * s = (screen_s*)ud;
@@ -410,7 +411,7 @@ static void clicked_button_stop_connect(GtkButton * b,gpointer ud)
 	vs->connect = CONNECT_RTSP_FAILURE;
 }
 
-/*отдельный поток подключения*/
+/******* отдельный поток подключения *******/
 static gpointer connect_rtsp(gpointer args)
 {
 	int rc;
@@ -440,6 +441,7 @@ static gpointer connect_rtsp(gpointer args)
 static char STR_NOT_NAME_STREAM[] = "Нет имени потока в файле конфигурации!";
 static char STR_NOT_ACCESS_STREAM[] = "Нет доступа к видео потоку : %s";
 
+/******* Функция опроса состояния соединения *******/
 static int check_connect_rtsp(gpointer ud)
 {
 	video_stream_s * vs = (video_stream_s*)ud;
@@ -541,6 +543,7 @@ static GtkWidget * create_window_connect(video_stream_s * vs)
 
 #define DEFAULT_TIMEOUT_CHECK_CONNECT_RTSP    500    /*0,5 секунды */
 static unsigned long int timeout_check_connect_rtsp = DEFAULT_TIMEOUT_CHECK_CONNECT_RTSP;
+
 static int init_video_stream(video_stream_s * vs)
 {
 	if(vs->check_connect != NULL){
@@ -577,7 +580,7 @@ static int deinit_video_stream(video_stream_s * vs)
 }
 
 /*****************************************************************************/
-/* отображение экрана                                                        */
+/* отображение основног экрана и дополнительного окна                        */
 /*****************************************************************************/
 
 static char STR_VIDEO[] = "Камеры";
