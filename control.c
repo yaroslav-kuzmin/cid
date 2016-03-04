@@ -684,7 +684,7 @@ static GtkWidget * lab_pressure;
 
 static char STR_CONNECT[] = "Установка подключена";
 static char STR_DISCONNECT[] = "Установка не подключена";
-static char STR_LIMIT_VERTICAL[] =        "Предел по вертикале!";
+static char STR_LIMIT_VERTICAL[] =        "Предел по вертикали!";
 static char STR_LIMIT_VERTICAL_TOP[] =    "Предел ВЕРХ!";
 static char STR_LIMIT_VERTICAL_BOTTOM[] = "Предел НИЗ!";
 static char STR_LIMIT_HORIZONTAL[] =       "Предел по горизонтали!";
