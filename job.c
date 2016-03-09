@@ -81,8 +81,6 @@ double rate_pressure = DEFAULT_RATE_PRESSURE;
 #define STEP_SPEED_VERTICAL                 0.75
 #define RATE_SPEED_VERTICAL                 666.66667
 
-#define DEFAULT_HORIZONTAL_OFFSET           MIN_HORIZONTAL_OFFSET_IN_TIC
-
 #define ANGLE_NULL                          -1
 #define MAX_ANGLE                           88.0
 #define MIN_ANGLE                           0.0
@@ -1271,8 +1269,6 @@ static GtkWidget * create_label_mode_auto(void)
 	return fra_auto;
 }
 
-static uint16_t horizontal_offset = DEFAULT_HORIZONTAL_OFFSET;
-
 static void show_frame_auto_mode(GtkWidget * w,gpointer ud)
 {
 	int rc;
@@ -1286,7 +1282,6 @@ static void show_frame_auto_mode(GtkWidget * w,gpointer ud)
 		command_uprise_angle(current_job->uprise);
 		command_lowering_angle(current_job->lowering);
 		command_speed_vertical(DEFAULT_SPEED_VERTICAL_AUTO_MODE);
-		command_horizontal(horizontal_offset);
 		auto_mode_start = NOT_OK;
 		auto_mode_pause = NOT_OK;
 		console_pause_old = 0;
@@ -2713,7 +2708,6 @@ static GtkWidget * create_job_save(void)
 /* основное окно                                                             */
 /*****************************************************************************/
 
-static char STR_HORIZONTAL_OFFSET[] =   "horizontal";
 static char STR_TIMEOUT_AUTO_MODE[] =   "timeout_auto_mode";
 static char STR_TIMEOUT_MANUAL_MODE[] = "timeout_manual_mode";
 static char STR_TIMEOUT_CONFIG_MODE[] = "timeout_config_mode";
@@ -2725,19 +2719,6 @@ static int load_config(void)
 	double d;
 	GError * err = NULL;
 
-	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,&err);
-	if(err != NULL){
-		g_critical("В секции %s нет ключа %s!",STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET);
-		g_error_free(err);
-	}
-	else{
-		if( ((rc < MIN_HORIZONTAL_OFFSET_IN_TIC) || (rc > MAX_HORIZONTAL_OFFSET_IN_TIC)) ){
-			rc = DEFAULT_HORIZONTAL_OFFSET;
-		}
-		horizontal_offset = rc;
-	}
-
-	err = NULL;
 	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_TIMEOUT_AUTO_MODE,&err);
 	if(err != NULL){
 		g_critical("В секции %s нет ключа %s!",STR_GLOBAL_KEY,STR_TIMEOUT_AUTO_MODE);

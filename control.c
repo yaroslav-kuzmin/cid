@@ -513,6 +513,9 @@ int command_horizontal(uint16_t horizontal_offset)
 	return write_register(reg_D117,horizontal_offset);
 }
 
+#define DEFAULT_HORIZONTAL_OFFSET           6
+static uint16_t horizontal_offset = DEFAULT_HORIZONTAL_OFFSET;
+
 int command_null_mode(void)
 {
 	command_wait_mode();
@@ -524,10 +527,9 @@ int command_null_mode(void)
 	command_speed_vertical(0);
 	command_valve(0);
 	command_pressure(0);
-	command_horizontal(0);
+	command_horizontal(horizontal_offset);
 	return SUCCESS;
 }
-
 
 static int reg_D110 = 0x106E;
 /*static int reg_D111 = 0x106F;*/
@@ -1018,6 +1020,7 @@ static int set_status_disconnect(void)
 }
 
 static char STR_TIMEOUT_CHECK_PORT[] = "timeout_check_port";
+static char STR_HORIZONTAL_OFFSET[] =   "horizontal";
 
 static int load_config(void)
 {
@@ -1032,8 +1035,20 @@ static int load_config(void)
 	if( ((rc < MIN_TIMEOUT_CHECK_PORT) || (rc > MAX_TIMEOUT_CHECK_PORT)) ){
 		rc = DEFAULT_TIMEOU_CHECK_PORT;
 	}
-
 	time_check_connect_device = rc * MILLISECOND;
+
+	err = NULL;
+	rc = g_key_file_get_integer(ini_file,STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET,&err);
+	if(err != NULL){
+		g_critical("В секции %s нет ключа %s!",STR_GLOBAL_KEY,STR_HORIZONTAL_OFFSET);
+		g_error_free(err);
+	}
+	else{
+		if( ((rc < MIN_HORIZONTAL_OFFSET_IN_TIC) || (rc > MAX_HORIZONTAL_OFFSET_IN_TIC)) ){
+			rc = DEFAULT_HORIZONTAL_OFFSET;
+		}
+		horizontal_offset = rc;
+	}
 
 	return SUCCESS;
 }
